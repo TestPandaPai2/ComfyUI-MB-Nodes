@@ -1,10 +1,7 @@
 import { app } from "../../scripts/app.js";
+import { getWidget, resizeToContent } from "./common.js";
 
 const SNAP = 8; // must match SNAP in nodes/load_image_node.py
-
-function getWidget(node, name) {
-    return node.widgets?.find((w) => w.name === name);
-}
 
 function targetSize(width, height, megapixels) {
     const scale = Math.sqrt((megapixels * 1e6) / (width * height));
@@ -59,6 +56,7 @@ function wireNode(node) {
     });
     info.disabled = true; // read-only readout
     node.__mbInfoWidget = info;
+    resizeToContent(node); // the node was sized before the readout existed
 
     for (const name of ["image", "resize", "megapixels"]) {
         const w = getWidget(node, name);

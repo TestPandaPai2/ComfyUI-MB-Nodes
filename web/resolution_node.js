@@ -1,5 +1,6 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
+import { getWidget, setWidgetVisible } from "./common.js";
 
 // { ratios: [...], table: { ratio: [label, ...] } }, fetched once at load.
 let DATA = { ratios: [], table: {} };
@@ -15,17 +16,8 @@ const CELL_H = 22;
 const GAP = 4;
 const MARGIN = 14;
 
-function getWidget(node, name) {
-    return node.widgets?.find((w) => w.name === name);
-}
-
 function hideWidget(node, name) {
-    const w = getWidget(node, name);
-    if (!w || w.origType !== undefined) return;
-    w.origType = w.type;
-    w.origComputeSize = w.computeSize;
-    w.type = "hidden";
-    w.computeSize = () => [0, -4];
+    setWidgetVisible(node, name, false);
 }
 
 // Keep the resolution combo showing only the sizes that belong to the active

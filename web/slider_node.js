@@ -1,10 +1,7 @@
 import { app } from "../../scripts/app.js";
+import { getWidget } from "./common.js";
 
 const LIVE_DEBOUNCE = 250; // ms of quiet after a drag before the prompt re-queues
-
-function getWidget(node, name) {
-    return node.widgets?.find((w) => w.name === name);
-}
 
 function clamp(value, low, high) {
     return Math.max(low, Math.min(high, value));

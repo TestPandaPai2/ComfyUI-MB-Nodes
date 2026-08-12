@@ -1,4 +1,5 @@
 import { app } from "../../scripts/app.js";
+import { getWidget, setWidgetVisible, resizeToContent } from "./common.js";
 
 const SEPARATORS = { newline: "\n", comma: ", ", space: " ", none: "" };
 
@@ -22,10 +23,6 @@ async function readClipboard() {
     }
 }
 
-function getWidget(node, name) {
-    return node.widgets?.find((w) => w.name === name);
-}
-
 function commit(node, widget, value) {
     widget.value = value;
     // Keep the DOM textarea in sync — its input event is what normally writes .value
@@ -39,29 +36,9 @@ function separatorOf(node) {
 }
 
 // The priority widget only makes sense while text_in is connected, so it is
-// swapped between its real type and "hidden" instead of being removed (removal
-// would lose the value on save/load).
+// hidden rather than removed (removal would lose the value on save/load).
 function setPriorityVisible(node, visible) {
-    const w = getWidget(node, "priority");
-    if (!w) return;
-
-    if (visible) {
-        if (w.origType === undefined) return; // already visible
-        w.type = w.origType;
-        w.computeSize = w.origComputeSize;
-        delete w.origType;
-        delete w.origComputeSize;
-    } else {
-        if (w.origType !== undefined) return; // already hidden
-        w.origType = w.type;
-        w.origComputeSize = w.computeSize;
-        w.type = "hidden";
-        w.computeSize = () => [0, -4];
-    }
-
-    const size = node.computeSize();
-    node.setSize([Math.max(node.size[0], size[0]), size[1]]);
-    node.setDirtyCanvas(true, true);
+    if (setWidgetVisible(node, "priority", visible)) resizeToContent(node);
 }
 
 function textInConnected(node) {
