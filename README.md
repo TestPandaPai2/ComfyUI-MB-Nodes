@@ -42,3 +42,16 @@ muxed in. `trim_to_audio` cuts the video down to whichever of the two tracks end
 first, so it stops when the music does. It writes to the ComfyUI output folder by
 default or to any folder you type in, and the `preview_only` switch keeps the
 file in temp instead. Either way the finished video plays back on the node.
+
+### Prompt Pad (MB)
+A scratchpad for prompts. Type into the text box, put a name in the filename
+field, and the Save button writes it to the `SavedPrompts` folder inside the node
+pack as a .txt file — it asks before overwriting one that already exists. The
+optional `text_in` dot takes over the output when connected, so a generated
+prompt can be piped in and kept. Outputs the text.
+
+### Get Lines (MB)
+Takes a text input and hands back one output per line. It has no text box of its
+own: it reads whatever is feeding it and grows or shrinks its output dots to
+match the number of lines, rechecking every 3 seconds. Blank lines are skipped
+and trailing spaces are trimmed. Up to 32 lines.
