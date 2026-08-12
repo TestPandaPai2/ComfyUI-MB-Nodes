@@ -1,7 +1,8 @@
 from .nodes.text_node import NODE_CLASS_MAPPINGS as _m1, NODE_DISPLAY_NAME_MAPPINGS as _d1
+from .nodes.resolution_node import NODE_CLASS_MAPPINGS as _m2, NODE_DISPLAY_NAME_MAPPINGS as _d2
 
-NODE_CLASS_MAPPINGS = {**_m1}
-NODE_DISPLAY_NAME_MAPPINGS = {**_d1}
+NODE_CLASS_MAPPINGS = {**_m1, **_m2}
+NODE_DISPLAY_NAME_MAPPINGS = {**_d1, **_d2}
 
 WEB_DIRECTORY = "./web"
 
