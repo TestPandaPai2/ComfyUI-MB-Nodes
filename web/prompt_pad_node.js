@@ -1,6 +1,6 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
-import { getWidget } from "./common.js";
+import { addButton, getWidget } from "./common.js";
 
 function notify(severity, summary, detail) {
     const toast = app.extensionManager?.toast;
@@ -56,6 +56,6 @@ app.registerExtension({
 
     async nodeCreated(node) {
         if (node.comfyClass !== "MBPromptPad") return;
-        node.addWidget("button", "Save", null, () => savePrompt(node));
+        addButton(node, "Save", () => savePrompt(node));
     },
 });

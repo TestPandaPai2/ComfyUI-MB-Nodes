@@ -1,5 +1,5 @@
 import { app } from "../../scripts/app.js";
-import { getWidget, setWidgetVisible, resizeToContent } from "./common.js";
+import { addButton, getWidget, setWidgetVisible, resizeToContent } from "./common.js";
 
 const SEPARATORS = { newline: "\n", comma: ", ", space: " ", none: "" };
 
@@ -60,7 +60,7 @@ function wireNode(node) {
     const textWidget = getWidget(node, "text");
     if (!textWidget) return;
 
-    node.addWidget("button", "Paste (append)", null, async () => {
+    addButton(node, "Paste (append)", async () => {
         const clip = await readClipboard();
         if (clip === null) return;
         if (!clip) {
@@ -71,7 +71,7 @@ function wireNode(node) {
         commit(node, textWidget, current ? current + separatorOf(node) + clip : clip);
     });
 
-    node.addWidget("button", "Replace", null, async () => {
+    addButton(node, "Replace", async () => {
         const clip = await readClipboard();
         if (clip === null) return;
         commit(node, textWidget, clip);
