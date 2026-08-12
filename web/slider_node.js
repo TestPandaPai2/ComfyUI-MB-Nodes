@@ -26,17 +26,30 @@ function applyRange(node) {
     let step = Number(stepW.value);
     if (!Number.isFinite(step) || step <= 0) step = 0.01;
 
-    value.options = value.options ?? {};
-    value.options.min = low;
-    value.options.max = high;
-    // LiteGraph number widgets treat options.step as 10x the real increment.
-    value.options.step = step * 10;
-    value.options.step2 = step;
-    value.options.round = step;
-    value.options.precision = Math.min(12, Math.max(0, -Math.floor(Math.log10(step))) + 2);
+    const precision = step >= 1 ? 0 : Math.min(12, Math.max(0, -Math.floor(Math.log10(step))) + 2);
 
-    const snapped = low + Math.round((Number(value.value) - low) / step) * step;
-    value.value = Number(clamp(snapped, low, high).toFixed(value.options.precision));
+    // Replaced rather than mutated: the options object can be the one shared
+    // with the node definition, and writing through it leaks this node's range
+    // onto every other slider.
+    value.options = {
+        ...(value.options ?? {}),
+        min: low,
+        max: high,
+        // LiteGraph number widgets treat options.step as 10x the real increment.
+        step: step * 10,
+        step2: step,
+        round: step,
+        precision,
+    };
+
+    // A widget value that is undefined (or already broken) would snap to NaN,
+    // and NaN serialises into the workflow as null, which comes back as an
+    // invalid float on the next load. Fall back to the bottom of the range.
+    const current = Number(value.value);
+    const base = Number.isFinite(current) ? current : low;
+
+    const snapped = low + Math.round((base - low) / step) * step;
+    value.value = Number(clamp(snapped, low, high).toFixed(precision));
 
     node.setDirtyCanvas(true, true);
 }
@@ -49,7 +62,7 @@ function liveEnabled(node) {
 function scheduleQueue(node) {
     clearTimeout(node.__mbLiveTimer);
     node.__mbLiveTimer = setTimeout(() => {
-        if (!liveEnabled(node)) return;
+        if (!liveEnabled(node) || !node.__mbReady) return;
         // Skip while something is already running to avoid stacking a queue per drag.
         if (app.ui?.lastQueueSize) return;
         app.queuePrompt(0, 1).catch((e) => console.error("[MBNodes] live queue failed", e));
@@ -85,6 +98,14 @@ function wireNode(node) {
     };
 
     applyRange(node);
+
+    // Values are written into the widgets while a workflow loads. Live mode only
+    // starts listening once that has settled, so opening a saved graph with live
+    // on does not fire a run by itself.
+    node.__mbReady = false;
+    setTimeout(() => {
+        node.__mbReady = true;
+    }, 1000);
 }
 
 app.registerExtension({
