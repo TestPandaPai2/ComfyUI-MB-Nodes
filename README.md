@@ -35,3 +35,10 @@ any folder you type in (absolute, or relative to the output folder). Switch
 `mode` to `preview` and nothing is written to that folder at all. Either way a
 half-size copy is cached in `output/MBNodesCache`, and the node pulls it back in
 after a ComfyUI restart so the preview never goes blank.
+
+### SaveMP4 (MB)
+Encodes an image batch into an h264 mp4 at the fps you set, with optional audio
+muxed in. `trim_to_audio` cuts the video down to whichever of the two tracks ends
+first, so it stops when the music does. It writes to the ComfyUI output folder by
+default or to any folder you type in, and the `preview_only` switch keeps the
+file in temp instead. Either way the finished video plays back on the node.
