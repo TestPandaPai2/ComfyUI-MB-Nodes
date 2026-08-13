@@ -163,8 +163,9 @@ class MBSaveImage(io.ComfyNode):
         cls, images, mode, format, filename_prefix, output_folder, quality,
         png_compress_level, webp_lossless,
     ) -> io.NodeOutput:
-        workflow = (cls.hidden.extra_pnginfo or {}).get("workflow") or {}
-        key = _cache_key(workflow.get("id"), cls.hidden.unique_id)
+        hidden = cls.hidden
+        workflow = ((hidden.extra_pnginfo if hidden else None) or {}).get("workflow") or {}
+        key = _cache_key(workflow.get("id"), hidden.unique_id if hidden else None)
 
         # The cached preview is written in both modes: it is what the node shows
         # after a restart, and the only previewable copy when saving elsewhere.

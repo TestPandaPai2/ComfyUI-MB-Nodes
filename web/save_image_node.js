@@ -27,12 +27,26 @@ function refresh(node) {
     if (changed) resizeToContent(node);
 }
 
+function viewURL({ filename, subfolder, type }) {
+    const query = new URLSearchParams({ filename, subfolder, type });
+    return api.apiURL(`/view?${query}`);
+}
+
+function loadImage(url) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = url;
+    });
+}
+
 // After a restart there is no execution history, so the node asks the backend
 // for the half-size copy it cached in output/MBNodesCache the last time it ran.
 async function restorePreview(node) {
     if (node.imgs?.length) return;
 
-    const workflowId = app.graph?.id ?? app.graph?.extra?.id ?? "default";
+    const workflowId = app.graph?.id ?? "default";
     const query = `workflow_id=${encodeURIComponent(workflowId)}&node_id=${encodeURIComponent(node.id)}`;
 
     try {
@@ -40,11 +54,13 @@ async function restorePreview(node) {
         const data = await response.json();
         if (!data.images?.length || node.imgs?.length) return;
 
-        node.images = data.images;
-        if (app.nodeOutputs) app.nodeOutputs[node.id] = { images: data.images };
+        // node.imgs holds loaded Image objects and is what actually gets drawn.
+        // Setting node.images (or app.nodeOutputs) does nothing on its own here.
+        node.imgs = [await loadImage(viewURL(data.images[0]))];
+        node.setSizeForImage?.();
         node.setDirtyCanvas(true, true);
     } catch (e) {
-        console.error("[MBNodes] preview cache fetch failed", e);
+        console.error("[MBNodes] preview cache restore failed", e);
     }
 }
 
