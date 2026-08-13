@@ -153,5 +153,4 @@ class MBSaveMP4(io.ComfyNode):
         return io.NodeOutput(ui=ui.PreviewVideo([_previewable(path)]))
 
 
-NODE_CLASS_MAPPINGS = {"MBSaveMP4": MBSaveMP4}
-NODE_DISPLAY_NAME_MAPPINGS = {"MBSaveMP4": "SaveMP4 (MB)"}
+NODES = [MBSaveMP4]

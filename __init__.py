@@ -1,15 +1,44 @@
-from .nodes.text_node import NODE_CLASS_MAPPINGS as _m1, NODE_DISPLAY_NAME_MAPPINGS as _d1
-from .nodes.resolution_node import NODE_CLASS_MAPPINGS as _m2, NODE_DISPLAY_NAME_MAPPINGS as _d2
-from .nodes.slider_node import NODE_CLASS_MAPPINGS as _m3, NODE_DISPLAY_NAME_MAPPINGS as _d3
-from .nodes.load_image_node import NODE_CLASS_MAPPINGS as _m4, NODE_DISPLAY_NAME_MAPPINGS as _d4
-from .nodes.save_image_node import NODE_CLASS_MAPPINGS as _m5, NODE_DISPLAY_NAME_MAPPINGS as _d5
-from .nodes.save_mp4_node import NODE_CLASS_MAPPINGS as _m6, NODE_DISPLAY_NAME_MAPPINGS as _d6
-from .nodes.prompt_pad_node import NODE_CLASS_MAPPINGS as _m7, NODE_DISPLAY_NAME_MAPPINGS as _d7
-from .nodes.get_lines_node import NODE_CLASS_MAPPINGS as _m8, NODE_DISPLAY_NAME_MAPPINGS as _d8
+"""MB Nodes — a V3 (comfy_api.latest) node pack.
 
-NODE_CLASS_MAPPINGS = {**_m1, **_m2, **_m3, **_m4, **_m5, **_m6, **_m7, **_m8}
-NODE_DISPLAY_NAME_MAPPINGS = {**_d1, **_d2, **_d3, **_d4, **_d5, **_d6, **_d7, **_d8}
+The pack is loaded through the V3 entrypoint, so ComfyUI reads the schema each
+node declares in define_schema() rather than a NODE_CLASS_MAPPINGS dict.
+"""
+
+from typing_extensions import override
+
+from comfy_api.latest import ComfyExtension, io
+
+from .nodes.get_lines_node import NODES as _get_lines
+from .nodes.load_image_node import NODES as _load_image
+from .nodes.prompt_pad_node import NODES as _prompt_pad
+from .nodes.resolution_node import NODES as _resolution
+from .nodes.save_image_node import NODES as _save_image
+from .nodes.save_mp4_node import NODES as _save_mp4
+from .nodes.slider_node import NODES as _slider
+from .nodes.text_node import NODES as _text
+
+NODES: list[type[io.ComfyNode]] = [
+    *_text,
+    *_resolution,
+    *_slider,
+    *_load_image,
+    *_save_image,
+    *_save_mp4,
+    *_prompt_pad,
+    *_get_lines,
+]
+
+
+class MBNodesExtension(ComfyExtension):
+    @override
+    async def get_node_list(self) -> list[type[io.ComfyNode]]:
+        return NODES
+
+
+async def comfy_entrypoint() -> MBNodesExtension:
+    return MBNodesExtension()
+
 
 WEB_DIRECTORY = "./web"
 
-__all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS", "WEB_DIRECTORY"]
+__all__ = ["comfy_entrypoint", "WEB_DIRECTORY"]

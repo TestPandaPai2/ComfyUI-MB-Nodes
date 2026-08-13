@@ -1,3 +1,5 @@
+from comfy_api.latest import io
+
 SEPARATORS = {
     "newline": "\n",
     "comma": ", ",
@@ -6,29 +8,46 @@ SEPARATORS = {
 }
 
 
-class MBText:
+class MBText(io.ComfyNode):
     """Text box with clipboard paste/replace buttons and an optional text input
     whose content is placed before or after the typed text."""
 
     @classmethod
-    def INPUT_TYPES(cls):
-        return {
-            "required": {
-                "text": ("STRING", {"multiline": True, "default": ""}),
-                "separator": (list(SEPARATORS.keys()), {"default": "newline"}),
-                "priority": (["after", "before"], {"default": "after"}),
-            },
-            "optional": {
-                "text_in": ("STRING", {"forceInput": True}),
-            },
-        }
+    def define_schema(cls) -> io.Schema:
+        return io.Schema(
+            node_id="MBText",
+            display_name="Text (MB)",
+            category="MBNodes",
+            description="Text box that merges an optional incoming string with the typed text.",
+            search_aliases=["text", "string", "prompt text"],
+            inputs=[
+                io.String.Input("text", multiline=True, default=""),
+                io.Combo.Input(
+                    "separator",
+                    options=list(SEPARATORS.keys()),
+                    default="newline",
+                    socketless=True,
+                    tooltip="What is placed between the two pieces of text.",
+                ),
+                io.Combo.Input(
+                    "priority",
+                    options=["after", "before"],
+                    default="after",
+                    socketless=True,
+                    tooltip="Where the incoming text goes relative to the typed text.",
+                ),
+                io.String.Input(
+                    "text_in",
+                    optional=True,
+                    force_input=True,
+                    tooltip="When connected, this is merged with the typed text.",
+                ),
+            ],
+            outputs=[io.String.Output("text")],
+        )
 
-    RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("text",)
-    FUNCTION = "run"
-    CATEGORY = "MBNodes"
-
-    def run(self, text, separator, priority, text_in=None):
+    @classmethod
+    def execute(cls, text, separator, priority, text_in=None) -> io.NodeOutput:
         own = text or ""
         if text_in is None:
             incoming = ""
@@ -38,14 +57,13 @@ class MBText:
             incoming = str(text_in)
 
         if not incoming.strip():
-            return (own,)
+            return io.NodeOutput(own)
         if not own.strip():
-            return (incoming,)
+            return io.NodeOutput(incoming)
 
         sep = SEPARATORS.get(separator, "\n")
         parts = (incoming, own) if priority == "before" else (own, incoming)
-        return (sep.join(parts),)
+        return io.NodeOutput(sep.join(parts))
 
 
-NODE_CLASS_MAPPINGS = {"MBText": MBText}
-NODE_DISPLAY_NAME_MAPPINGS = {"MBText": "Text (MB)"}
+NODES = [MBText]

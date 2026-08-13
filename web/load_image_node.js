@@ -1,4 +1,5 @@
 import { app } from "../../scripts/app.js";
+import { api } from "../../scripts/api.js";
 import { getWidget, resizeToContent } from "./common.js";
 
 const SNAP = 8; // must match SNAP in nodes/load_image_node.py
@@ -20,19 +21,36 @@ function aspectRatio(width, height) {
     return r >= 1 ? `${r.toFixed(2)}:1` : `1:${(1 / r).toFixed(2)}`;
 }
 
-// The image widget's preview lives in node.imgs; its natural size is the source
-// resolution, so the readout can be computed without touching the backend.
-function sourceSize(node) {
-    const img = node.imgs?.[0];
-    if (!img?.naturalWidth) return null;
-    return [img.naturalWidth, img.naturalHeight];
+// The selected file is loaded straight from /view to read its natural size.
+// node.imgs is not used for this: the Nodes 2.0 renderer draws previews from the
+// node output store rather than off the canvas, so it is not reliably populated.
+const sizeCache = new Map();
+
+function measure(filename) {
+    if (!filename) return Promise.resolve(null);
+    if (sizeCache.has(filename)) return Promise.resolve(sizeCache.get(filename));
+
+    // "name [output]" style annotated paths carry their folder in brackets.
+    const match = /^(.*?)\s*\[(\w+)\]\s*$/.exec(filename);
+    const [name, type] = match ? [match[1], match[2]] : [filename, "input"];
+    const query = new URLSearchParams({ filename: name, subfolder: "", type });
+
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const size = [img.naturalWidth, img.naturalHeight];
+            sizeCache.set(filename, size);
+            resolve(size);
+        };
+        img.onerror = () => resolve(null);
+        img.src = api.apiURL(`/view?${query}`);
+    });
 }
 
-function updateInfo(node) {
+function render(node, size) {
     const info = node.__mbInfoWidget;
     if (!info) return;
 
-    const size = sourceSize(node);
     if (!size) {
         info.value = "no image loaded";
         node.setDirtyCanvas(true, false);
@@ -50,9 +68,16 @@ function updateInfo(node) {
     node.setDirtyCanvas(true, false);
 }
 
+async function updateInfo(node) {
+    render(node, await measure(getWidget(node, "image")?.value));
+}
+
 function wireNode(node) {
     const info = node.addWidget("text", "output", "no image loaded", () => {}, {
         serialize: false,
+        // disabled is what the canvas renderer reads, read_only what Nodes 2.0 does.
+        disabled: true,
+        read_only: true,
     });
     info.disabled = true; // read-only readout
     info.serialize = false; // the serializer checks this, not options.serialize
@@ -65,23 +90,10 @@ function wireNode(node) {
         const prev = w.callback;
         w.callback = function (...args) {
             const r = prev?.apply(this, args);
-            // The preview image loads asynchronously after the widget changes.
-            setTimeout(() => updateInfo(node), 60);
+            updateInfo(node);
             return r;
         };
     }
-
-    // node.imgs is replaced whenever a new preview finishes loading.
-    let lastImg = null;
-    const prevDraw = node.onDrawBackground;
-    node.onDrawBackground = function (ctx) {
-        const r = prevDraw?.apply(this, arguments);
-        if (this.imgs?.[0] !== lastImg) {
-            lastImg = this.imgs?.[0] ?? null;
-            updateInfo(this);
-        }
-        return r;
-    };
 
     updateInfo(node);
 }

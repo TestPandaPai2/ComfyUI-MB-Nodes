@@ -83,5 +83,4 @@ class MBSlider(io.ComfyNode):
         return io.NodeOutput(result, int(round(result)), f"{result:g}")
 
 
-NODE_CLASS_MAPPINGS = {"MBSlider": MBSlider}
-NODE_DISPLAY_NAME_MAPPINGS = {"MBSlider": "Slider (MB)"}
+NODES = [MBSlider]

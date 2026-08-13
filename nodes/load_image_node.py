@@ -149,5 +149,4 @@ class MBLoadImage(io.ComfyNode):
         return io.NodeOutput(output, width, height, aspect_ratio_string(width, height))
 
 
-NODE_CLASS_MAPPINGS = {"MBLoadImage": MBLoadImage}
-NODE_DISPLAY_NAME_MAPPINGS = {"MBLoadImage": "Load Image (MB)"}
+NODES = [MBLoadImage]

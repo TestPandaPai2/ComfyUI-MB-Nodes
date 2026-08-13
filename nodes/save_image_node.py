@@ -208,5 +208,4 @@ except Exception:  # server missing (unit runs) or route already registered
     pass
 
 
-NODE_CLASS_MAPPINGS = {"MBSaveImage": MBSaveImage}
-NODE_DISPLAY_NAME_MAPPINGS = {"MBSaveImage": "Save Image (MB)"}
+NODES = [MBSaveImage]

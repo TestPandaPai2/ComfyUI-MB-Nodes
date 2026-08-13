@@ -2,6 +2,8 @@ import math
 
 import torch
 
+from comfy_api.latest import io
+
 RATIOS = [
     ("1:1", 1 / 1),
     ("5:4", 5 / 4),
@@ -77,33 +79,56 @@ DEFAULT_RATIO = "1:1"
 DEFAULT_RESOLUTION = "1024 x 1024"
 
 
-class MBResolution:
+class MBResolution(io.ComfyNode):
     """Aspect-ratio / resolution picker. Outputs width and height as INT,
     plus a matching empty latent."""
 
     @classmethod
-    def INPUT_TYPES(cls):
-        return {
-            "required": {
-                "aspect_ratio": ([name for name, _ in RATIOS], {"default": DEFAULT_RATIO}),
-                "resolution": (ALL_RESOLUTIONS, {"default": DEFAULT_RESOLUTION}),
-                "portrait": ("BOOLEAN", {"default": False}),
-                "batch_size": ("INT", {"default": 1, "min": 1, "max": 4096}),
-            },
-        }
+    def define_schema(cls) -> io.Schema:
+        return io.Schema(
+            node_id="MBResolution",
+            display_name="Resolution (MB)",
+            category="MBNodes",
+            description="Pick an aspect ratio and a resolution; outputs width, height and an empty latent.",
+            search_aliases=["resolution", "aspect ratio", "empty latent"],
+            inputs=[
+                io.Combo.Input(
+                    "aspect_ratio",
+                    options=[name for name, _ in RATIOS],
+                    default=DEFAULT_RATIO,
+                    socketless=True,
+                ),
+                io.Combo.Input(
+                    "resolution",
+                    options=ALL_RESOLUTIONS,
+                    default=DEFAULT_RESOLUTION,
+                    socketless=True,
+                ),
+                io.Boolean.Input(
+                    "portrait",
+                    default=False,
+                    label_on="portrait",
+                    label_off="landscape",
+                    tooltip="Swap width and height.",
+                ),
+                io.Int.Input("batch_size", default=1, min=1, max=4096),
+            ],
+            outputs=[
+                io.Int.Output("width"),
+                io.Int.Output("height"),
+                io.Latent.Output("latent"),
+                io.Int.Output("batch_size"),
+            ],
+        )
 
-    RETURN_TYPES = ("INT", "INT", "LATENT", "INT")
-    RETURN_NAMES = ("width", "height", "latent", "batch_size")
-    FUNCTION = "run"
-    CATEGORY = "MBNodes"
-
-    def run(self, aspect_ratio, resolution, portrait, batch_size):
+    @classmethod
+    def execute(cls, aspect_ratio, resolution, portrait, batch_size) -> io.NodeOutput:
         width, height = (int(part) for part in resolution.split(" x "))
         if portrait:
             width, height = height, width
 
         latent = torch.zeros([batch_size, 4, height // 8, width // 8])
-        return (width, height, {"samples": latent}, batch_size)
+        return io.NodeOutput(width, height, {"samples": latent}, batch_size)
 
 
 # Hand the table to the frontend so the button grid and the option filtering
@@ -119,5 +144,4 @@ except Exception:  # server missing (unit runs) or route already registered
     pass
 
 
-NODE_CLASS_MAPPINGS = {"MBResolution": MBResolution}
-NODE_DISPLAY_NAME_MAPPINGS = {"MBResolution": "Resolution (MB)"}
+NODES = [MBResolution]

@@ -39,6 +39,7 @@ function applyRatio(node, ratio, keepValue) {
         const index = prevIndex >= 0 ? Math.min(prevIndex, labels.length - 1) : 3;
         resWidget.value = labels[Math.min(index, labels.length - 1)];
     }
+    node.__mbRatioGrid?.triggerDraw?.();
     node.setDirtyCanvas(true, true);
 }
 
@@ -46,8 +47,11 @@ function gridRows() {
     return Math.ceil(DATA.ratios.length / COLS);
 }
 
-function cellRect(node, index, widgetY) {
-    const usable = node.size[0] - MARGIN * 2;
+// Laid out against the width handed to draw(), not node.size: under Nodes 2.0
+// each custom widget is drawn onto its own canvas that is only as wide as the
+// widget, so node width would overshoot it and the cells would miss the pointer.
+function cellRect(width, index, widgetY) {
+    const usable = width - MARGIN * 2;
     const cellW = (usable - GAP * (COLS - 1)) / COLS;
     const col = index % COLS;
     const row = Math.floor(index / COLS);
@@ -63,8 +67,10 @@ function makeGridWidget(node) {
     return {
         type: "mb_ratio_grid",
         name: "ratio_grid",
-        // y is set by LiteGraph before draw() and reused by mouse() for hit tests.
+        // y and width are recorded by draw() and reused by mouse() for hit tests,
+        // so the two agree in either renderer.
         y: 0,
+        width: 0,
         // The serializer checks widget.serialize, not options.serialize.
         serialize: false,
         options: { serialize: false },
@@ -76,6 +82,7 @@ function makeGridWidget(node) {
 
         draw(ctx, drawNode, widgetWidth, y, height) {
             this.y = y;
+            this.width = widgetWidth || node.size[0];
             const active = getWidget(drawNode, "aspect_ratio")?.value;
 
             ctx.save();
@@ -84,7 +91,7 @@ function makeGridWidget(node) {
             ctx.font = "12px Arial";
 
             DATA.ratios.forEach((ratio, index) => {
-                const [x, cy, w, h] = cellRect(drawNode, index, y);
+                const [x, cy, w, h] = cellRect(this.width, index, y);
                 const selected = ratio === active;
 
                 ctx.fillStyle = selected ? "#3f7cc6" : "#353535";
@@ -104,9 +111,12 @@ function makeGridWidget(node) {
         mouse(event, pos, mouseNode) {
             if (event.type !== "pointerdown" && event.type !== "mousedown") return false;
             for (let index = 0; index < DATA.ratios.length; index++) {
-                const [x, cy, w, h] = cellRect(mouseNode, index, this.y);
+                const [x, cy, w, h] = cellRect(this.width || mouseNode.size[0], index, this.y);
                 if (pos[0] >= x && pos[0] <= x + w && pos[1] >= cy && pos[1] <= cy + h) {
                     applyRatio(mouseNode, DATA.ratios[index], false);
+                    // Under Nodes 2.0 the widget owns its own canvas and only
+                    // repaints when asked; setDirtyCanvas alone is not enough.
+                    this.triggerDraw?.();
                     return true;
                 }
             }
@@ -123,6 +133,7 @@ function wireNode(node) {
     hideWidget(node, "aspect_ratio");
 
     const grid = makeGridWidget(node);
+    node.__mbRatioGrid = grid;
     node.addCustomWidget(grid);
     // addCustomWidget appends; move the grid above the resolution combo.
     node.widgets.splice(node.widgets.indexOf(grid), 1);

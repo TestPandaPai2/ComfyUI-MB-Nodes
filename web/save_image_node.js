@@ -41,6 +41,14 @@ function loadImage(url) {
     });
 }
 
+// Both renderers read previews out of app.nodeOutputs (the canvas renderer
+// mirrors it into node.imgs, Nodes 2.0 renders it directly), so the restored
+// images are published there as well as loaded onto the node.
+function publishOutputs(node, images) {
+    const outputs = app.nodeOutputs ?? {};
+    app.nodeOutputs = { ...outputs, [String(node.id)]: { images } };
+}
+
 // After a restart there is no execution history, so the node asks the backend
 // for the half-size copy it cached in output/MBNodesCache the last time it ran.
 async function restorePreview(node) {
@@ -54,10 +62,10 @@ async function restorePreview(node) {
         const data = await response.json();
         if (!data.images?.length || node.imgs?.length) return;
 
-        // node.imgs holds loaded Image objects and is what actually gets drawn.
-        // Setting node.images (or app.nodeOutputs) does nothing on its own here.
+        publishOutputs(node, data.images);
+        node.images = data.images;
+        // node.imgs holds loaded Image objects and is what the canvas draws.
         node.imgs = [await loadImage(viewURL(data.images[0]))];
-        node.setSizeForImage?.();
         node.setDirtyCanvas(true, true);
     } catch (e) {
         console.error("[MBNodes] preview cache restore failed", e);

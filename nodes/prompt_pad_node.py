@@ -92,5 +92,4 @@ except Exception:  # server missing (unit runs) or route already registered
     pass
 
 
-NODE_CLASS_MAPPINGS = {"MBPromptPad": MBPromptPad}
-NODE_DISPLAY_NAME_MAPPINGS = {"MBPromptPad": "Prompt Pad (MB)"}
+NODES = [MBPromptPad]

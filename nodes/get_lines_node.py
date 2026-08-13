@@ -32,5 +32,4 @@ class MBGetLines(io.ComfyNode):
         return io.NodeOutput(*(lines + [""] * (MAX_LINES - len(lines))))
 
 
-NODE_CLASS_MAPPINGS = {"MBGetLines": MBGetLines}
-NODE_DISPLAY_NAME_MAPPINGS = {"MBGetLines": "Get Lines (MB)"}
+NODES = [MBGetLines]
