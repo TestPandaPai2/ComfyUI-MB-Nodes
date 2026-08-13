@@ -27,26 +27,17 @@ function refresh(node) {
     if (changed) resizeToContent(node);
 }
 
-function viewURL({ filename, subfolder, type }) {
-    const query = new URLSearchParams({ filename, subfolder, type });
-    return api.apiURL(`/view?${query}`);
-}
-
-function loadImage(url) {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = reject;
-        img.src = url;
-    });
-}
-
-// Both renderers read previews out of app.nodeOutputs (the canvas renderer
-// mirrors it into node.imgs, Nodes 2.0 renders it directly), so the restored
-// images are published there as well as loaded onto the node.
+// The node output store keeps two copies of every result: app.nodeOutputs, which
+// the canvas renderer reads, and a reactive one that Nodes 2.0 renders from.
+// Writing app.nodeOutputs directly only fills the first, so the images are fed
+// in through the same "executed" event the backend uses, which fills both.
 function publishOutputs(node, images) {
-    const outputs = app.nodeOutputs ?? {};
-    app.nodeOutputs = { ...outputs, [String(node.id)]: { images } };
+    const id = String(node.id);
+    api.dispatchEvent(
+        new CustomEvent("executed", {
+            detail: { node: id, display_node: id, output: { images } },
+        })
+    );
 }
 
 // After a restart there is no execution history, so the node asks the backend
@@ -63,9 +54,6 @@ async function restorePreview(node) {
         if (!data.images?.length || node.imgs?.length) return;
 
         publishOutputs(node, data.images);
-        node.images = data.images;
-        // node.imgs holds loaded Image objects and is what the canvas draws.
-        node.imgs = [await loadImage(viewURL(data.images[0]))];
         node.setDirtyCanvas(true, true);
     } catch (e) {
         console.error("[MBNodes] preview cache restore failed", e);
