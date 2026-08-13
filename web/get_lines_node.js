@@ -1,5 +1,6 @@
 import { app } from "../../scripts/app.js";
 import { resizeToContent } from "./common.js";
+import { openDialog, radioRow } from "./dialog.js";
 
 const MAX_LINES = 32; // must match MAX_LINES in nodes/get_lines_node.py
 const POLL_MS = 3000;
@@ -68,46 +69,70 @@ function refresh(node) {
     setOutputCount(node, splitLines(text).length);
 }
 
-function askFixedCount(node) {
-    const answer = prompt(`Number of outputs (1-${MAX_LINES}):`, String(fixedCount(node)));
-    if (answer === null) return;
+function openSettings(node) {
+    let auto;
+    let fixed;
+    let count;
 
-    const count = Math.round(Number(answer));
-    if (!Number.isFinite(count) || count < 1 || count > MAX_LINES) {
-        alert(`Enter a whole number between 1 and ${MAX_LINES}.`);
-        return;
-    }
+    openDialog({
+        title: "Get Lines (MB) — MB Settings",
+        render(body) {
+            count = document.createElement("input");
+            count.type = "number";
+            count.className = "mb-dialog-number";
+            count.min = "1";
+            count.max = String(MAX_LINES);
+            count.value = String(fixedCount(node));
+            count.disabled = !isFixed(node);
 
-    node.properties.mb_mode = "fixed";
-    node.properties.mb_outputs = count;
-    refresh(node);
+            auto = radioRow({
+                group: "mb-getlines-mode",
+                value: "auto",
+                label: "Detect lines automatically",
+                checked: !isFixed(node),
+                hint: `Rechecks the incoming text every ${POLL_MS / 1000}s.`,
+            });
+
+            fixed = radioRow({
+                group: "mb-getlines-mode",
+                value: "fixed",
+                label: "Fixed outputs",
+                checked: isFixed(node),
+                hint: `Keeps the count pinned, no rechecking. 1-${MAX_LINES}.`,
+                control: count,
+            });
+
+            const sync = () => (count.disabled = !fixed.radio.checked);
+            auto.radio.addEventListener("change", sync);
+            fixed.radio.addEventListener("change", sync);
+
+            body.append(auto.wrapper, fixed.wrapper);
+        },
+        onApply() {
+            if (!fixed.radio.checked) {
+                node.properties.mb_mode = "auto";
+                refresh(node);
+                return;
+            }
+
+            const value = Math.round(Number(count.value));
+            if (!Number.isFinite(value) || value < 1 || value > MAX_LINES) {
+                count.focus();
+                return false; // keep the dialog open
+            }
+
+            node.properties.mb_mode = "fixed";
+            node.properties.mb_outputs = value;
+            refresh(node);
+        },
+    });
 }
 
 function addSettingsMenu(node) {
     const prevMenuOptions = node.getExtraMenuOptions;
     node.getExtraMenuOptions = function (canvas, options) {
         prevMenuOptions?.apply(this, arguments);
-
-        const fixed = isFixed(this);
-        options.unshift({
-            content: "MB Settings",
-            has_submenu: true,
-            submenu: {
-                options: [
-                    {
-                        content: `Detect lines automatically${fixed ? "" : "  ✓"}`,
-                        callback: () => {
-                            this.properties.mb_mode = "auto";
-                            refresh(this);
-                        },
-                    },
-                    {
-                        content: `Fixed number of outputs${fixed ? `  (${fixedCount(this)})  ✓` : "..."}`,
-                        callback: () => askFixedCount(this),
-                    },
-                ],
-            },
-        });
+        options.unshift({ content: "MB Settings", callback: () => openSettings(this) });
     };
 }
 
