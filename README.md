@@ -55,3 +55,7 @@ Takes a text input and hands back one output per line. It has no text box of its
 own: it reads whatever is feeding it and grows or shrinks its output dots to
 match the number of lines, rechecking every 3 seconds. Blank lines are skipped
 and trailing spaces are trimmed. Up to 32 lines.
+
+Right-click the node for **MB Settings**: leave it detecting lines by itself, or
+pin it to a fixed number of outputs, which turns the 3 second recheck off. The
+choice is saved with the workflow.

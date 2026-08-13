@@ -47,13 +47,76 @@ function setOutputCount(node, count) {
     return true;
 }
 
+// Stored in node.properties so the choice is saved with the workflow.
+function isFixed(node) {
+    return node.properties?.mb_mode === "fixed";
+}
+
+function fixedCount(node) {
+    const value = Math.round(Number(node.properties?.mb_outputs));
+    return Number.isFinite(value) ? Math.max(1, Math.min(MAX_LINES, value)) : 1;
+}
+
 function refresh(node) {
+    if (isFixed(node)) {
+        setOutputCount(node, fixedCount(node));
+        return; // the 3s recheck does nothing while the count is pinned
+    }
+
     const text = upstreamText(node);
     if (text === null) return; // nothing readable upstream; leave the slots alone
     setOutputCount(node, splitLines(text).length);
 }
 
+function askFixedCount(node) {
+    const answer = prompt(`Number of outputs (1-${MAX_LINES}):`, String(fixedCount(node)));
+    if (answer === null) return;
+
+    const count = Math.round(Number(answer));
+    if (!Number.isFinite(count) || count < 1 || count > MAX_LINES) {
+        alert(`Enter a whole number between 1 and ${MAX_LINES}.`);
+        return;
+    }
+
+    node.properties.mb_mode = "fixed";
+    node.properties.mb_outputs = count;
+    refresh(node);
+}
+
+function addSettingsMenu(node) {
+    const prevMenuOptions = node.getExtraMenuOptions;
+    node.getExtraMenuOptions = function (canvas, options) {
+        prevMenuOptions?.apply(this, arguments);
+
+        const fixed = isFixed(this);
+        options.unshift({
+            content: "MB Settings",
+            has_submenu: true,
+            submenu: {
+                options: [
+                    {
+                        content: `Detect lines automatically${fixed ? "" : "  ✓"}`,
+                        callback: () => {
+                            this.properties.mb_mode = "auto";
+                            refresh(this);
+                        },
+                    },
+                    {
+                        content: `Fixed number of outputs${fixed ? `  (${fixedCount(this)})  ✓` : "..."}`,
+                        callback: () => askFixedCount(this),
+                    },
+                ],
+            },
+        });
+    };
+}
+
 function wireNode(node) {
+    node.properties = node.properties ?? {};
+    node.properties.mb_mode = node.properties.mb_mode ?? "auto";
+    node.properties.mb_outputs = node.properties.mb_outputs ?? 1;
+    addSettingsMenu(node);
+
     const prevOnConnectionsChange = node.onConnectionsChange;
     node.onConnectionsChange = function (type, slotIndex, connected, link, ioSlot) {
         prevOnConnectionsChange?.apply(this, arguments);
@@ -76,7 +139,7 @@ app.registerExtension({
         if (node.comfyClass !== "MBGetLines") return;
         wireNode(node);
         // The schema declares every possible output; a fresh node shows one.
-        setOutputCount(node, 1);
+        setOutputCount(node, isFixed(node) ? fixedCount(node) : 1);
         refresh(node);
     },
 
