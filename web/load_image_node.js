@@ -55,6 +55,7 @@ function wireNode(node) {
         serialize: false,
     });
     info.disabled = true; // read-only readout
+    info.serialize = false; // the serializer checks this, not options.serialize
     node.__mbInfoWidget = info;
     resizeToContent(node); // the node was sized before the readout existed
 

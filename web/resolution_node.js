@@ -65,6 +65,8 @@ function makeGridWidget(node) {
         name: "ratio_grid",
         // y is set by LiteGraph before draw() and reused by mouse() for hit tests.
         y: 0,
+        // The serializer checks widget.serialize, not options.serialize.
+        serialize: false,
         options: { serialize: false },
 
         computeSize() {
@@ -113,9 +115,11 @@ function makeGridWidget(node) {
     };
 }
 
+// Must run synchronously from nodeCreated. A workflow restores widget values by
+// position, so the grid has to already sit at index 0 when that happens — if it
+// were added later (after the ratio table arrives) every saved value would land
+// one widget too early and batch_size would be left undefined.
 function wireNode(node) {
-    if (!DATA.ratios.length) return;
-
     hideWidget(node, "aspect_ratio");
 
     const grid = makeGridWidget(node);
@@ -123,12 +127,39 @@ function wireNode(node) {
     // addCustomWidget appends; move the grid above the resolution combo.
     node.widgets.splice(node.widgets.indexOf(grid), 1);
     node.widgets.unshift(grid);
+}
 
-    const ratio = getWidget(node, "aspect_ratio")?.value ?? DATA.ratios[0];
-    applyRatio(node, ratio, true);
+// Widget values a previous version of this node scrambled on load: portrait held
+// a resolution label, batch_size held a boolean or nothing at all.
+function repairValues(node) {
+    const portrait = getWidget(node, "portrait");
+    if (portrait && typeof portrait.value !== "boolean") {
+        portrait.value = portrait.value === "true" || portrait.value === 1;
+    }
 
+    const batch = getWidget(node, "batch_size");
+    if (batch) {
+        const value = Math.round(Number(batch.value));
+        if (!Number.isFinite(value) || value < 1) batch.value = 1;
+        else batch.value = value;
+    }
+
+    const ratio = getWidget(node, "aspect_ratio");
+    if (ratio && !DATA.table[ratio.value]) ratio.value = DATA.ratios[0];
+}
+
+function fitNode(node) {
     const size = node.computeSize();
     node.setSize([Math.max(node.size[0], size[0]), Math.max(node.size[1], size[1])]);
+    node.setDirtyCanvas(true, true);
+}
+
+// Everything that needs the ratio table, run once it has arrived.
+function applyTable(node) {
+    if (!DATA.ratios.length) return;
+    repairValues(node);
+    applyRatio(node, getWidget(node, "aspect_ratio")?.value ?? DATA.ratios[0], true);
+    fitNode(node);
 }
 
 app.registerExtension({
@@ -138,16 +169,15 @@ app.registerExtension({
         await READY;
     },
 
-    async nodeCreated(node) {
+    nodeCreated(node) {
         if (node.comfyClass !== "MBResolution") return;
-        await READY;
-        wireNode(node);
+        wireNode(node); // synchronous: keeps the widget indices stable
+        READY.then(() => applyTable(node));
     },
 
     async loadedGraphNode(node) {
         if (node.comfyClass !== "MBResolution") return;
         await READY;
-        const ratio = getWidget(node, "aspect_ratio")?.value;
-        if (ratio) applyRatio(node, ratio, true);
+        applyTable(node);
     },
 });

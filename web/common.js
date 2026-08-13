@@ -26,6 +26,7 @@ const BUTTON_TEXT = "#dcdcdc";
 // and is unaffected by the custom draw.
 export function addButton(node, label, callback, radius = BUTTON_RADIUS) {
     const widget = node.addWidget("button", label, null, callback);
+    widget.serialize = false; // buttons hold no value worth saving
 
     widget.draw = function (ctx, drawNode, widgetWidth, y, height) {
         const x = BUTTON_MARGIN;
