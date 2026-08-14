@@ -1,6 +1,6 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
-import { getWidget, setWidgetVisible } from "./common.js";
+import { getWidget, resizeToContent } from "./common.js";
 
 // { ratios: [...], table: { ratio: [label, ...] } }, fetched once at load.
 let DATA = { ratios: [], table: {} };
@@ -10,15 +10,6 @@ const READY = api
     .then((response) => response.json())
     .then((data) => (DATA = data))
     .catch((e) => console.error("[MBNodes] resolution table fetch failed", e));
-
-const COLS = 3;
-const CELL_H = 22;
-const GAP = 4;
-const MARGIN = 14;
-
-function hideWidget(node, name) {
-    setWidgetVisible(node, name, false);
-}
 
 // Keep the resolution combo showing only the sizes that belong to the active
 // ratio. Selection is preserved by index so stepping through ratios keeps a
@@ -39,113 +30,19 @@ function applyRatio(node, ratio, keepValue) {
         const index = prevIndex >= 0 ? Math.min(prevIndex, labels.length - 1) : 3;
         resWidget.value = labels[Math.min(index, labels.length - 1)];
     }
-    node.__mbRatioGrid?.triggerDraw?.();
     node.setDirtyCanvas(true, true);
 }
 
-function gridRows() {
-    return Math.ceil(DATA.ratios.length / COLS);
-}
-
-// Laid out against the width handed to draw(), not node.size: under Nodes 2.0
-// each custom widget is drawn onto its own canvas that is only as wide as the
-// widget, so node width would overshoot it and the cells would miss the pointer.
-function cellRect(width, index, widgetY) {
-    const usable = width - MARGIN * 2;
-    const cellW = (usable - GAP * (COLS - 1)) / COLS;
-    const col = index % COLS;
-    const row = Math.floor(index / COLS);
-    return [
-        MARGIN + col * (cellW + GAP),
-        widgetY + row * (CELL_H + GAP),
-        cellW,
-        CELL_H,
-    ];
-}
-
-function makeGridWidget(node) {
-    return {
-        type: "mb_ratio_grid",
-        name: "ratio_grid",
-        // y and width are recorded by draw() and reused by mouse() for hit tests,
-        // so the two agree in either renderer.
-        y: 0,
-        width: 0,
-        // The serializer checks widget.serialize, not options.serialize.
-        serialize: false,
-        options: { serialize: false },
-
-        computeSize() {
-            const rows = gridRows();
-            return [node.size[0], rows * CELL_H + (rows - 1) * GAP + GAP];
-        },
-
-        draw(ctx, drawNode, widgetWidth, y, height) {
-            this.y = y;
-            this.width = widgetWidth || node.size[0];
-            const active = getWidget(drawNode, "aspect_ratio")?.value;
-
-            ctx.save();
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.font = "12px Arial";
-
-            DATA.ratios.forEach((ratio, index) => {
-                const [x, cy, w, h] = cellRect(this.width, index, y);
-                const selected = ratio === active;
-
-                ctx.fillStyle = selected ? "#3f7cc6" : "#353535";
-                ctx.strokeStyle = selected ? "#8ab4e8" : "#1a1a1a";
-                ctx.beginPath();
-                ctx.roundRect(x, cy, w, h, 5);
-                ctx.fill();
-                ctx.stroke();
-
-                ctx.fillStyle = selected ? "#ffffff" : "#c8c8c8";
-                ctx.fillText(ratio, x + w / 2, cy + h / 2);
-            });
-
-            ctx.restore();
-        },
-
-        mouse(event, pos, mouseNode) {
-            if (event.type !== "pointerdown" && event.type !== "mousedown") return false;
-            const width = this.width || mouseNode.size[0];
-
-            // The canvas renderer measures pos from the node, so the rows start
-            // at the widget's y; Nodes 2.0 gives the widget its own canvas and
-            // starts at 0. Both origins are tested, which is safe because the
-            // widget only ever receives clicks that landed inside its own box.
-            for (const origin of [this.y, 0]) {
-                for (let index = 0; index < DATA.ratios.length; index++) {
-                    const [x, cy, w, h] = cellRect(width, index, origin);
-                    if (pos[0] >= x && pos[0] <= x + w && pos[1] >= cy && pos[1] <= cy + h) {
-                        applyRatio(mouseNode, DATA.ratios[index], false);
-                        // Under Nodes 2.0 the widget owns its own canvas and only
-                        // repaints when asked; setDirtyCanvas alone is not enough.
-                        this.triggerDraw?.();
-                        return true;
-                    }
-                }
-            }
-            return false;
-        },
-    };
-}
-
-// Must run synchronously from nodeCreated. A workflow restores widget values by
-// position, so the grid has to already sit at index 0 when that happens — if it
-// were added later (after the ratio table arrives) every saved value would land
-// one widget too early and batch_size would be left undefined.
 function wireNode(node) {
-    hideWidget(node, "aspect_ratio");
+    const ratio = getWidget(node, "aspect_ratio");
+    if (!ratio) return;
 
-    const grid = makeGridWidget(node);
-    node.__mbRatioGrid = grid;
-    node.addCustomWidget(grid);
-    // addCustomWidget appends; move the grid above the resolution combo.
-    node.widgets.splice(node.widgets.indexOf(grid), 1);
-    node.widgets.unshift(grid);
+    const prev = ratio.callback;
+    ratio.callback = function (value, ...rest) {
+        const r = prev?.apply(this, [value, ...rest]);
+        applyRatio(node, value ?? this.value, false);
+        return r;
+    };
 }
 
 // Widget values a previous version of this node scrambled on load: portrait held
@@ -167,18 +64,12 @@ function repairValues(node) {
     if (ratio && !DATA.table[ratio.value]) ratio.value = DATA.ratios[0];
 }
 
-function fitNode(node) {
-    const size = node.computeSize();
-    node.setSize([Math.max(node.size[0], size[0]), Math.max(node.size[1], size[1])]);
-    node.setDirtyCanvas(true, true);
-}
-
 // Everything that needs the ratio table, run once it has arrived.
 function applyTable(node) {
     if (!DATA.ratios.length) return;
     repairValues(node);
     applyRatio(node, getWidget(node, "aspect_ratio")?.value ?? DATA.ratios[0], true);
-    fitNode(node);
+    resizeToContent(node);
 }
 
 app.registerExtension({
@@ -190,7 +81,7 @@ app.registerExtension({
 
     nodeCreated(node) {
         if (node.comfyClass !== "MBResolution") return;
-        wireNode(node); // synchronous: keeps the widget indices stable
+        wireNode(node);
         READY.then(() => applyTable(node));
     },
 

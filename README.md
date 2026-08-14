@@ -11,8 +11,8 @@ comma, space or none), and `priority` decides whether the incoming text lands
 before or after your own.
 
 ### Resolution (MB)
-Pick a resolution from a grid of presets grouped by aspect ratio (1:1 through
-21:9). Every size is a multiple of 64 and stays inside a sane area window, with a
+Pick an aspect ratio from the dropdown (1:1 through 21:9) and a resolution from
+the presets it offers. Every size is a multiple of 64 and stays inside a sane area window, with a
 portrait toggle to flip the orientation. Outputs width, height, an empty latent
 and the batch size.
 
