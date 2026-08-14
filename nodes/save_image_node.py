@@ -12,8 +12,8 @@ from comfy_api.latest import io, ui
 
 FORMATS = ["png", "jpg", "webp"]
 CACHE_DIR_NAME = "MBNodesCache"  # lives inside the ComfyUI output folder
-CACHE_SCALE = 0.5
-CACHE_QUALITY = 80
+CACHE_SCALE = {"preview": 0.5, "save": 1.0}  # preview mode halves it, save mode keeps full size
+CACHE_QUALITY = {"preview": 80, "save": 95}  # the full-size copy needs the higher quality
 KEY_SAFE = re.compile(r"[^A-Za-z0-9_.-]")
 
 FORMAT_TOOLTIP = (
@@ -75,16 +75,19 @@ def _save_one(pil_image, path, fmt, quality, png_compress_level, webp_lossless, 
         )
 
 
-def _write_cache_preview(image_tensor, key):
-    """Half-size webp copy kept in output/MBNodesCache so the node can show a
-    preview again after a restart, whatever the real save path was."""
-    pil = _to_pil(image_tensor)
-    width = max(1, int(pil.width * CACHE_SCALE))
-    height = max(1, int(pil.height * CACHE_SCALE))
-    pil = pil.convert("RGB").resize((width, height), Image.LANCZOS)
+def _write_cache_preview(image_tensor, key, mode):
+    """Webp copy kept in output/MBNodesCache so the node can show a preview again
+    after a restart, whatever the real save path was. Preview mode shows it at
+    half the incoming resolution, save mode at the full incoming resolution."""
+    pil = _to_pil(image_tensor).convert("RGB")
+    scale = CACHE_SCALE.get(mode, 1.0)
+    if scale != 1.0:
+        width = max(1, int(pil.width * scale))
+        height = max(1, int(pil.height * scale))
+        pil = pil.resize((width, height), Image.LANCZOS)
 
     filename = f"{key}.webp"
-    pil.save(os.path.join(_cache_dir(), filename), quality=CACHE_QUALITY)
+    pil.save(os.path.join(_cache_dir(), filename), quality=CACHE_QUALITY.get(mode, 95))
     return ui.SavedResult(filename, CACHE_DIR_NAME, io.FolderType.output)
 
 
@@ -169,7 +172,7 @@ class MBSaveImage(io.ComfyNode):
 
         # The cached preview is written in both modes: it is what the node shows
         # after a restart, and the only previewable copy when saving elsewhere.
-        preview = _write_cache_preview(images[0], key)
+        preview = _write_cache_preview(images[0], key, mode)
 
         if mode == "preview":
             return io.NodeOutput(ui=ui.SavedImages([preview]))

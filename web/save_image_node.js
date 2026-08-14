@@ -41,7 +41,7 @@ function publishOutputs(node, images) {
 }
 
 // After a restart there is no execution history, so the node asks the backend
-// for the half-size copy it cached in output/MBNodesCache the last time it ran.
+// for the copy it cached in output/MBNodesCache the last time it ran.
 async function restorePreview(node) {
     if (node.imgs?.length) return;
 
