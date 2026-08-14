@@ -13,23 +13,20 @@ const STYLE_ID = "mb-restart-style";
 const POLL_MS = 1000;
 const POLL_TIMEOUT_MS = 120000;
 
+// The button copies the class list of a neighbouring sidebar button so it picks
+// up the frontend's own size, spacing and hover chrome; only the red tint and
+// the spinner below are ours.
 const CSS = `
 #${BUTTON_ID} {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 100%;
-    min-height: 40px;
-    margin: 0;
-    padding: 8px 0;
-    border: none;
-    background: transparent;
     color: #e01010;
     cursor: pointer;
 }
-#${BUTTON_ID}:hover { background: rgba(224, 16, 16, 0.14); }
+#${BUTTON_ID}:hover { background: rgba(224, 16, 16, 0.16); color: #ff3b3b; }
 #${BUTTON_ID}:disabled { opacity: 0.5; cursor: default; }
-#${BUTTON_ID} svg { width: 20px; height: 20px; fill: currentColor; }
+#${BUTTON_ID} svg { width: 1.25rem; height: 1.25rem; fill: currentColor; }
 #${BUTTON_ID}.mb-spinning svg { animation: mb-restart-spin 1s linear infinite; }
 @keyframes mb-restart-spin { to { transform: rotate(360deg); } }
 `;
@@ -75,19 +72,29 @@ async function restart(button) {
     toast("info", "Restarting ComfyUI", "The page reloads once the server is back.", 6000);
 
     try {
-        await api.fetchApi("/mbnodes/restart", { method: "POST" });
+        const response = await api.fetchApi("/mbnodes/restart", { method: "POST" });
+        // The endpoint ships with this pack, so a 404 means the running server
+        // predates it and has to be started again by hand this once.
+        if (response.status === 404) {
+            button.disabled = false;
+            button.classList.remove("mb-spinning");
+            toast("error", "Restart", "Restart endpoint missing — start ComfyUI again by hand once to load it.", 8000);
+            return;
+        }
     } catch (e) {
         // The server usually dies mid-request, so a network error here is expected.
     }
     waitForServer(button);
 }
 
-function makeButton() {
+function makeButton(sibling) {
     const button = document.createElement("button");
     button.id = BUTTON_ID;
     button.type = "button";
     button.title = "Restart ComfyUI";
     button.setAttribute("aria-label", "Restart ComfyUI");
+    // Same chrome as the icons above it, whatever the frontend styles them with.
+    if (sibling?.className) button.className = sibling.className;
     button.innerHTML = ICON;
     button.addEventListener("click", () => restart(button));
     return button;
@@ -105,8 +112,12 @@ function mount() {
     }
     if (!host) return;
 
+    const sibling =
+        host.querySelector("button") ??
+        document.querySelector(".side-tool-bar-container button");
+
     ensureStyle();
-    host.appendChild(makeButton());
+    host.appendChild(makeButton(sibling));
 }
 
 app.registerExtension({
