@@ -16,6 +16,8 @@ RATIOS = [
     "3:4", "2:3", "10:16", "9:16", "1:1.85", "1:2", "9:21",
 ]
 
+DIVISORS = ["1", "8", "16", "32", "64"]
+
 CACHE_DIR_NAME = "MBNodesCache"  # shared with Save Image (MB)
 SOURCE_MAX = 1024   # longest side of the copy the crop editor draws
 SOURCE_QUALITY = 82
@@ -51,9 +53,24 @@ def _write_source_preview(image_tensor, key):
         json.dump({"width": full_width, "height": full_height}, f)
 
 
-def crop_box(width, height, x, y, w, h):
+def snap_axis(start, end, limit, multiple):
+    """Round one axis of the box down to a multiple, splitting the trimmed
+    pixels between both ends so the crop keeps its centre. A box shorter than
+    one step is rounded up instead, and an image too small for a single step is
+    left alone."""
+    if multiple > limit:
+        return start, end
+
+    span = end - start
+    snapped = max(multiple, (span // multiple) * multiple)
+    start = start + (span - snapped) // 2
+    start = max(0, min(start, limit - snapped))
+    return start, start + snapped
+
+
+def crop_box(width, height, x, y, w, h, divisible_by=1):
     """Normalised crop rect -> integer pixel box clamped inside the image, never
-    smaller than one pixel."""
+    smaller than one pixel, with each side snapped to `divisible_by`."""
     left = int(round(min(max(x, 0.0), 1.0) * width))
     top = int(round(min(max(y, 0.0), 1.0) * height))
     right = int(round(min(max(x + w, 0.0), 1.0) * width))
@@ -63,6 +80,11 @@ def crop_box(width, height, x, y, w, h):
     top = min(top, height - 1)
     right = max(right, left + 1)
     bottom = max(bottom, top + 1)
+
+    if divisible_by > 1:
+        left, right = snap_axis(left, right, width, divisible_by)
+        top, bottom = snap_axis(top, bottom, height, divisible_by)
+
     return left, top, right, bottom
 
 
@@ -87,6 +109,12 @@ class MBImageCrop(io.ComfyNode):
                     default="free",
                     tooltip="free: drag any box. source: keep the input's aspect. Otherwise the box is locked to the chosen ratio.",
                 ),
+                io.Combo.Input(
+                    "divisible_by",
+                    options=DIVISORS,
+                    default="1",
+                    tooltip="Round the cropped width and height down to a multiple of this, trimming evenly from both sides. Ignored on an axis smaller than one step.",
+                ),
                 # Driven by the editor widget, hidden from the node body by the
                 # frontend. Fractions of the image so they stay valid whatever
                 # resolution arrives.
@@ -104,7 +132,9 @@ class MBImageCrop(io.ComfyNode):
         )
 
     @classmethod
-    def execute(cls, image, aspect_ratio, crop_x, crop_y, crop_width, crop_height) -> io.NodeOutput:
+    def execute(
+        cls, image, aspect_ratio, divisible_by, crop_x, crop_y, crop_width, crop_height
+    ) -> io.NodeOutput:
         hidden = cls.hidden
         workflow = ((hidden.extra_pnginfo if hidden else None) or {}).get("workflow") or {}
         key = _cache_key(workflow.get("id"), hidden.unique_id if hidden else None)
@@ -114,7 +144,9 @@ class MBImageCrop(io.ComfyNode):
             print(f"[MBNodes] crop source preview failed: {e}")
 
         height, width = image.shape[1], image.shape[2]
-        left, top, right, bottom = crop_box(width, height, crop_x, crop_y, crop_width, crop_height)
+        left, top, right, bottom = crop_box(
+            width, height, crop_x, crop_y, crop_width, crop_height, int(divisible_by)
+        )
 
         cropped = image[:, top:bottom, left:right, :]
         return io.NodeOutput(cropped, right - left, bottom - top)

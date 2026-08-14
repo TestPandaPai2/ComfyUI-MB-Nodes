@@ -29,6 +29,14 @@ const FIXED_RATIOS = {
 
 const clamp01 = (v) => Math.min(1, Math.max(0, v));
 
+// Mirrors snap_axis() in nodes/crop_image_node.py, so the readout on the node
+// shows the size that actually comes out.
+function snapSpan(span, limit, multiple) {
+    const rounded = Math.max(1, Math.round(span));
+    if (multiple <= 1 || multiple > limit) return rounded;
+    return Math.max(multiple, Math.floor(rounded / multiple) * multiple);
+}
+
 // ---------------------------------------------------------------- crop rect
 
 function getRect(node) {
@@ -327,7 +335,8 @@ function makeEditorWidget(node) {
             }
 
             const [sw, sh] = drawNode.__mbCropSize ?? [image.naturalWidth, image.naturalHeight];
-            const label = `${Math.max(1, Math.round(rect.w * sw))} x ${Math.max(1, Math.round(rect.h * sh))}`;
+            const step = Number(getWidget(drawNode, "divisible_by")?.value ?? 1) || 1;
+            const label = `${snapSpan(rect.w * sw, sw, step)} x ${snapSpan(rect.h * sh, sh, step)}`;
             ctx.font = "11px Arial";
             ctx.textAlign = "left";
             ctx.textBaseline = "top";
@@ -401,12 +410,15 @@ function makeEditorWidget(node) {
 function wireNode(node) {
     for (const name of RECT_WIDGETS) setWidgetVisible(node, name, false);
 
-    const ratio = getWidget(node, "aspect_ratio");
-    if (ratio) {
-        const prev = ratio.callback;
-        ratio.callback = function (...args) {
+    for (const name of ["aspect_ratio", "divisible_by"]) {
+        const widget = getWidget(node, name);
+        if (!widget) continue;
+        const prev = widget.callback;
+        widget.callback = function (...args) {
             const r = prev?.apply(this, args);
-            refit(node, imageAspect(node));
+            // Only the aspect changes the box; the divisor just changes the
+            // size that is reported for it.
+            if (name === "aspect_ratio") refit(node, imageAspect(node));
             node.__mbCropEditor?.triggerDraw?.();
             node.setDirtyCanvas(true, true);
             return r;

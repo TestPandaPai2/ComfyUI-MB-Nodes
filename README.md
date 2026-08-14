@@ -34,8 +34,11 @@ the crop: drag inside it to move, grab a corner or edge to resize, or drag on
 empty image to start a fresh box. The `aspect_ratio` widget locks the box to a
 preset (1:1 through 21:9, portrait ones too), `source` keeps the input's own
 aspect and `free` lets you drag anything. The crop is stored as fractions of the
-image, so it stays correct if the input resolution changes. Outputs the cropped
-image, its width and its height.
+image, so it stays correct if the input resolution changes. `divisible_by` rounds
+the cropped width and height down to a multiple of 8, 16, 32 or 64, trimming
+evenly from both sides so the crop keeps its centre — the readout on the image
+shows the size you will actually get. Outputs the cropped image, its width and
+its height.
 
 The editor draws the image the node saw on its last run, cached in
 `output/MBNodesCache`, so it comes back after a restart. Before the first run it
