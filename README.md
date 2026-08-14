@@ -84,8 +84,8 @@ detecting lines by itself, or pin it to a fixed number of outputs, which turns
 the 3 second recheck off. The choice is saved with the workflow.
 
 ### Restart button
-Not a node: the pack adds a red restart icon at the bottom of the ComfyUI
-sidebar. One click restarts the ComfyUI server — no confirmation — and the page
+Not a node: the pack adds a red restart icon to the ComfyUI top bar, at the
+right-hand end of its controls. One click restarts the ComfyUI server — no confirmation — and the page
 reloads by itself once the new process answers.
 
 ### Upscale Latent (MB)
