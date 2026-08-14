@@ -110,14 +110,22 @@ function makeGridWidget(node) {
 
         mouse(event, pos, mouseNode) {
             if (event.type !== "pointerdown" && event.type !== "mousedown") return false;
-            for (let index = 0; index < DATA.ratios.length; index++) {
-                const [x, cy, w, h] = cellRect(this.width || mouseNode.size[0], index, this.y);
-                if (pos[0] >= x && pos[0] <= x + w && pos[1] >= cy && pos[1] <= cy + h) {
-                    applyRatio(mouseNode, DATA.ratios[index], false);
-                    // Under Nodes 2.0 the widget owns its own canvas and only
-                    // repaints when asked; setDirtyCanvas alone is not enough.
-                    this.triggerDraw?.();
-                    return true;
+            const width = this.width || mouseNode.size[0];
+
+            // The canvas renderer measures pos from the node, so the rows start
+            // at the widget's y; Nodes 2.0 gives the widget its own canvas and
+            // starts at 0. Both origins are tested, which is safe because the
+            // widget only ever receives clicks that landed inside its own box.
+            for (const origin of [this.y, 0]) {
+                for (let index = 0; index < DATA.ratios.length; index++) {
+                    const [x, cy, w, h] = cellRect(width, index, origin);
+                    if (pos[0] >= x && pos[0] <= x + w && pos[1] >= cy && pos[1] <= cy + h) {
+                        applyRatio(mouseNode, DATA.ratios[index], false);
+                        // Under Nodes 2.0 the widget owns its own canvas and only
+                        // repaints when asked; setDirtyCanvas alone is not enough.
+                        this.triggerDraw?.();
+                        return true;
+                    }
                 }
             }
             return false;
