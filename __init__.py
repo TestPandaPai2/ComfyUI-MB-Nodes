@@ -13,6 +13,7 @@ from .nodes.get_lines_node import NODES as _get_lines
 from .nodes.load_image_node import NODES as _load_image
 from .nodes.prompt_pad_node import NODES as _prompt_pad
 from .nodes.resolution_node import NODES as _resolution
+from .nodes.restart_server import NODES as _restart_server
 from .nodes.save_image_node import NODES as _save_image
 from .nodes.save_mp4_node import NODES as _save_mp4
 from .nodes.slider_node import NODES as _slider
@@ -30,6 +31,7 @@ NODES: list[type[io.ComfyNode]] = [
     *_get_lines,
     *_crop_image,
     *_upscale_latent,
+    *_restart_server,
 ]
 
 
