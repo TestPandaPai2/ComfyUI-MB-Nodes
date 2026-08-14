@@ -88,6 +88,7 @@ Takes a latent and scales it by a multiplier picked from a row of clickable
 buttons — 0.5x, 1x, 1.5x, 2x, 2.5x and 3x out of the box. `upscale_method`
 chooses the interpolation. 1x passes the latent straight through.
 
-Right-click the node for **MB Settings** to edit the button list: type the
-multipliers you want, separated by commas, or reset back to the defaults. The
-list is saved with the workflow.
+Right-click the node for **MB Settings** to edit the button list: it shows one
+row per multiplier, **Add New** appends another and the × next to a row removes
+it, with a reset back to the defaults. The node updates as you type, and the list
+is saved with the workflow.

@@ -57,6 +57,40 @@ const CSS = `
     font-size: 13px;
 }
 .mb-dialog-number:disabled { opacity: 0.4; }
+.mb-dialog-list { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; }
+.mb-dialog-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 8px;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    background: #1b1b1b;
+}
+.mb-dialog-item input {
+    flex: 1;
+    min-width: 0;
+    padding: 4px 8px;
+    background: #0d0d0d;
+    color: #dcdcdc;
+    border: 1px solid #3a3a3a;
+    border-radius: 6px;
+    font-size: 13px;
+}
+.mb-dialog-item input.mb-invalid { border-color: #e01010; }
+.mb-dialog-remove {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    line-height: 1;
+    border-radius: 6px;
+    border: 1px solid #3a3a3a;
+    background: #262626;
+    color: #b0b0b0;
+    font-size: 14px;
+    cursor: pointer;
+}
+.mb-dialog-remove:hover { background: #3a1a1c; border-color: #e01010; color: #ffffff; }
 .mb-dialog-footer {
     display: flex;
     justify-content: flex-end;
@@ -87,9 +121,10 @@ function ensureStyle() {
 
 /**
  * Opens a modal. `render` fills the body element; `onApply` runs on Apply and
- * can return false to keep the dialog open (failed validation).
+ * can return false to keep the dialog open (failed validation); `onClose` runs
+ * however the dialog goes away — Apply, Cancel, Escape or a click outside.
  */
-export function openDialog({ title, render, onApply, applyLabel = "Apply" }) {
+export function openDialog({ title, render, onApply, onClose, applyLabel = "Apply" }) {
     ensureStyle();
 
     const overlay = document.createElement("div");
@@ -122,10 +157,11 @@ export function openDialog({ title, render, onApply, applyLabel = "Apply" }) {
     function close() {
         document.removeEventListener("keydown", onKeyDown, true);
         overlay.remove();
+        onClose?.();
     }
 
     function submit() {
-        if (onApply() === false) return;
+        if (onApply?.() === false) return;
         close();
     }
 

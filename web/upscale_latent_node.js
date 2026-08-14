@@ -1,5 +1,5 @@
 import { app } from "../../scripts/app.js";
-import { getWidget, setWidgetVisible, resizeToContent } from "./common.js";
+import { getWidget, setWidgetVisible } from "./common.js";
 import { openDialog } from "./dialog.js";
 
 // Must match nodes/upscale_latent_node.py.
@@ -23,16 +23,38 @@ function multipliers(node) {
     return Array.isArray(stored) && stored.length ? stored : DEFAULT_MULTIPLIERS;
 }
 
-function parseList(text) {
-    const seen = new Set();
-    for (const part of text.split(/[\s,;]+/)) {
-        if (!part) continue;
-        const value = Number(part.replace(/x$/i, ""));
-        if (!Number.isFinite(value) || value < MIN_MULTIPLIER || value > MAX_MULTIPLIER) return null;
-        seen.add(Number(value.toFixed(4)));
+function parseValue(text) {
+    const value = Number(String(text).trim().replace(/x$/i, ""));
+    if (!Number.isFinite(value) || value < MIN_MULTIPLIER || value > MAX_MULTIPLIER) return null;
+    return Number(value.toFixed(4));
+}
+
+// Writes the list back and keeps the node in step with it: the grid grows or
+// shrinks, and a selection that no longer exists moves to the nearest entry.
+function setMultipliers(node, values) {
+    node.properties.mb_multipliers = values;
+
+    const current = Number(getWidget(node, "multiplier")?.value);
+    if (values.length && !values.some((v) => Math.abs(v - current) < 1e-6)) {
+        const nearest = values.reduce(
+            (best, v) => (Math.abs(v - current) < Math.abs(best - current) ? v : best),
+            values[0]
+        );
+        selectMultiplier(node, nearest);
     }
-    if (!seen.size || seen.size > MAX_ENTRIES) return null;
-    return [...seen].sort((a, b) => a - b);
+    refitGrid(node);
+}
+
+// Nodes 2.0 lays each widget out into its own box and only routes pointer events
+// that land inside it, so a grid that grew a row stays unclickable there until
+// the layout is recomputed from the widget's new height.
+function refitGrid(node) {
+    const grid = node.__mbMultiplierGrid;
+    if (grid) grid.computedHeight = grid.computeSize()[1];
+    const size = node.computeSize();
+    node.setSize([Math.max(node.size[0], size[0]), size[1]]);
+    grid?.triggerDraw?.();
+    node.setDirtyCanvas(true, true);
 }
 
 function selectMultiplier(node, value) {
@@ -75,8 +97,16 @@ function makeGridWidget(node) {
         options: { serialize: false },
 
         computeSize() {
-            const rows = gridRows(node);
+            const rows = Math.max(1, gridRows(node));
             return [node.size[0], rows * CELL_H + (rows - 1) * GAP + GAP];
+        },
+
+        // Nodes 2.0 asks for a layout box rather than calling computeSize; without
+        // this the box keeps the height it had when the node was created and the
+        // rows added later never receive clicks.
+        computeLayoutSize() {
+            const height = this.computeSize()[1];
+            return { minHeight: height, maxHeight: height, minWidth: 180 };
         },
 
         draw(ctx, drawNode, widgetWidth, y) {
@@ -122,60 +152,86 @@ function makeGridWidget(node) {
     };
 }
 
+// The dialog edits a working copy; every edit is pushed to the node right away,
+// so the grid is already correct by the time the dialog goes away.
 function openSettings(node) {
-    let input;
-    let error;
+    let draft = [...multipliers(node)];
+
+    const commit = () => {
+        const values = [...new Set(draft.filter((v) => v !== null))].sort((a, b) => a - b);
+        setMultipliers(node, values.length ? values : [...DEFAULT_MULTIPLIERS]);
+    };
 
     openDialog({
         title: "Upscale Latent (MB) — MB Settings",
+        applyLabel: "Done",
         render(body) {
             const hint = document.createElement("div");
             hint.className = "mb-dialog-hint";
             hint.style.margin = "0";
-            hint.textContent = `Multipliers shown as buttons, separated by commas. ${MIN_MULTIPLIER}-${MAX_MULTIPLIER}, up to ${MAX_ENTRIES} of them.`;
+            hint.textContent = `Buttons shown on the node. ${MIN_MULTIPLIER}-${MAX_MULTIPLIER}, up to ${MAX_ENTRIES} of them.`;
 
-            input = document.createElement("input");
-            input.type = "text";
-            input.className = "mb-dialog-number";
-            input.style.width = "100%";
-            input.style.marginLeft = "0";
-            input.value = multipliers(node).map((v) => Number(v.toFixed(4))).join(", ");
+            const list = document.createElement("div");
+            list.className = "mb-dialog-list";
 
-            error = document.createElement("div");
-            error.className = "mb-dialog-hint";
-            error.style.margin = "0";
-            error.style.color = "#e01010";
+            const add = document.createElement("button");
+            add.className = "mb-dialog-button";
+            add.textContent = "Add New";
 
             const reset = document.createElement("button");
             reset.className = "mb-dialog-button";
             reset.textContent = "Reset to defaults";
-            reset.addEventListener("click", () => {
-                input.value = DEFAULT_MULTIPLIERS.join(", ");
-                error.textContent = "";
+
+            function render(focusIndex) {
+                list.replaceChildren();
+                draft.forEach((value, index) => {
+                    const row = document.createElement("div");
+                    row.className = "mb-dialog-item";
+
+                    const input = document.createElement("input");
+                    input.type = "text";
+                    input.value = value === null ? "" : String(value);
+                    input.placeholder = "e.g. 1.75";
+                    input.addEventListener("input", () => {
+                        const parsed = parseValue(input.value);
+                        input.classList.toggle("mb-invalid", parsed === null);
+                        draft[index] = parsed;
+                        commit();
+                    });
+
+                    const remove = document.createElement("button");
+                    remove.className = "mb-dialog-remove";
+                    remove.textContent = "×";
+                    remove.title = "Remove";
+                    remove.addEventListener("click", () => {
+                        draft.splice(index, 1);
+                        commit();
+                        render();
+                    });
+
+                    row.append(input, remove);
+                    list.appendChild(row);
+                    if (index === focusIndex) setTimeout(() => input.focus(), 0);
+                });
+                add.disabled = draft.length >= MAX_ENTRIES;
+            }
+
+            add.addEventListener("click", () => {
+                if (draft.length >= MAX_ENTRIES) return;
+                draft.push(null); // an empty row; it counts once a valid number is typed
+                render(draft.length - 1);
             });
 
-            body.append(hint, input, error, reset);
-        },
-        onApply() {
-            const values = parseList(input.value);
-            if (!values) {
-                error.textContent = "Enter numbers only, each between " +
-                    `${MIN_MULTIPLIER} and ${MAX_MULTIPLIER}.`;
-                input.focus();
-                return false; // keep the dialog open
-            }
+            reset.addEventListener("click", () => {
+                draft = [...DEFAULT_MULTIPLIERS];
+                commit();
+                render();
+            });
 
-            node.properties.mb_multipliers = values;
-            // A removed multiplier must not stay selected behind the grid.
-            const current = Number(getWidget(node, "multiplier")?.value);
-            if (!values.some((v) => Math.abs(v - current) < 1e-6)) {
-                selectMultiplier(node, values.reduce(
-                    (best, v) => (Math.abs(v - current) < Math.abs(best - current) ? v : best),
-                    values[0]
-                ));
-            }
-            resizeToContent(node);
+            render();
+            body.append(hint, list, add, reset);
         },
+        onClose: commit,
     });
 }
 
@@ -208,14 +264,14 @@ app.registerExtension({
     nodeCreated(node) {
         if (node.comfyClass !== "MBUpscaleLatent") return;
         wireNode(node);
-        resizeToContent(node);
+        refitGrid(node);
     },
 
     async loadedGraphNode(node) {
         if (node.comfyClass !== "MBUpscaleLatent") return;
         setTimeout(() => {
             setWidgetVisible(node, "multiplier", false);
-            resizeToContent(node);
+            refitGrid(node);
         }, 60);
     },
 });
