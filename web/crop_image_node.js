@@ -52,9 +52,29 @@ function getRect(node) {
     };
 }
 
-function setRect(node, rect) {
-    const w = Math.min(1, Math.max(MIN_FRACTION, rect.w));
-    const h = Math.min(1, Math.max(MIN_FRACTION, rect.h));
+// Clamping the two sides on their own is what silently breaks a locked ratio:
+// the side that hit the edge gets cut and the other one keeps its length. With
+// a ratio in hand the whole box is scaled down instead, so its shape holds.
+function fitRatio(rect, ratio) {
+    if (ratio === null) return rect;
+    let w = Math.max(MIN_FRACTION, rect.w);
+    let h = w / ratio;
+    if (h > 1) {
+        h = 1;
+        w = h * ratio;
+    }
+    if (w > 1) {
+        w = 1;
+        h = w / ratio;
+    }
+    return { ...rect, w, h };
+}
+
+function setRect(node, rect, ratio = null) {
+    const fitted = fitRatio(rect, ratio);
+    const w = Math.min(1, Math.max(MIN_FRACTION, fitted.w));
+    const h = Math.min(1, Math.max(MIN_FRACTION, fitted.h));
+    rect = fitted;
     const values = {
         crop_x: clamp01(Math.min(rect.x, 1 - w)),
         crop_y: clamp01(Math.min(rect.y, 1 - h)),
@@ -103,12 +123,24 @@ function refit(node, imageAspect) {
         w = 1;
         h = w / ratio;
     }
-    setRect(node, { x: cx - w / 2, y: cy - h / 2, w, h });
+    setRect(node, { x: cx - w / 2, y: cy - h / 2, w, h }, ratio);
 }
 
 function resetRect(node, imageAspect) {
     setRect(node, { x: 0, y: 0, w: 1, h: 1 });
     refit(node, imageAspect);
+}
+
+// A locked ratio is a ratio of pixels, so the same box stops matching when an
+// image of a different shape arrives. Called whenever one loads, which also
+// repairs a rect saved by an older version that let the box go off-ratio.
+function enforceRatio(node) {
+    const aspect = imageAspect(node);
+    const ratio = fractionRatio(node, aspect);
+    if (ratio === null) return;
+
+    const rect = getRect(node);
+    if (Math.abs(rect.w / rect.h - ratio) > ratio * 0.005) refit(node, aspect);
 }
 
 // ------------------------------------------------------------ source image
@@ -123,6 +155,7 @@ function loadImage(node, src, size) {
         node.__mbCropSize = size?.width && size?.height
             ? [size.width, size.height]
             : [img.naturalWidth, img.naturalHeight];
+        enforceRatio(node);
         node.__mbCropEditor?.triggerDraw?.();
         resizeToContent(node);
         node.setDirtyCanvas(true, true);
@@ -301,49 +334,96 @@ function hitTest(frame, rect, px, py) {
     return "new";
 }
 
-// Resize driven by one grip. `ratio` is in fraction space; the edge opposite the
-// grip stays put, and a locked ratio grows the box to cover the pointer.
-function resizeRect(mode, start, dx, dy, ratio) {
-    let { x, y, w, h } = start;
-    const right = x + w;
-    const bottom = y + h;
+// Every resize holds something still: the edge opposite the grip, or — for a
+// grip on an edge with a locked ratio — the centre of the free axis. `at` is
+// that fixed coordinate and `side` says which way the box grows from it.
+function anchorOf(mode, start, axis) {
+    const [low, high, pos, size] = axis === "x"
+        ? ["w", "e", start.x, start.w]
+        : ["n", "s", start.y, start.h];
 
-    if (mode.includes("w")) { x = Math.min(x + dx, right - MIN_FRACTION); w = right - x; }
-    if (mode.includes("e")) { w = Math.max(MIN_FRACTION, w + dx); }
-    if (mode.includes("n")) { y = Math.min(y + dy, bottom - MIN_FRACTION); h = bottom - y; }
-    if (mode.includes("s")) { h = Math.max(MIN_FRACTION, h + dy); }
-
-    if (ratio !== null) {
-        const horizontal = mode === "w" || mode === "e";
-        if (horizontal || mode.length === 2) {
-            h = w / ratio;
-        } else {
-            w = h * ratio;
-        }
-        // Grips keep their anchor; edge grips stay centred on the free axis.
-        if (mode.includes("n")) y = bottom - h;
-        else if (!mode.includes("s")) y = start.y + start.h / 2 - h / 2;
-        if (mode.includes("w")) x = right - w;
-        else if (!mode.includes("e")) x = start.x + start.w / 2 - w / 2;
-    }
-
-    return { x, y, w, h };
+    if (mode.includes(low)) return { side: "back", at: pos + size };   // grows left/up
+    if (mode.includes(high)) return { side: "front", at: pos };        // grows right/down
+    return { side: "center", at: pos + size / 2 };
 }
 
-// A drag started outside the box draws a fresh one from the press point.
+// How far the box may run from its anchor before it leaves the image. A centred
+// axis is limited by the nearer of the two edges, hence the doubling.
+function room(anchor) {
+    if (anchor.side === "front") return 1 - anchor.at;
+    if (anchor.side === "back") return anchor.at;
+    return 2 * Math.min(anchor.at, 1 - anchor.at);
+}
+
+function place(anchor, size) {
+    if (anchor.side === "front") return anchor.at;
+    if (anchor.side === "back") return anchor.at - size;
+    return anchor.at - size / 2;
+}
+
+// Fit a wanted width/height around its anchors. Without a ratio each axis is
+// capped on its own; with one, both are scaled by the same factor, so the box
+// stops at the edge of the image with its shape intact instead of flattening
+// into a free crop.
+function fitToBounds(w, h, ax, ay, ratio) {
+    const maxW = Math.max(MIN_FRACTION, room(ax));
+    const maxH = Math.max(MIN_FRACTION, room(ay));
+
+    if (ratio === null) {
+        w = Math.min(w, maxW);
+        h = Math.min(h, maxH);
+    } else {
+        const scale = Math.min(1, maxW / w, maxH / h);
+        w *= scale;
+        h *= scale;
+    }
+
+    w = Math.max(MIN_FRACTION, w);
+    h = Math.max(MIN_FRACTION, h);
+    return { x: place(ax, w), y: place(ay, h), w, h };
+}
+
+// Resize driven by one grip. `ratio` is in fraction space; a locked ratio grows
+// the box to cover the pointer on whichever axis moved furthest.
+function resizeRect(mode, start, dx, dy, ratio) {
+    const ax = anchorOf(mode, start, "x");
+    const ay = anchorOf(mode, start, "y");
+
+    let w = start.w;
+    let h = start.h;
+    if (mode.includes("w")) w = start.w - dx;
+    else if (mode.includes("e")) w = start.w + dx;
+    if (mode.includes("n")) h = start.h - dy;
+    else if (mode.includes("s")) h = start.h + dy;
+
+    w = Math.max(MIN_FRACTION, w);
+    h = Math.max(MIN_FRACTION, h);
+
+    if (ratio !== null) {
+        // A corner follows the axis the pointer pushed harder; an edge grip
+        // only has the one axis to go on.
+        if (mode.length === 2) w = Math.max(w, h * ratio);
+        else if (mode === "n" || mode === "s") w = h * ratio;
+        h = w / ratio;
+    }
+
+    return fitToBounds(w, h, ax, ay, ratio);
+}
+
+// A drag started outside the box draws a fresh one from the press point, which
+// is the corner that stays put.
 function newRect(anchor, px, py, ratio) {
+    const ax = { side: px < anchor[0] ? "back" : "front", at: anchor[0] };
+    const ay = { side: py < anchor[1] ? "back" : "front", at: anchor[1] };
+
     let w = Math.abs(px - anchor[0]);
     let h = Math.abs(py - anchor[1]);
     if (ratio !== null) {
         w = Math.max(w, h * ratio);
         h = w / ratio;
     }
-    return {
-        x: px < anchor[0] ? anchor[0] - w : anchor[0],
-        y: py < anchor[1] ? anchor[1] - h : anchor[1],
-        w: Math.max(MIN_FRACTION, w),
-        h: Math.max(MIN_FRACTION, h),
-    };
+
+    return fitToBounds(w, h, ax, ay, ratio);
 }
 
 function makeEditorWidget(node) {
@@ -459,7 +539,10 @@ function makeEditorWidget(node) {
                     return false; // outside the image altogether, let the node have it
                 }
                 this.drag = { mode, start: getRect(mouseNode), from: [fx, fy] };
-                if (mode === "new") setRect(mouseNode, { x: fx, y: fy, w: MIN_FRACTION, h: MIN_FRACTION });
+                if (mode === "new") {
+                    const ratio = fractionRatio(mouseNode, imageAspect(mouseNode));
+                    setRect(mouseNode, { x: fx, y: fy, w: MIN_FRACTION, h: MIN_FRACTION }, ratio);
+                }
                 this.triggerDraw?.();
                 return true;
             }
@@ -488,7 +571,7 @@ function makeEditorWidget(node) {
                 rect = resizeRect(mode, start, dx, dy, ratio);
             }
 
-            setRect(mouseNode, rect);
+            setRect(mouseNode, rect, ratio);
             // Under Nodes 2.0 the widget owns its own canvas and only repaints
             // when asked; setDirtyCanvas alone is not enough.
             this.triggerDraw?.();
