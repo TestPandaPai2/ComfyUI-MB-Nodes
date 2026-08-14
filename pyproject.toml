@@ -1,0 +1,14 @@
+[project]
+name = "comfyui-mbnodes"
+description = "A small pack of quality-of-life ComfyUI nodes: text, resolution, slider, load/crop/save image, mp4 saving, prompt pad and line picking."
+version = "0.1"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+
+[project.urls]
+Repository = "https://github.com/TestPandaPai2/ComfyUI-MB-Nodes"
+
+[tool.comfy]
+PublisherId = "TestPandaPai2"
+DisplayName = "ComfyUI-MBNodes"
+Repository = "https://github.com/TestPandaPai2/ComfyUI-MB-Nodes"
