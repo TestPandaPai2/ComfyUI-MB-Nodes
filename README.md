@@ -40,9 +40,14 @@ evenly from both sides so the crop keeps its centre — the readout on the image
 shows the size you will actually get. Outputs the cropped image, its width and
 its height.
 
-The editor draws the image the node saw on its last run, cached in
-`output/MBNodesCache`, so it comes back after a restart. Before the first run it
-borrows the preview from the upstream node if that node has one.
+The preview appears as soon as something is plugged into the `image` dot — no
+run needed. The node walks back up the chain (through reroutes and anything else
+that has no image of its own) until it finds a node that can hand one over,
+including a loader that has only picked a file. Change the file or reroute the
+link and the preview follows within a second. Behind a sampler, where nothing
+upstream has an image yet, it falls back to the copy cached in
+`output/MBNodesCache` on the last run, so the crop box still has its picture
+after a restart.
 
 ### Save Image (MB)
 Saves images as png, jpg or webp — png is lossless and carries the workflow,

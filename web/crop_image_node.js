@@ -127,14 +127,82 @@ function loadImage(node, src, size) {
         resizeToContent(node);
         node.setDirtyCanvas(true, true);
     };
+    // The URL is kept on failure, so the once-a-second watch does not sit there
+    // retrying an image that is not there.
     img.onerror = () => {
-        node.__mbCropSrc = null;
+        node.__mbCropImage = null;
+        node.__mbCropEditor?.triggerDraw?.();
+        node.setDirtyCanvas(true, true);
     };
     img.src = src;
 }
 
-// The preview the node cached the last time it ran. Nothing has been through
-// the node before its first run, hence the upstream fallback below.
+function viewURL(filename, subfolder, type) {
+    const params = new URLSearchParams({
+        filename,
+        subfolder: subfolder ?? "",
+        type: type ?? "input",
+    });
+    return api.apiURL(`/view?${params}`);
+}
+
+const IMAGE_FILE = /\.(png|jpe?g|webp|gif|bmp|tiff?)$/i;
+// "name [output]" style annotated paths carry their folder in brackets.
+const ANNOTATED = /^(.*?)\s*\[(\w+)\]\s*$/;
+
+// Anything a node already knows about its own image, without running: the
+// preview it is drawing, the result of an earlier run still in the output
+// store, or — the case that matters on a fresh graph — the file a loader has
+// selected in its widget, which is on disk and servable right now.
+function nodeImageSrc(node) {
+    if (node.imgs?.[0]?.src) return node.imgs[0].src;
+
+    const stored = app.nodeOutputs?.[node.id]?.images?.[0]
+        ?? app.nodeOutputs?.[String(node.id)]?.images?.[0];
+    if (stored?.filename) return viewURL(stored.filename, stored.subfolder, stored.type ?? "output");
+
+    const widget = node.widgets?.find(
+        (w) => typeof w.value === "string" && IMAGE_FILE.test(w.value)
+            && (w.name === "image" || w.name === "images")
+    );
+    if (widget) {
+        const match = ANNOTATED.exec(widget.value);
+        const [name, type] = match ? [match[1], match[2]] : [widget.value, "input"];
+        return viewURL(name, "", type);
+    }
+
+    return null;
+}
+
+// Reroutes, upscalers and the like hold no image of their own, so the search
+// keeps walking back through IMAGE links until it finds a node that does.
+function upstreamPreview(node, depth = 0, seen = new Set()) {
+    if (!node || depth > 8 || seen.has(node.id)) return null;
+    seen.add(node.id);
+
+    if (depth > 0) {
+        const src = nodeImageSrc(node);
+        if (src) return src;
+    }
+
+    for (const input of node.inputs ?? []) {
+        if (input.link == null) continue;
+        if (depth === 0 && input.name !== "image") continue; // only our own dot
+        const link = app.graph?.links?.[input.link];
+        if (!link) continue;
+        if (link.type && link.type !== "IMAGE" && link.type !== "*") continue;
+
+        const found = upstreamPreview(app.graph.getNodeById(link.origin_id), depth + 1, seen);
+        if (found) return found;
+    }
+
+    return null;
+}
+
+// The preview the node cached the last time it ran. Only reached when nothing
+// upstream can hand over an image, e.g. the crop sits behind a sampler on a
+// freshly reopened workflow. The run token keeps the URL stable between runs so
+// the poll below does not refetch it every second.
 async function loadFromCache(node) {
     const workflowId = app.graph?.id ?? "default";
     const query = `workflow_id=${encodeURIComponent(workflowId)}&node_id=${encodeURIComponent(node.id)}`;
@@ -143,8 +211,8 @@ async function loadFromCache(node) {
         const data = await response.json();
         if (!data.image) return false;
         const { filename, subfolder, type } = data.image;
-        const params = new URLSearchParams({ filename, subfolder, type, rand: String(Date.now()) });
-        loadImage(node, api.apiURL(`/view?${params}`), data);
+        const src = `${viewURL(filename, subfolder, type)}&run=${node.__mbCropRun ?? 0}`;
+        loadImage(node, src, data);
         return true;
     } catch (e) {
         console.error("[MBNodes] crop source fetch failed", e);
@@ -152,18 +220,41 @@ async function loadFromCache(node) {
     }
 }
 
-// Nodes that show a preview of their own (Load Image (MB), Preview Image, …)
-// already hold one, so the editor can fill in before the first run.
-function upstreamPreview(node) {
-    const link = app.graph?.links?.[node.inputs?.[0]?.link];
-    const source = link ? app.graph.getNodeById(link.origin_id) : null;
-    return source?.imgs?.[0]?.src ?? null;
+async function refreshSource(node) {
+    const src = upstreamPreview(node);
+    if (src) {
+        loadImage(node, src, null);
+        return;
+    }
+    // Nothing connected any more: drop the stale image rather than keep
+    // offering a crop of something that is no longer the input.
+    if (node.inputs?.[0]?.link == null) {
+        node.__mbCropSrc = null;
+        node.__mbCropImage = null;
+        node.__mbCropEditor?.triggerDraw?.();
+        node.setDirtyCanvas(true, true);
+        return;
+    }
+    await loadFromCache(node);
 }
 
-async function refreshSource(node) {
-    if (await loadFromCache(node)) return;
-    const src = upstreamPreview(node);
-    if (src) loadImage(node, src, null);
+// Upstream selections change without any event the node can hook — a different
+// file picked in a loader, a link rerouted. The walk is cheap and only touches
+// the network when the resolved URL actually changed.
+function startWatch(node) {
+    const timer = setInterval(() => {
+        if (!app.graph?.getNodeById?.(node.id)) {
+            clearInterval(timer);
+            return;
+        }
+        refreshSource(node);
+    }, 1000);
+
+    const onRemoved = node.onRemoved;
+    node.onRemoved = function (...args) {
+        clearInterval(timer);
+        return onRemoved?.apply(this, args);
+    };
 }
 
 // ------------------------------------------------------------------ widget
@@ -293,7 +384,10 @@ function makeEditorWidget(node) {
                 ctx.font = "12px Arial";
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
-                ctx.fillText("connect an image and run once", frame.x + frame.w / 2, frame.y + frame.h / 2);
+                const hint = drawNode.inputs?.[0]?.link == null
+                    ? "connect an image"
+                    : "no preview yet — run once";
+                ctx.fillText(hint, frame.x + frame.w / 2, frame.y + frame.h / 2);
                 ctx.restore();
                 return;
             }
@@ -435,6 +529,15 @@ function wireNode(node) {
     node.__mbCropEditor = editor;
     node.addCustomWidget(editor);
 
+    // Connecting or rerouting the input dot should show the new image at once,
+    // ahead of the next tick of the watch.
+    const onConnectionsChange = node.onConnectionsChange;
+    node.onConnectionsChange = function (...args) {
+        const r = onConnectionsChange?.apply(this, args);
+        refreshSource(node);
+        return r;
+    };
+
     resizeToContent(node);
 }
 
@@ -444,7 +547,10 @@ app.registerExtension({
     async nodeCreated(node) {
         if (node.comfyClass !== "MBImageCrop") return;
         wireNode(node);
-        setTimeout(() => refreshSource(node), 100);
+        setTimeout(() => {
+            refreshSource(node);
+            startWatch(node);
+        }, 100);
     },
 
     async loadedGraphNode(node) {
@@ -454,10 +560,13 @@ app.registerExtension({
 
     async setup() {
         // A non-output node emits no "executed" event, so the cached source is
-        // picked up once the run as a whole is done.
+        // picked up once the run as a whole is done. The token makes that a new
+        // URL, which is what gets the fresh copy past the browser cache.
         api.addEventListener("execution_success", () => {
             for (const node of app.graph?._nodes ?? []) {
-                if (node.comfyClass === "MBImageCrop") refreshSource(node);
+                if (node.comfyClass !== "MBImageCrop") continue;
+                node.__mbCropRun = (node.__mbCropRun ?? 0) + 1;
+                refreshSource(node);
             }
         });
     },
