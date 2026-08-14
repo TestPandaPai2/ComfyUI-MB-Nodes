@@ -55,8 +55,9 @@ jpg is the smallest and drops alpha and metadata, webp sits in between with an
 optional lossless mode. It writes to the ComfyUI output folder by default, or to
 any folder you type in (absolute, or relative to the output folder). Switch
 `mode` to `preview` and nothing is written to that folder at all. Either way a
-half-size copy is cached in `output/MBNodesCache`, and the node pulls it back in
-after a ComfyUI restart so the preview never goes blank.
+copy is cached in `output/MBNodesCache` — full size in `save` mode, half size in
+`preview` mode — and the node pulls it back in after a ComfyUI restart so the
+preview never goes blank.
 
 ### SaveMP4 (MB)
 Encodes an image batch into an h264 mp4 at the fps you set, with optional audio
@@ -81,3 +82,12 @@ and trailing spaces are trimmed. Up to 32 lines.
 Right-click the node for **MB Settings**, which opens a small dialog: leave it
 detecting lines by itself, or pin it to a fixed number of outputs, which turns
 the 3 second recheck off. The choice is saved with the workflow.
+
+### Upscale Latent (MB)
+Takes a latent and scales it by a multiplier picked from a row of clickable
+buttons — 0.5x, 1x, 1.5x, 2x, 2.5x and 3x out of the box. `upscale_method`
+chooses the interpolation. 1x passes the latent straight through.
+
+Right-click the node for **MB Settings** to edit the button list: type the
+multipliers you want, separated by commas, or reset back to the defaults. The
+list is saved with the workflow.
