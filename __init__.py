@@ -8,6 +8,7 @@ from typing_extensions import override
 
 from comfy_api.latest import ComfyExtension, io
 
+from .nodes.crop_image_node import NODES as _crop_image
 from .nodes.get_lines_node import NODES as _get_lines
 from .nodes.load_image_node import NODES as _load_image
 from .nodes.prompt_pad_node import NODES as _prompt_pad
@@ -26,6 +27,7 @@ NODES: list[type[io.ComfyNode]] = [
     *_save_mp4,
     *_prompt_pad,
     *_get_lines,
+    *_crop_image,
 ]
 
 
