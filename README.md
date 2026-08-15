@@ -27,6 +27,22 @@ node. Flip `resize` on to scale the image to the closest resolution matching a
 target megapixel count, keeping the aspect ratio. Outputs the image, its width
 and height, and the aspect ratio as a string such as `16:9`.
 
+### Load Image with Crop (MB)
+Load Image (MB) with a crop step built in. Same file picker, upload button and
+megapixel resize, plus a **Crop...** button that opens a dialog holding the
+picked image: drag inside the box to move it, grab a corner or edge to resize,
+or drag on empty image to start a fresh one. The dialog also carries the
+`aspect` preset (1:1 through 21:9, portrait ones too, plus `source` and `free`)
+and `divisible by`, and a Reset button. Nothing is written to the node until you
+hit Apply crop.
+
+The crop is stored as fractions of the image, so picking a file of another size
+keeps it meaningful. Cropping happens first and the megapixel resize is applied
+to the result, so the target describes what comes out. The readout on the node
+shows the chain — source size, cropped size, resized size — with the aspect
+ratio and megapixels of the final image. Outputs the image, its width and
+height, and the aspect ratio as a string.
+
 ### Crop Image (MB)
 Crops whatever comes in on the `image` dot — there is no file picker, the image
 always arrives from another node. Drag a box over the preview on the node to set

@@ -1,6 +1,10 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 import { getWidget, setWidgetVisible, addButton, resizeToContent } from "./common.js";
+import {
+    MIN_FRACTION, HANDLES, snapSpan, fractionRatio, normalizeRect, refitRect,
+    offRatio, resizeRect, newRect, frameOf, hitTest, drawCrop,
+} from "./crop_geometry.js";
 
 // The crop rect lives in these four widgets as fractions of the image, so it
 // stays valid whatever resolution turns up on the input dot.
@@ -9,33 +13,9 @@ const RECT_WIDGETS = ["crop_x", "crop_y", "crop_width", "crop_height"];
 const MARGIN = 15;      // matches the inset LiteGraph uses for its own widgets
 const MIN_HEIGHT = 140; // the editor never collapses below this
 const MAX_HEIGHT = 420;
-const HANDLE = 8;       // hit radius of a corner/edge grip, in widget pixels
-const MIN_FRACTION = 0.02;
 
-const FILL_OUTSIDE = "rgba(0, 0, 0, 0.55)";
-const LINE = "#e01010";
-const LINE_SOFT = "rgba(255, 255, 255, 0.35)";
-const HANDLE_FILL = "#ffffff";
 const EMPTY_BG = "#1a1a1a";
 const TEXT = "#dcdcdc";
-
-// Fixed presets, keyed the same as RATIOS in nodes/crop_image_node.py.
-const FIXED_RATIOS = {
-    "1:1": 1, "4:3": 4 / 3, "3:2": 3 / 2, "16:10": 16 / 10, "16:9": 16 / 9,
-    "1.85:1": 1.85, "2:1": 2, "21:9": 21 / 9,
-    "3:4": 3 / 4, "2:3": 2 / 3, "10:16": 10 / 16, "9:16": 9 / 16,
-    "1:1.85": 1 / 1.85, "1:2": 0.5, "9:21": 9 / 21,
-};
-
-const clamp01 = (v) => Math.min(1, Math.max(0, v));
-
-// Mirrors snap_axis() in nodes/crop_image_node.py, so the readout on the node
-// shows the size that actually comes out.
-function snapSpan(span, limit, multiple) {
-    const rounded = Math.max(1, Math.round(span));
-    if (multiple <= 1 || multiple > limit) return rounded;
-    return Math.max(multiple, Math.floor(rounded / multiple) * multiple);
-}
 
 // ---------------------------------------------------------------- crop rect
 
@@ -52,78 +32,29 @@ function getRect(node) {
     };
 }
 
-// Clamping the two sides on their own is what silently breaks a locked ratio:
-// the side that hit the edge gets cut and the other one keeps its length. With
-// a ratio in hand the whole box is scaled down instead, so its shape holds.
-function fitRatio(rect, ratio) {
-    if (ratio === null) return rect;
-    let w = Math.max(MIN_FRACTION, rect.w);
-    let h = w / ratio;
-    if (h > 1) {
-        h = 1;
-        w = h * ratio;
-    }
-    if (w > 1) {
-        w = 1;
-        h = w / ratio;
-    }
-    return { ...rect, w, h };
-}
-
 function setRect(node, rect, ratio = null) {
-    const fitted = fitRatio(rect, ratio);
-    const w = Math.min(1, Math.max(MIN_FRACTION, fitted.w));
-    const h = Math.min(1, Math.max(MIN_FRACTION, fitted.h));
-    rect = fitted;
-    const values = {
-        crop_x: clamp01(Math.min(rect.x, 1 - w)),
-        crop_y: clamp01(Math.min(rect.y, 1 - h)),
-        crop_width: w,
-        crop_height: h,
+    const values = normalizeRect(rect, ratio);
+    const named = {
+        crop_x: values.x,
+        crop_y: values.y,
+        crop_width: values.w,
+        crop_height: values.h,
     };
-    for (const [name, value] of Object.entries(values)) {
+    for (const [name, value] of Object.entries(named)) {
         const widget = getWidget(node, name);
         if (widget) widget.value = value;
     }
 }
 
-// Target aspect as a *pixel* ratio, or null when the box is unconstrained.
-function targetRatio(node) {
-    const choice = getWidget(node, "aspect_ratio")?.value ?? "free";
-    if (choice === "free") return null;
-    if (choice === "source") return 1; // in fraction space that is the full frame
-    return FIXED_RATIOS[choice] ?? null;
+// Target aspect in fraction space, or null when the box is unconstrained.
+function ratioOf(node, aspect) {
+    return fractionRatio(getWidget(node, "aspect_ratio")?.value ?? "free", aspect);
 }
 
-// Pixel ratios have to be expressed against the image's own aspect before they
-// can be applied to a rect measured in fractions of that image.
-function fractionRatio(node, imageAspect) {
-    const ratio = targetRatio(node);
-    if (ratio === null) return null;
-    if ((getWidget(node, "aspect_ratio")?.value ?? "") === "source") return 1;
-    return ratio / (imageAspect || 1);
-}
-
-// Largest rect of the wanted shape that fits, centred on the current one.
 function refit(node, imageAspect) {
-    const ratio = fractionRatio(node, imageAspect);
-    const rect = getRect(node);
+    const ratio = ratioOf(node, imageAspect);
     if (ratio === null) return;
-
-    const cx = rect.x + rect.w / 2;
-    const cy = rect.y + rect.h / 2;
-
-    let w = rect.w;
-    let h = w / ratio;
-    if (h > 1) {
-        h = 1;
-        w = h * ratio;
-    }
-    if (w > 1) {
-        w = 1;
-        h = w / ratio;
-    }
-    setRect(node, { x: cx - w / 2, y: cy - h / 2, w, h }, ratio);
+    setRect(node, refitRect(getRect(node), ratio), ratio);
 }
 
 function resetRect(node, imageAspect) {
@@ -136,11 +67,8 @@ function resetRect(node, imageAspect) {
 // repairs a rect saved by an older version that let the box go off-ratio.
 function enforceRatio(node) {
     const aspect = imageAspect(node);
-    const ratio = fractionRatio(node, aspect);
-    if (ratio === null) return;
-
-    const rect = getRect(node);
-    if (Math.abs(rect.w / rect.h - ratio) > ratio * 0.005) refit(node, aspect);
+    const ratio = ratioOf(node, aspect);
+    if (offRatio(getRect(node), ratio)) refit(node, aspect);
 }
 
 // ------------------------------------------------------------ source image
@@ -297,135 +225,6 @@ function imageAspect(node) {
     return size ? size[0] / size[1] : 1;
 }
 
-// The image is letterboxed inside the widget, so the box the user drags is the
-// image and nothing else.
-function frameOf(widget, widgetWidth, y, height, node) {
-    const boxW = Math.max(1, widgetWidth - MARGIN * 2);
-    const boxH = Math.max(1, height);
-    const aspect = node.__mbCropImage ? imageAspect(node) : boxW / boxH;
-
-    let w = boxW;
-    let h = w / aspect;
-    if (h > boxH) {
-        h = boxH;
-        w = h * aspect;
-    }
-    return { x: MARGIN + (boxW - w) / 2, y: y + (boxH - h) / 2, w, h };
-}
-
-const HANDLES = [
-    ["nw", 0, 0], ["n", 0.5, 0], ["ne", 1, 0],
-    ["w", 0, 0.5], ["e", 1, 0.5],
-    ["sw", 0, 1], ["s", 0.5, 1], ["se", 1, 1],
-];
-
-function hitTest(frame, rect, px, py) {
-    const rx = frame.x + rect.x * frame.w;
-    const ry = frame.y + rect.y * frame.h;
-    const rw = rect.w * frame.w;
-    const rh = rect.h * frame.h;
-
-    for (const [name, fx, fy] of HANDLES) {
-        const hx = rx + fx * rw;
-        const hy = ry + fy * rh;
-        if (Math.abs(px - hx) <= HANDLE && Math.abs(py - hy) <= HANDLE) return name;
-    }
-    if (px >= rx && px <= rx + rw && py >= ry && py <= ry + rh) return "move";
-    return "new";
-}
-
-// Every resize holds something still: the edge opposite the grip, or — for a
-// grip on an edge with a locked ratio — the centre of the free axis. `at` is
-// that fixed coordinate and `side` says which way the box grows from it.
-function anchorOf(mode, start, axis) {
-    const [low, high, pos, size] = axis === "x"
-        ? ["w", "e", start.x, start.w]
-        : ["n", "s", start.y, start.h];
-
-    if (mode.includes(low)) return { side: "back", at: pos + size };   // grows left/up
-    if (mode.includes(high)) return { side: "front", at: pos };        // grows right/down
-    return { side: "center", at: pos + size / 2 };
-}
-
-// How far the box may run from its anchor before it leaves the image. A centred
-// axis is limited by the nearer of the two edges, hence the doubling.
-function room(anchor) {
-    if (anchor.side === "front") return 1 - anchor.at;
-    if (anchor.side === "back") return anchor.at;
-    return 2 * Math.min(anchor.at, 1 - anchor.at);
-}
-
-function place(anchor, size) {
-    if (anchor.side === "front") return anchor.at;
-    if (anchor.side === "back") return anchor.at - size;
-    return anchor.at - size / 2;
-}
-
-// Fit a wanted width/height around its anchors. Without a ratio each axis is
-// capped on its own; with one, both are scaled by the same factor, so the box
-// stops at the edge of the image with its shape intact instead of flattening
-// into a free crop.
-function fitToBounds(w, h, ax, ay, ratio) {
-    const maxW = Math.max(MIN_FRACTION, room(ax));
-    const maxH = Math.max(MIN_FRACTION, room(ay));
-
-    if (ratio === null) {
-        w = Math.min(w, maxW);
-        h = Math.min(h, maxH);
-    } else {
-        const scale = Math.min(1, maxW / w, maxH / h);
-        w *= scale;
-        h *= scale;
-    }
-
-    w = Math.max(MIN_FRACTION, w);
-    h = Math.max(MIN_FRACTION, h);
-    return { x: place(ax, w), y: place(ay, h), w, h };
-}
-
-// Resize driven by one grip. `ratio` is in fraction space; a locked ratio grows
-// the box to cover the pointer on whichever axis moved furthest.
-function resizeRect(mode, start, dx, dy, ratio) {
-    const ax = anchorOf(mode, start, "x");
-    const ay = anchorOf(mode, start, "y");
-
-    let w = start.w;
-    let h = start.h;
-    if (mode.includes("w")) w = start.w - dx;
-    else if (mode.includes("e")) w = start.w + dx;
-    if (mode.includes("n")) h = start.h - dy;
-    else if (mode.includes("s")) h = start.h + dy;
-
-    w = Math.max(MIN_FRACTION, w);
-    h = Math.max(MIN_FRACTION, h);
-
-    if (ratio !== null) {
-        // A corner follows the axis the pointer pushed harder; an edge grip
-        // only has the one axis to go on.
-        if (mode.length === 2) w = Math.max(w, h * ratio);
-        else if (mode === "n" || mode === "s") w = h * ratio;
-        h = w / ratio;
-    }
-
-    return fitToBounds(w, h, ax, ay, ratio);
-}
-
-// A drag started outside the box draws a fresh one from the press point, which
-// is the corner that stays put.
-function newRect(anchor, px, py, ratio) {
-    const ax = { side: px < anchor[0] ? "back" : "front", at: anchor[0] };
-    const ay = { side: py < anchor[1] ? "back" : "front", at: anchor[1] };
-
-    let w = Math.abs(px - anchor[0]);
-    let h = Math.abs(py - anchor[1]);
-    if (ratio !== null) {
-        w = Math.max(w, h * ratio);
-        h = w / ratio;
-    }
-
-    return fitToBounds(w, h, ax, ay, ratio);
-}
-
 function makeEditorWidget(node) {
     return {
         type: "mb_crop_editor",
@@ -449,13 +248,15 @@ function makeEditorWidget(node) {
         draw(ctx, drawNode, widgetWidth, y, height) {
             this.y = y;
             this.width = widgetWidth || drawNode.size[0];
-            const frame = frameOf(this, this.width, y, height, drawNode);
+            const image = drawNode.__mbCropImage;
+            const frame = frameOf(
+                MARGIN, y, this.width - MARGIN * 2, height,
+                image ? imageAspect(drawNode) : 0
+            );
             this.frame = frame;
 
-            const image = drawNode.__mbCropImage;
-            ctx.save();
-
             if (!image) {
+                ctx.save();
                 ctx.fillStyle = EMPTY_BG;
                 ctx.beginPath();
                 ctx.roundRect(frame.x, frame.y, frame.w, frame.h, 6);
@@ -472,55 +273,11 @@ function makeEditorWidget(node) {
                 return;
             }
 
-            ctx.drawImage(image, frame.x, frame.y, frame.w, frame.h);
-
             const rect = getRect(drawNode);
-            const rx = frame.x + rect.x * frame.w;
-            const ry = frame.y + rect.y * frame.h;
-            const rw = rect.w * frame.w;
-            const rh = rect.h * frame.h;
-
-            // Everything outside the crop is dimmed, drawn as four bands so no
-            // compositing mode is needed.
-            ctx.fillStyle = FILL_OUTSIDE;
-            ctx.fillRect(frame.x, frame.y, frame.w, ry - frame.y);
-            ctx.fillRect(frame.x, ry + rh, frame.w, frame.y + frame.h - (ry + rh));
-            ctx.fillRect(frame.x, ry, rx - frame.x, rh);
-            ctx.fillRect(rx + rw, ry, frame.x + frame.w - (rx + rw), rh);
-
-            ctx.strokeStyle = LINE_SOFT;
-            ctx.lineWidth = 1;
-            for (let i = 1; i < 3; i++) {
-                ctx.beginPath();
-                ctx.moveTo(rx + (rw * i) / 3, ry);
-                ctx.lineTo(rx + (rw * i) / 3, ry + rh);
-                ctx.moveTo(rx, ry + (rh * i) / 3);
-                ctx.lineTo(rx + rw, ry + (rh * i) / 3);
-                ctx.stroke();
-            }
-
-            ctx.strokeStyle = LINE;
-            ctx.lineWidth = 2;
-            ctx.strokeRect(rx, ry, rw, rh);
-
-            ctx.fillStyle = HANDLE_FILL;
-            for (const [, fx, fy] of HANDLES) {
-                ctx.fillRect(rx + fx * rw - 3, ry + fy * rh - 3, 6, 6);
-            }
-
             const [sw, sh] = drawNode.__mbCropSize ?? [image.naturalWidth, image.naturalHeight];
             const step = Number(getWidget(drawNode, "divisible_by")?.value ?? 1) || 1;
             const label = `${snapSpan(rect.w * sw, sw, step)} x ${snapSpan(rect.h * sh, sh, step)}`;
-            ctx.font = "11px Arial";
-            ctx.textAlign = "left";
-            ctx.textBaseline = "top";
-            const textW = ctx.measureText(label).width;
-            ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
-            ctx.fillRect(frame.x + 4, frame.y + 4, textW + 8, 16);
-            ctx.fillStyle = TEXT;
-            ctx.fillText(label, frame.x + 8, frame.y + 6);
-
-            ctx.restore();
+            drawCrop(ctx, frame, image, rect, label);
         },
 
         // LiteGraph keeps forwarding move/up to whichever widget claimed the
@@ -540,7 +297,7 @@ function makeEditorWidget(node) {
                 }
                 this.drag = { mode, start: getRect(mouseNode), from: [fx, fy] };
                 if (mode === "new") {
-                    const ratio = fractionRatio(mouseNode, imageAspect(mouseNode));
+                    const ratio = ratioOf(mouseNode, imageAspect(mouseNode));
                     setRect(mouseNode, { x: fx, y: fy, w: MIN_FRACTION, h: MIN_FRACTION }, ratio);
                 }
                 this.triggerDraw?.();
@@ -558,7 +315,7 @@ function makeEditorWidget(node) {
             if (type !== "pointermove" && type !== "mousemove") return false;
 
             const { mode, start, from } = this.drag;
-            const ratio = fractionRatio(mouseNode, imageAspect(mouseNode));
+            const ratio = ratioOf(mouseNode, imageAspect(mouseNode));
             const dx = fx - from[0];
             const dy = fy - from[1];
 

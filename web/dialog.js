@@ -91,6 +91,23 @@ const CSS = `
     cursor: pointer;
 }
 .mb-dialog-remove:hover { background: #3a1a1c; border-color: #e01010; color: #ffffff; }
+.mb-dialog-field { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #b0b0b0; }
+.mb-dialog-select {
+    padding: 4px 8px;
+    background: #0d0d0d;
+    color: #dcdcdc;
+    border: 1px solid #3a3a3a;
+    border-radius: 6px;
+    font-size: 13px;
+}
+.mb-dialog-canvas {
+    display: block;
+    width: 100%;
+    border-radius: 8px;
+    background: #0d0d0d;
+    touch-action: none;
+    cursor: crosshair;
+}
 .mb-dialog-footer {
     display: flex;
     justify-content: flex-end;
@@ -123,8 +140,9 @@ function ensureStyle() {
  * Opens a modal. `render` fills the body element; `onApply` runs on Apply and
  * can return false to keep the dialog open (failed validation); `onClose` runs
  * however the dialog goes away — Apply, Cancel, Escape or a click outside.
+ * `width` overrides the default narrow body, for dialogs that hold a canvas.
  */
-export function openDialog({ title, render, onApply, onClose, applyLabel = "Apply" }) {
+export function openDialog({ title, render, onApply, onClose, applyLabel = "Apply", width }) {
     ensureStyle();
 
     const overlay = document.createElement("div");
@@ -132,6 +150,7 @@ export function openDialog({ title, render, onApply, onClose, applyLabel = "Appl
 
     const dialog = document.createElement("div");
     dialog.className = "mb-dialog";
+    if (width) dialog.style.width = `${width}px`;
     dialog.innerHTML = `<div class="mb-dialog-title"></div><div class="mb-dialog-body"></div>`;
     dialog.querySelector(".mb-dialog-title").textContent = title;
 
