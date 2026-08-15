@@ -320,8 +320,17 @@ function openCropDialog(node) {
 
 // --------------------------------------------------------------------- node
 
+// The node face stays down to the image options; everything about the crop is
+// edited in the dialog. Called again after a load and on the next tick, since a
+// widget the frontend rebuilds comes back visible.
+function hideCropWidgets(node) {
+    let changed = false;
+    for (const name of CROP_WIDGETS) changed = setWidgetVisible(node, name, false) || changed;
+    if (changed) resizeToContent(node);
+}
+
 function wireNode(node) {
-    for (const name of CROP_WIDGETS) setWidgetVisible(node, name, false);
+    hideCropWidgets(node);
 
     addButton(node, "Crop...", () => openCropDialog(node));
 
@@ -356,10 +365,14 @@ app.registerExtension({
     async nodeCreated(node) {
         if (node.comfyClass !== "MBLoadImageCrop") return;
         wireNode(node);
+        setTimeout(() => hideCropWidgets(node), 100);
     },
 
     async loadedGraphNode(node) {
         if (node.comfyClass !== "MBLoadImageCrop") return;
-        setTimeout(() => updateInfo(node), 100);
+        setTimeout(() => {
+            hideCropWidgets(node);
+            updateInfo(node);
+        }, 100);
     },
 });
