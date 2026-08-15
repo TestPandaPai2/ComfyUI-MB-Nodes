@@ -19,6 +19,7 @@ from .nodes.restart_server import NODES as _restart_server
 from .nodes.save_image_node import NODES as _save_image
 from .nodes.save_mp4_node import NODES as _save_mp4
 from .nodes.slider_node import NODES as _slider
+from .nodes.system_prompt_node import NODES as _system_prompt
 from .nodes.text_node import NODES as _text
 from .nodes.upscale_latent_node import NODES as _upscale_latent
 
@@ -31,6 +32,7 @@ NODES: list[type[io.ComfyNode]] = [
     *_save_image,
     *_save_mp4,
     *_prompt_pad,
+    *_system_prompt,
     *_get_lines,
     *_crop_image,
     *_upscale_latent,

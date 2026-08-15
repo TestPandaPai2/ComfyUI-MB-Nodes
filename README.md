@@ -86,8 +86,21 @@ file in temp instead. Either way the finished video plays back on the node.
 A scratchpad for prompts. Type into the text box, put a name in the filename
 field, and the Save button writes it to the `SavedPrompts` folder inside the node
 pack as a .txt file — it asks before overwriting one that already exists. The
-optional `text_in` dot takes over the output when connected, so a generated
-prompt can be piped in and kept. Outputs the text.
+Load button opens the same picker as System Prompt (MB) below. The optional
+`text_in` dot takes over the output when connected, so a generated prompt can be
+piped in and kept. Outputs the text.
+
+### System Prompt (MB)
+The same idea aimed at LLM system prompts, with its own library. Save writes the
+box to the `SystemPrompts` folder inside the node pack, asking before it
+overwrites. Load opens a picker: choose a folder, choose a file, and the text
+drops into the box — a double click loads it straight away.
+
+The folder dropdown lists **System Prompts** and **Saved Prompts** to start
+with, and **Add folder...** takes the full path of any other folder — a prompt
+library kept elsewhere, a repo, a synced drive. Folders you add are remembered
+in the browser and can be dropped again with **Forget**. Only `.txt` and `.md`
+files are listed. Outputs the text as `system_prompt`.
 
 ### Get Lines (MB)
 Takes a text input and hands back one output per line. It has no text box of its

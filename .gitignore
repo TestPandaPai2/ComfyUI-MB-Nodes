@@ -1,5 +1,7 @@
 __pycache__/
 *.pyc
 
-# Prompts saved from the Prompt Pad node stay local; drop this line to track them.
+# Prompts saved from the Prompt Pad and System Prompt nodes stay local; drop
+# these lines to track them.
 SavedPrompts/
+SystemPrompts/
