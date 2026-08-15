@@ -90,6 +90,10 @@ through 21:9, with a portrait toggle) and the node pads the short axis evenly
 until the image reaches it — it never crops. The colour comes from a colour
 picker, and the fields for the other mode stay hidden.
 
+`all_sides` is the shortcut: set it above 0 and every side gets that many pixels,
+with the mode, the four side fields and the ratio all ignored and hidden until it
+goes back to 0.
+
 ### Restart button
 Not a node: the pack adds a red restart icon to the ComfyUI top bar, at the
 right-hand end of its controls. One click restarts the ComfyUI server — no confirmation — and the page

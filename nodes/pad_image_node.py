@@ -85,15 +85,29 @@ class MBPadImage(io.ComfyNode):
                     tooltip="aspect ratio mode only. Flips the target ratio.",
                 ),
                 io.Color.Input("color", default="#000000", tooltip="Colour of the padding."),
+                # Declared last so the widget order of workflows saved before it
+                # existed still lines up on load.
+                io.Int.Input(
+                    "all_sides",
+                    default=0,
+                    min=0,
+                    max=MAX_PAD,
+                    socketless=True,
+                    tooltip="Above 0 this pads every side by this many pixels and the mode, the four side fields and the ratio are all ignored.",
+                ),
             ],
             outputs=[io.Image.Output("image")],
         )
 
     @classmethod
-    def execute(cls, image, mode, top, bottom, left, right, aspect_ratio, portrait, color) -> io.NodeOutput:
+    def execute(
+        cls, image, mode, top, bottom, left, right, aspect_ratio, portrait, color, all_sides=0,
+    ) -> io.NodeOutput:
         height, width = image.shape[1], image.shape[2]
 
-        if mode == "aspect ratio":
+        if all_sides > 0:
+            top = bottom = left = right = all_sides
+        elif mode == "aspect ratio":
             ratio = RATIO_BY_NAME.get(aspect_ratio, 1.0)
             if portrait:
                 ratio = 1 / ratio

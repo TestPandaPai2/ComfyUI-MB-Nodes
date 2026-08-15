@@ -7,28 +7,31 @@ const RATIO_WIDGETS = ["aspect_ratio", "portrait"];
 
 function refresh(node) {
     const ratioMode = getWidget(node, "mode")?.value === "aspect ratio";
+    // Above 0 all_sides takes over, so everything it overrides is hidden.
+    const uniform = Number(getWidget(node, "all_sides")?.value) > 0;
 
-    let changed = false;
+    let changed = setWidgetVisible(node, "mode", !uniform);
     for (const name of PIXEL_WIDGETS) {
-        changed = setWidgetVisible(node, name, !ratioMode) || changed;
+        changed = setWidgetVisible(node, name, !uniform && !ratioMode) || changed;
     }
     for (const name of RATIO_WIDGETS) {
-        changed = setWidgetVisible(node, name, ratioMode) || changed;
+        changed = setWidgetVisible(node, name, !uniform && ratioMode) || changed;
     }
 
     if (changed) resizeToContent(node);
 }
 
 function wireNode(node) {
-    const mode = getWidget(node, "mode");
-    if (!mode) return;
-
-    const prev = mode.callback;
-    mode.callback = function (...args) {
-        const r = prev?.apply(this, args);
-        refresh(node);
-        return r;
-    };
+    for (const name of ["mode", "all_sides"]) {
+        const w = getWidget(node, name);
+        if (!w) continue;
+        const prev = w.callback;
+        w.callback = function (...args) {
+            const r = prev?.apply(this, args);
+            refresh(node);
+            return r;
+        };
+    }
     refresh(node);
 }
 
