@@ -83,6 +83,13 @@ Right-click the node for **MB Settings**, which opens a small dialog: leave it
 detecting lines by itself, or pin it to a fixed number of outputs, which turns
 the 3 second recheck off. The choice is saved with the workflow.
 
+### Pad Image (MB)
+Adds a solid colour border around an image. In `pixels` mode you set top,
+bottom, left and right yourself; in `aspect ratio` mode you pick a ratio (1:1
+through 21:9, with a portrait toggle) and the node pads the short axis evenly
+until the image reaches it — it never crops. The colour comes from a colour
+picker, and the fields for the other mode stay hidden.
+
 ### Restart button
 Not a node: the pack adds a red restart icon to the ComfyUI top bar, at the
 right-hand end of its controls. One click restarts the ComfyUI server — no confirmation — and the page
