@@ -1,5 +1,14 @@
 // Shared widget helpers for the MBNodes pack.
 
+import { app } from "../../scripts/app.js";
+
+// A toast when the frontend offers one, the console when it does not.
+export function notify(severity, summary, detail) {
+    const toast = app.extensionManager?.toast;
+    if (toast) toast.add({ severity, summary, detail, life: 4000 });
+    else console.log(`[MBNodes] ${summary}: ${detail ?? ""}`);
+}
+
 export function getWidget(node, name) {
     return node.widgets?.find((w) => w.name === name);
 }

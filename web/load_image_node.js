@@ -1,6 +1,7 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
-import { getWidget, resizeToContent } from "./common.js";
+import { addButton, getWidget, resizeToContent } from "./common.js";
+import { pasteImage } from "./clipboard_image.js";
 
 const SNAP = 8; // must match SNAP in nodes/load_image_node.py
 
@@ -73,6 +74,8 @@ async function updateInfo(node) {
 }
 
 function wireNode(node) {
+    addButton(node, "📋 Paste from clipboard", () => pasteImage(node));
+
     const info = node.addWidget("text", "output", "no image loaded", () => {}, {
         serialize: false,
         // disabled is what the canvas renderer reads, read_only what Nodes 2.0 does.

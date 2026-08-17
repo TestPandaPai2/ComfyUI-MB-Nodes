@@ -27,9 +27,15 @@ node. Flip `resize` on to scale the image to the closest resolution matching a
 target megapixel count, keeping the aspect ratio. Outputs the image, its width
 and height, and the aspect ratio as a string such as `16:9`.
 
+**📋 Paste from clipboard** takes whatever image you copied last — a screenshot,
+a crop from another app, an image copied out of a browser — writes it into the
+input folder as `clipboard-<date>-<time>.png` and selects it, so nothing is
+overwritten and the paste is still there next session. The browser asks for
+clipboard permission the first time.
+
 ### Load Image with Crop (MB)
-Load Image (MB) with a crop step built in. Same file picker, upload button and
-megapixel resize, plus a **Crop...** button that opens a dialog holding the
+Load Image (MB) with a crop step built in. Same file picker, upload button,
+clipboard paste and megapixel resize, plus a **Crop...** button that opens a dialog holding the
 picked image: drag inside the box to move it, grab a corner or edge to resize,
 or drag on empty image to start a fresh one. The dialog also carries the
 `aspect` preset (1:1 through 21:9, portrait ones too, plus `source` and `free`)

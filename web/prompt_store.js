@@ -2,10 +2,11 @@
 // (MB). Both talk to the routes in nodes/prompt_store.py; the only difference
 // is which folder they default to.
 
-import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
-import { getWidget } from "./common.js";
+import { getWidget, notify } from "./common.js";
 import { openDialog } from "./dialog.js";
+
+export { notify };
 
 // Keys the backend knows; anything else is an absolute path the user added.
 export const FOLDERS = [
@@ -30,12 +31,6 @@ function rememberFolder(path, keep = true) {
     const folders = customFolders().filter((f) => f !== path);
     if (keep) folders.unshift(path);
     localStorage.setItem(STORE_KEY, JSON.stringify(folders.slice(0, 12)));
-}
-
-export function notify(severity, summary, detail) {
-    const toast = app.extensionManager?.toast;
-    if (toast) toast.add({ severity, summary, detail, life: 4000 });
-    else console.log(`[MBNodes] ${summary}: ${detail ?? ""}`);
 }
 
 // Multiline widgets keep a DOM element of their own under Nodes 2.0, which does

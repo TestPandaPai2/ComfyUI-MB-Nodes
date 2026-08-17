@@ -2,6 +2,7 @@ import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 import { getWidget, setWidgetVisible, addButton, resizeToContent } from "./common.js";
 import { openDialog } from "./dialog.js";
+import { pasteImage } from "./clipboard_image.js";
 import {
     MIN_FRACTION, snapSpan, fractionRatio, normalizeRect, refitRect, offRatio,
     resizeRect, newRect, frameOf, hitTest, drawCrop,
@@ -332,6 +333,7 @@ function hideCropWidgets(node) {
 function wireNode(node) {
     hideCropWidgets(node);
 
+    addButton(node, "📋 Paste from clipboard", () => pasteImage(node));
     addButton(node, "Crop...", () => openCropDialog(node));
 
     const info = node.addWidget("text", "output", "no image loaded", () => {}, {
