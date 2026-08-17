@@ -143,3 +143,20 @@ Right-click the node for **MB Settings** to edit the button list: it shows one
 row per multiplier, **Add New** appends another and the × next to a row removes
 it, with a reset back to the defaults. The node updates as you type, and the list
 is saved with the workflow.
+
+## Settings
+
+Open ComfyUI's settings dialog and pick the **MB** panel.
+
+### Links → Link render mode
+Circuit-board routing for every link on the canvas, on top of ComfyUI's own
+three styles:
+
+- **Default** — hands back to whatever ComfyUI is set to.
+- **Manhattan** — right angles only, elbowing across a shared mid-line.
+- **Mitred** — the same route with the corners cut at 45°, like an etched trace.
+- **Diagonal Bus** — horizontal runs joined by a true 45° diagonal.
+- **Bezier Snap** — a flattened spline that leaves and enters each slot level.
+
+Links attached to a reroute point keep ComfyUI's own rendering, so the dot stays
+draggable.
