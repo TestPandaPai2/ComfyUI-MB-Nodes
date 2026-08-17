@@ -5,20 +5,22 @@ import torch
 from comfy_api.latest import io
 
 RATIOS = [
-    ("1:1", 1 / 1),
-    ("5:4", 5 / 4),
-    ("4:3", 4 / 3),
-    ("3:2", 3 / 2),
-    ("16:10", 16 / 10),
-    ("16:9", 16 / 9),
-    ("1.85:1", 1.85),
-    ("2:1", 2 / 1),
-    ("21:9", 21 / 9),
+    ("1:1 (Square)", 1 / 1),
+    ("2:3 (Portrait Photo)", 2 / 3),
+    ("3:2 (Photo)", 3 / 2),
+    ("3:4 (Portrait Standard)", 3 / 4),
+    ("4:3 (Standard)", 4 / 3),
+    ("9:16 (Portrait Widescreen)", 9 / 16),
+    ("16:9 (Widescreen)", 16 / 9),
+    ("21:9 (Ultrawide)", 21 / 9),
+    ("9:19 (Tall Phone)", 9 / 19),
+    ("1:2 (Tall)", 1 / 2),
+    ("1:3 (Extra Tall)", 1 / 3),
 ]
 
 STEPS = 7           # options offered per ratio
 SNAP = 64           # every dimension is a multiple of this
-MAX_WIDTH = 1920    # Full HD long side
+MAX_SIDE = 1920     # Full HD long side
 MIN_AREA = 0.26e6   # 512 x 512
 MAX_AREA = 1920 * 1088
 RATIO_TOLERANCE = 0.02  # max |ln(actual / nominal)| after snapping
@@ -32,9 +34,14 @@ def _candidates(ratio):
     """All snapped sizes for a ratio that stay inside the area window and keep
     the ratio within tolerance, ascending by pixel count."""
     pool = []
-    for units in range(SNAP // 16, MAX_WIDTH // SNAP + 1):
-        width = units * SNAP
-        height = _snap(width / ratio)
+    # Step the long side, so ratios below 1 (portrait) are capped by height the
+    # same way landscape ones are capped by width.
+    for units in range(SNAP // 16, MAX_SIDE // SNAP + 1):
+        long_side = units * SNAP
+        if ratio >= 1:
+            width, height = long_side, _snap(long_side / ratio)
+        else:
+            width, height = _snap(long_side * ratio), long_side
         area = width * height
         if not (MIN_AREA * 0.94 <= area <= MAX_AREA * 1.02):
             continue
@@ -75,7 +82,7 @@ TABLE = build_table()
 # visible options to the ones belonging to the selected ratio.
 ALL_RESOLUTIONS = list(dict.fromkeys(l for labels in TABLE.values() for l in labels))
 
-DEFAULT_RATIO = "1:1"
+DEFAULT_RATIO = RATIOS[0][0]
 DEFAULT_RESOLUTION = "1024 x 1024"
 
 

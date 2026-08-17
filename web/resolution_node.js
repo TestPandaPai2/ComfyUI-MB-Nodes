@@ -61,7 +61,13 @@ function repairValues(node) {
     }
 
     const ratio = getWidget(node, "aspect_ratio");
-    if (ratio && !DATA.table[ratio.value]) ratio.value = DATA.ratios[0];
+    if (!ratio || DATA.table[ratio.value]) return;
+
+    // Workflows saved before the labels grew their descriptions hold a bare
+    // "16:9"; match on the part before the parenthesis so they still restore.
+    const bare = String(ratio.value ?? "").trim();
+    const match = DATA.ratios.find((name) => name.split(" (")[0] === bare);
+    ratio.value = match ?? DATA.ratios[0];
 }
 
 // Everything that needs the ratio table, run once it has arrived.
