@@ -8,11 +8,14 @@ from typing_extensions import override
 
 from comfy_api.latest import ComfyExtension, io
 
+from .nodes.combine_text_node import NODES as _combine_text
 from .nodes.crop_image_node import NODES as _crop_image
 from .nodes.get_lines_node import NODES as _get_lines
 from .nodes.image_info import NODES as _image_info
+from .nodes.load_folder_node import NODES as _load_folder
 from .nodes.load_image_crop_node import NODES as _load_image_crop
 from .nodes.load_image_node import NODES as _load_image
+from .nodes.load_video_node import NODES as _load_video
 from .nodes.pad_image_node import NODES as _pad_image
 from .nodes.prompt_pad_node import NODES as _prompt_pad
 from .nodes.resolution_node import NODES as _resolution
@@ -31,11 +34,14 @@ NODES: list[type[io.ComfyNode]] = [
     *_load_image,
     *_load_image_crop,
     *_image_info,
+    *_load_video,
+    *_load_folder,
     *_save_image,
     *_save_mp4,
     *_prompt_pad,
     *_system_prompt,
     *_get_lines,
+    *_combine_text,
     *_crop_image,
     *_upscale_latent,
     *_pad_image,
