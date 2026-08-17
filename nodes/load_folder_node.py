@@ -12,6 +12,8 @@ import comfy.utils
 import node_helpers
 from comfy_api.latest import io
 
+from . import image_info
+
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif", ".tif", ".tiff", ".jfif", ".avif"}
 THUMB_SIZE = 192  # long side of the preview images handed to the frontend
 
@@ -93,7 +95,10 @@ class MBLoadImagesFromFolder(io.ComfyNode):
                     tooltip="File names to load, one per line. Managed by the preview grid.",
                 ),
             ],
-            outputs=[io.Image.Output("images")],
+            outputs=[
+                io.Image.Output("images"),
+                image_info.ImageInfo.Output("image_info"),
+            ],
         )
 
     @classmethod
@@ -142,7 +147,12 @@ class MBLoadImagesFromFolder(io.ComfyNode):
                 tensor = samples.movedim(1, -1).clamp(0.0, 1.0)
             images.append(tensor)
 
-        return io.NodeOutput(torch.cat(images, dim=0))
+        batch = torch.cat(images, dim=0)
+        # One name per loaded file; `filename` is the first, matching the batch
+        # order the images arrive in.
+        return io.NodeOutput(
+            batch, image_info.make(batch, None, names[0], filenames=names)
+        )
 
 
 def _drives():

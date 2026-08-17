@@ -11,7 +11,6 @@ from .load_image_node import (
     _image_files,
     aspect_ratio_string,
     load_frames,
-    resize_mask,
     target_size,
 )
 
@@ -112,8 +111,9 @@ class MBLoadImageCrop(io.ComfyNode):
         left, top, right, bottom = crop_box(
             width, height, crop_x, crop_y, crop_width, crop_height, int(divisible_by)
         )
+        # Crop the mask against the uncropped image: the box is in its pixels.
+        mask = image_info.crop_mask(mask, output, top, bottom, left, right)
         output = output[:, top:bottom, left:right, :]
-        mask = image_info.crop_mask(mask, top, bottom, left, right)
         width, height = right - left, bottom - top
 
         if resize:
@@ -123,7 +123,7 @@ class MBLoadImageCrop(io.ComfyNode):
                 samples = output.movedim(-1, 1)
                 samples = comfy.utils.common_upscale(samples, new_w, new_h, "lanczos", "disabled")
                 output = samples.movedim(1, -1).clamp(0.0, 1.0)
-                mask = resize_mask(mask, new_w, new_h)
+                mask = image_info.resize_mask(mask, new_w, new_h)
                 width, height = new_w, new_h
 
         return io.NodeOutput(

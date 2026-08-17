@@ -5,6 +5,8 @@ import torch
 import folder_paths
 from comfy_api.latest import io, InputImpl
 
+from . import image_info
+
 SILENT_SAMPLE_RATE = 44100
 
 
@@ -45,6 +47,7 @@ class MBLoadVideo(io.ComfyNode):
                 io.Float.Output("fps"),
                 io.Float.Output("seconds"),
                 io.Video.Output("video"),
+                image_info.ImageInfo.Output("image_info"),
             ],
         )
 
@@ -74,7 +77,10 @@ class MBLoadVideo(io.ComfyNode):
         frames = components.images.shape[0]
         seconds = frames / fps if fps > 0 else float(video.get_duration())
 
-        return io.NodeOutput(components.images, audio, fps, seconds, video)
+        return io.NodeOutput(
+            components.images, audio, fps, seconds, video,
+            image_info.make(components.images, None, file),
+        )
 
 
 NODES = [MBLoadVideo]

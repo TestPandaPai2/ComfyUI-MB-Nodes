@@ -2,6 +2,9 @@ import torch
 
 from comfy_api.latest import io
 
+# Aliased: "image_info" is also this node's optional input, which would
+# shadow the module inside execute().
+from . import image_info as _info
 from .resolution_node import RATIOS
 
 MODES = ["pixels", "aspect ratio"]
@@ -95,13 +98,22 @@ class MBPadImage(io.ComfyNode):
                     socketless=True,
                     tooltip="Above 0 this pads every side by this many pixels and the mode, the four side fields and the ratio are all ignored.",
                 ),
+                _info.ImageInfo.Input(
+                    "image_info",
+                    optional=True,
+                    tooltip="Wire an upstream image_info to carry its filename and mask through the pad.",
+                ),
             ],
-            outputs=[io.Image.Output("image")],
+            outputs=[
+                io.Image.Output("image"),
+                _info.ImageInfo.Output("image_info"),
+            ],
         )
 
     @classmethod
     def execute(
         cls, image, mode, top, bottom, left, right, aspect_ratio, portrait, color, all_sides=0,
+        image_info=None,
     ) -> io.NodeOutput:
         height, width = image.shape[1], image.shape[2]
 
@@ -113,8 +125,9 @@ class MBPadImage(io.ComfyNode):
                 ratio = 1 / ratio
             top, bottom, left, right = _ratio_padding(width, height, ratio)
 
+        source = image_info or {}
         if not (top or bottom or left or right):
-            return io.NodeOutput(image)
+            return io.NodeOutput(image, _info.make(image, source.get("mask"), source.get("filename", "")))
 
         channels = image.shape[3]
         fill = _rgb(color)
@@ -131,7 +144,18 @@ class MBPadImage(io.ComfyNode):
         padded[:] = torch.tensor(fill[:channels], dtype=image.dtype, device=image.device)
         padded[:, top:top + height, left:left + width, :] = image
 
-        return io.NodeOutput(padded)
+        # The mask describes the original pixels, so it is padded to match with
+        # 0 (unmasked) around the edge rather than stretched over the border.
+        mask = _info.fit_mask(source.get("mask"), image)
+        if mask is not None:
+            grown = torch.zeros(
+                (mask.shape[0], height + top + bottom, width + left + right),
+                dtype=mask.dtype, device=mask.device,
+            )
+            grown[:, top:top + height, left:left + width] = mask
+            mask = grown
+
+        return io.NodeOutput(padded, _info.make(padded, mask, source.get("filename", "")))
 
 
 NODES = [MBPadImage]

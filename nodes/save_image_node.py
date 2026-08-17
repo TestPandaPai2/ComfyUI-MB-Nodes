@@ -37,9 +37,18 @@ def _cache_key(workflow_id, node_id):
     return KEY_SAFE.sub("_", f"{workflow_id or 'default'}_{node_id or '0'}")
 
 
-def _to_pil(image_tensor):
+def _to_pil(image_tensor, mask_tensor=None):
+    """RGB, or RGBA when a mask is supplied. The mask is inverted on the way in:
+    1 means masked/transparent, which is 0 in an alpha channel."""
     array = np.clip(255.0 * image_tensor.cpu().numpy(), 0, 255).astype(np.uint8)
-    return Image.fromarray(array)
+    pil = Image.fromarray(array)
+    if mask_tensor is None:
+        return pil
+
+    alpha = np.clip(255.0 * (1.0 - mask_tensor.cpu().numpy()), 0, 255).astype(np.uint8)
+    pil = pil.convert("RGBA")
+    pil.putalpha(Image.fromarray(alpha, "L"))
+    return pil
 
 
 def _png_metadata(cls):
@@ -144,7 +153,7 @@ class MBSaveImage(io.ComfyNode):
                 io.Mask.Input(
                     "mask",
                     optional=True,
-                    tooltip="Passed straight through onto the image_info output; it does not affect what is written.",
+                    tooltip="Written into the alpha channel for png and webp, and carried on the image_info output. jpg has no alpha, so it is ignored there.",
                 ),
             ],
             outputs=[
@@ -194,19 +203,23 @@ class MBSaveImage(io.ComfyNode):
             filename_prefix, base_dir, images[0].shape[1], images[0].shape[0]
         )
 
-        first_path = ""
+        # jpg cannot carry alpha, so the mask only reaches the file for png/webp.
+        fitted = image_info.fit_mask(mask, images) if format != "jpg" else None
+
+        paths = []
         for batch_number, image_tensor in enumerate(images):
-            pil = _to_pil(image_tensor)
+            pil = _to_pil(image_tensor, fitted[batch_number] if fitted is not None else None)
             name = filename.replace("%batch_num%", str(batch_number))
             path = os.path.join(full_folder, f"{name}_{counter:05}_.{format}")
             _save_one(pil, path, format, quality, png_compress_level, webp_lossless, cls)
-            first_path = first_path or path
+            paths.append(path)
             counter += 1
 
-        # One filename for a batch: the first written, which is what the counter
-        # names the run by.
+        # `filename` is the first written, which is what the counter names the
+        # run by; `filenames` keeps the rest of a batch.
         return io.NodeOutput(
-            image_info.make(images, mask, first_path), ui=ui.SavedImages([preview])
+            image_info.make(images, mask, paths[0] if paths else "", filenames=paths),
+            ui=ui.SavedImages([preview]),
         )
 
 

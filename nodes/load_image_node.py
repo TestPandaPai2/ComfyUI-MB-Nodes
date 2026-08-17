@@ -92,16 +92,6 @@ def load_frames(path):
     return output, mask
 
 
-def resize_mask(mask, width, height):
-    """Nearest-neighbour resize of a [B, H, W] mask onto a new image size."""
-    if mask is None:
-        return None
-    resized = comfy.utils.common_upscale(
-        mask.unsqueeze(1), width, height, "nearest-exact", "disabled"
-    )
-    return resized.squeeze(1).clamp(0.0, 1.0)
-
-
 class MBLoadImage(io.ComfyNode):
     """Load an image from the input folder, optionally resized to the closest
     resolution hitting a target megapixel count."""
@@ -173,7 +163,7 @@ class MBLoadImage(io.ComfyNode):
                 samples = output.movedim(-1, 1)
                 samples = comfy.utils.common_upscale(samples, new_w, new_h, "lanczos", "disabled")
                 output = samples.movedim(1, -1).clamp(0.0, 1.0)
-                mask = resize_mask(mask, new_w, new_h)
+                mask = image_info.resize_mask(mask, new_w, new_h)
                 width, height = new_w, new_h
 
         return io.NodeOutput(

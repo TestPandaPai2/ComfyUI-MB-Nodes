@@ -170,7 +170,7 @@ class MBImageCrop(io.ComfyNode):
         # on the incoming bundle, so a loader's alpha survives the crop.
         source = image_info or {}
         cropped_mask = info.crop_mask(
-            mask if mask is not None else source.get("mask"), top, bottom, left, right
+            mask if mask is not None else source.get("mask"), image, top, bottom, left, right
         )
 
         return io.NodeOutput(

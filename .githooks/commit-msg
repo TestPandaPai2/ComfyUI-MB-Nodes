@@ -1,0 +1,17 @@
+#!/bin/sh
+# Rejects the PowerShell here-string leak: writing `git commit -m @'...'@` in a
+# POSIX shell concatenates a literal "@" onto both ends of the message, leaving
+# "@" as the subject line and a stray "@" at the end.
+subject=$(sed -n '1p' "$1")
+
+if [ "$subject" = "@" ] || [ "$subject" = "'@" ]; then
+    echo "commit-msg: subject line is a bare '@'." >&2
+    echo "  A PowerShell here-string (@'...'@) was run through a POSIX shell." >&2
+    echo "  Use a heredoc instead:  git commit -F - <<'MSG'" >&2
+    exit 1
+fi
+
+if grep -qx "@" "$1"; then
+    echo "commit-msg: stray '@' on a line of its own." >&2
+    exit 1
+fi
