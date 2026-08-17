@@ -10,6 +10,7 @@ from comfy_api.latest import ComfyExtension, io
 
 from .nodes.crop_image_node import NODES as _crop_image
 from .nodes.get_lines_node import NODES as _get_lines
+from .nodes.image_info import NODES as _image_info
 from .nodes.load_image_crop_node import NODES as _load_image_crop
 from .nodes.load_image_node import NODES as _load_image
 from .nodes.pad_image_node import NODES as _pad_image
@@ -29,6 +30,7 @@ NODES: list[type[io.ComfyNode]] = [
     *_slider,
     *_load_image,
     *_load_image_crop,
+    *_image_info,
     *_save_image,
     *_save_mp4,
     *_prompt_pad,

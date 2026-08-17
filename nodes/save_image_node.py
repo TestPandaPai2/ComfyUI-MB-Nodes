@@ -10,6 +10,8 @@ import folder_paths
 from comfy.cli_args import args
 from comfy_api.latest import io, ui
 
+from . import image_info
+
 FORMATS = ["png", "jpg", "webp"]
 CACHE_DIR_NAME = "MBNodesCache"  # lives inside the ComfyUI output folder
 CACHE_SCALE = {"preview": 0.5, "save": 1.0}  # preview mode halves it, save mode keeps full size
@@ -139,8 +141,15 @@ class MBSaveImage(io.ComfyNode):
                     default=False,
                     tooltip="webp only. Ignores quality and stores the image losslessly.",
                 ),
+                io.Mask.Input(
+                    "mask",
+                    optional=True,
+                    tooltip="Passed straight through onto the image_info output; it does not affect what is written.",
+                ),
             ],
-            outputs=[],
+            outputs=[
+                image_info.ImageInfo.Output("image_info"),
+            ],
             hidden=[io.Hidden.prompt, io.Hidden.extra_pnginfo, io.Hidden.unique_id],
         )
 
@@ -164,7 +173,7 @@ class MBSaveImage(io.ComfyNode):
     @classmethod
     def execute(
         cls, images, mode, format, filename_prefix, output_folder, quality,
-        png_compress_level, webp_lossless,
+        png_compress_level, webp_lossless, mask=None,
     ) -> io.NodeOutput:
         hidden = cls.hidden
         workflow = ((hidden.extra_pnginfo if hidden else None) or {}).get("workflow") or {}
@@ -175,21 +184,30 @@ class MBSaveImage(io.ComfyNode):
         preview = _write_cache_preview(images[0], key, mode)
 
         if mode == "preview":
-            return io.NodeOutput(ui=ui.SavedImages([preview]))
+            # Nothing was written, so image_info reports no filename.
+            return io.NodeOutput(
+                image_info.make(images, mask, ""), ui=ui.SavedImages([preview])
+            )
 
         base_dir = cls._resolve_folder(output_folder)
         full_folder, filename, counter, _subfolder, _prefix = folder_paths.get_save_image_path(
             filename_prefix, base_dir, images[0].shape[1], images[0].shape[0]
         )
 
+        first_path = ""
         for batch_number, image_tensor in enumerate(images):
             pil = _to_pil(image_tensor)
             name = filename.replace("%batch_num%", str(batch_number))
             path = os.path.join(full_folder, f"{name}_{counter:05}_.{format}")
             _save_one(pil, path, format, quality, png_compress_level, webp_lossless, cls)
+            first_path = first_path or path
             counter += 1
 
-        return io.NodeOutput(ui=ui.SavedImages([preview]))
+        # One filename for a batch: the first written, which is what the counter
+        # names the run by.
+        return io.NodeOutput(
+            image_info.make(images, mask, first_path), ui=ui.SavedImages([preview])
+        )
 
 
 # Lets the frontend re-attach a node's cached preview after a restart, when no

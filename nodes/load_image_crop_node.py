@@ -1,16 +1,19 @@
 import hashlib
 
-import numpy as np
-import torch
-from PIL import Image, ImageOps, ImageSequence
-
 import comfy.utils
 import folder_paths
-import node_helpers
 from comfy_api.latest import io
 
+from . import image_info
 from .crop_image_node import DIVISORS, RATIOS, crop_box
-from .load_image_node import MEGAPIXELS, aspect_ratio_string, target_size, _image_files
+from .load_image_node import (
+    MEGAPIXELS,
+    _image_files,
+    aspect_ratio_string,
+    load_frames,
+    resize_mask,
+    target_size,
+)
 
 
 class MBLoadImageCrop(io.ComfyNode):
@@ -75,6 +78,7 @@ class MBLoadImageCrop(io.ComfyNode):
                 io.Int.Output("width"),
                 io.Int.Output("height"),
                 io.String.Output("aspect_ratio"),
+                image_info.ImageInfo.Output("image_info"),
             ],
         )
 
@@ -101,20 +105,7 @@ class MBLoadImageCrop(io.ComfyNode):
     def execute(cls, image, resize, megapixels, aspect_ratio, divisible_by,
                 crop_x, crop_y, crop_width, crop_height) -> io.NodeOutput:
         path = folder_paths.get_annotated_filepath(image)
-        img = node_helpers.pillow(Image.open, path)
-
-        frames = []
-        first_size = None
-        for frame in ImageSequence.Iterator(img):
-            frame = node_helpers.pillow(ImageOps.exif_transpose, frame).convert("RGB")
-            if first_size is None:
-                first_size = frame.size
-            elif frame.size != first_size:
-                continue  # animated frames of a different size cannot be stacked
-            array = np.array(frame).astype(np.float32) / 255.0
-            frames.append(torch.from_numpy(array)[None,])
-
-        output = torch.cat(frames, dim=0)
+        output, mask = load_frames(path)
         height, width = output.shape[1], output.shape[2]
 
         # Crop first: the megapixel target is meant to describe what comes out.
@@ -122,6 +113,7 @@ class MBLoadImageCrop(io.ComfyNode):
             width, height, crop_x, crop_y, crop_width, crop_height, int(divisible_by)
         )
         output = output[:, top:bottom, left:right, :]
+        mask = image_info.crop_mask(mask, top, bottom, left, right)
         width, height = right - left, bottom - top
 
         if resize:
@@ -131,9 +123,16 @@ class MBLoadImageCrop(io.ComfyNode):
                 samples = output.movedim(-1, 1)
                 samples = comfy.utils.common_upscale(samples, new_w, new_h, "lanczos", "disabled")
                 output = samples.movedim(1, -1).clamp(0.0, 1.0)
+                mask = resize_mask(mask, new_w, new_h)
                 width, height = new_w, new_h
 
-        return io.NodeOutput(output, width, height, aspect_ratio_string(width, height))
+        return io.NodeOutput(
+            output,
+            width,
+            height,
+            aspect_ratio_string(width, height),
+            image_info.make(output, mask, image),
+        )
 
 
 NODES = [MBLoadImageCrop]

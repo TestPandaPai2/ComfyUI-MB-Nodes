@@ -8,6 +8,10 @@ from PIL import Image
 import folder_paths
 from comfy_api.latest import io
 
+# Aliased: "image_info" is also the name of this node's optional input, which
+# would shadow the module inside execute().
+from . import image_info as info
+
 # Aspect presets. "free" leaves the box unconstrained, "source" locks it to the
 # aspect of the incoming image. Everything else is a fixed w:h.
 RATIOS = [
@@ -122,18 +126,30 @@ class MBImageCrop(io.ComfyNode):
                 io.Float.Input("crop_y", default=0.0, min=0.0, max=1.0, step=0.0001, socketless=True),
                 io.Float.Input("crop_width", default=1.0, min=0.0, max=1.0, step=0.0001, socketless=True),
                 io.Float.Input("crop_height", default=1.0, min=0.0, max=1.0, step=0.0001, socketless=True),
+                io.Mask.Input(
+                    "mask",
+                    optional=True,
+                    tooltip="Cropped with the image and carried on the image_info output.",
+                ),
+                info.ImageInfo.Input(
+                    "image_info",
+                    optional=True,
+                    tooltip="Wire the upstream loader's image_info to carry its filename (and mask, when no mask is wired) through the crop.",
+                ),
             ],
             outputs=[
                 io.Image.Output("image"),
                 io.Int.Output("width"),
                 io.Int.Output("height"),
+                info.ImageInfo.Output("image_info"),
             ],
             hidden=[io.Hidden.extra_pnginfo, io.Hidden.unique_id],
         )
 
     @classmethod
     def execute(
-        cls, image, aspect_ratio, divisible_by, crop_x, crop_y, crop_width, crop_height
+        cls, image, aspect_ratio, divisible_by, crop_x, crop_y, crop_width, crop_height,
+        mask=None, image_info=None
     ) -> io.NodeOutput:
         hidden = cls.hidden
         workflow = ((hidden.extra_pnginfo if hidden else None) or {}).get("workflow") or {}
@@ -149,7 +165,20 @@ class MBImageCrop(io.ComfyNode):
         )
 
         cropped = image[:, top:bottom, left:right, :]
-        return io.NodeOutput(cropped, right - left, bottom - top)
+
+        # An explicitly wired mask wins; otherwise fall back to one riding along
+        # on the incoming bundle, so a loader's alpha survives the crop.
+        source = image_info or {}
+        cropped_mask = info.crop_mask(
+            mask if mask is not None else source.get("mask"), top, bottom, left, right
+        )
+
+        return io.NodeOutput(
+            cropped,
+            right - left,
+            bottom - top,
+            info.make(cropped, cropped_mask, source.get("filename", "")),
+        )
 
 
 # Lets the editor re-attach the cached source image after a restart, when the
