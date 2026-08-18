@@ -129,11 +129,6 @@ picker, and the fields for the other mode stay hidden.
 with the mode, the four side fields and the ratio all ignored and hidden until it
 goes back to 0.
 
-### Restart button
-Not a node: the pack adds a red restart icon to the ComfyUI top bar, at the
-right-hand end of its controls. One click restarts the ComfyUI server — no confirmation — and the page
-reloads by itself once the new process answers.
-
 ### Upscale Latent (MB)
 Takes a latent and scales it by a multiplier picked from a row of clickable
 buttons — 0.5x, 1x, 1.5x, 2x, 2.5x and 3x out of the box. `upscale_method`
