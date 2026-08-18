@@ -176,11 +176,24 @@ function makeWidget(node) {
             drawWidget(ctx, drawNode, this.width, y, this.height);
         },
 
-        // The split follows the pointer while it is over the widget, so hovering
-        // wipes between the two images with no click needed.
+        // The handle only moves while the pointer is held down, like a normal
+        // slider. LiteGraph keeps forwarding move/up to whichever widget
+        // claimed the pointerdown, so the drag keeps tracking even if the
+        // cursor briefly leaves the widget's bounds.
         mouse(event, pos, mouseNode) {
-            const tracked = ["pointermove", "mousemove", "pointerdown", "mousedown"];
-            if (!tracked.includes(event.type)) return false;
+            const type = event.type;
+
+            if (type === "pointerdown" || type === "mousedown") {
+                this.dragging = true;
+            } else if (type === "pointerup" || type === "mouseup") {
+                if (!this.dragging) return false;
+                this.dragging = false;
+                return true;
+            } else if (type !== "pointermove" && type !== "mousemove") {
+                return false;
+            }
+
+            if (!this.dragging) return false;
 
             // The canvas renderer measures pos from the node's origin, Nodes 2.0
             // from the widget's own box. The widget only receives events that
