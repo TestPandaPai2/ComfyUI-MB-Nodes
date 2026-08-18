@@ -17,7 +17,11 @@ const DIAGONAL = "Diagonal Bus";
 const BEZIER = "Bezier Snap";
 
 const STUB = 10; // straight run off a slot before the first bend
-const CHAMFER = 10; // corner cut length for the mitred mode
+const CORNER = 10; // corner radius for Manhattan, cut length for Mitred
+
+const SHARP = "sharp";
+const ROUND = "round";
+const CHAMFER = "chamfer";
 
 let mode = DEFAULT;
 
@@ -57,7 +61,7 @@ function pointsFor(ax, ay, bx, by) {
 
 // --- path building -------------------------------------------------------
 
-function tracePolyline(ctx, pts, chamfer) {
+function tracePolyline(ctx, pts, corner) {
     ctx.moveTo(pts[0][0], pts[0][1]);
 
     for (let i = 1; i < pts.length - 1; i++) {
@@ -67,14 +71,20 @@ function tracePolyline(ctx, pts, chamfer) {
 
         const inLen = Math.hypot(cx - px, cy - py);
         const outLen = Math.hypot(nx - cx, ny - cy);
-        const cut = chamfer ? Math.min(CHAMFER, inLen / 2, outLen / 2) : 0;
+        // A corner is only worth softening when both of its arms can give up
+        // half their length to it; short elbows stay square.
+        const size = corner === SHARP ? 0 : Math.min(CORNER, inLen / 2, outLen / 2);
 
-        if (cut < 0.5) {
+        if (size < 0.5) {
             ctx.lineTo(cx, cy);
             continue;
         }
-        ctx.lineTo(cx - ((cx - px) / inLen) * cut, cy - ((cy - py) / inLen) * cut);
-        ctx.lineTo(cx + ((nx - cx) / outLen) * cut, cy + ((ny - cy) / outLen) * cut);
+        if (corner === ROUND) {
+            ctx.arcTo(cx, cy, nx, ny, size);
+            continue;
+        }
+        ctx.lineTo(cx - ((cx - px) / inLen) * size, cy - ((cy - py) / inLen) * size);
+        ctx.lineTo(cx + ((nx - cx) / outLen) * size, cy + ((ny - cy) / outLen) * size);
     }
 
     const end = pts[pts.length - 1];
@@ -94,7 +104,8 @@ function tracePath(ctx, ax, ay, bx, by) {
         ctx.bezierCurveTo(ax + d, ay, bx - d, by, bx, by);
         return;
     }
-    tracePolyline(ctx, pointsFor(ax, ay, bx, by), mode === MITRED);
+    const corner = mode === MANHATTAN ? ROUND : mode === MITRED ? CHAMFER : SHARP;
+    tracePolyline(ctx, pointsFor(ax, ay, bx, by), corner);
 }
 
 // --- centre point --------------------------------------------------------
@@ -135,11 +146,27 @@ function centreOf(ax, ay, bx, by) {
 
 // --- canvas patch --------------------------------------------------------
 
+// LLink carries its own type, but a link restored from an older workflow can
+// come back without one — the input slot it lands on always knows.
+function linkType(canvas, link) {
+    if (link?.type != null && link.type !== -1 && link.type !== "*") return link.type;
+    const node = canvas.graph?.getNodeById?.(link?.target_id);
+    return node?.inputs?.[link?.target_slot]?.type ?? null;
+}
+
+// The caller's colour wins because that is how the highlight and the white
+// flow pulse are drawn. Otherwise the input's data type decides, so a link is
+// coloured by what it carries rather than by whatever colour it was saved
+// with, and a stored link colour is only used for types with no colour of
+// their own.
 function resolveColour(canvas, link, colour) {
     if (colour) return colour;
-    if (link?.color) return link.color;
-    const typed = link?.type != null && canvas.constructor.link_type_colors?.[link.type];
-    return typed || canvas.default_link_color || "#9A9";
+
+    const type = linkType(canvas, link);
+    const typed = type != null && canvas.constructor.link_type_colors?.[type];
+    if (typed) return typed;
+
+    return link?.color || canvas.default_link_color || "#9A9";
 }
 
 function install() {

@@ -153,10 +153,14 @@ Circuit-board routing for every link on the canvas, on top of ComfyUI's own
 three styles:
 
 - **Default** — hands back to whatever ComfyUI is set to.
-- **Manhattan** — right angles only, elbowing across a shared mid-line.
+- **Manhattan** — right angles only, elbowing across a shared mid-line, with the corners rounded off.
 - **Mitred** — the same route with the corners cut at 45°, like an etched trace.
 - **Diagonal Bus** — horizontal runs joined by a true 45° diagonal.
 - **Bezier Snap** — a flattened spline that leaves and enters each slot level.
 
 Links attached to a reroute point keep ComfyUI's own rendering, so the dot stays
 draggable.
+
+Links in the custom modes take their colour from the type of the input they
+land on, so a workflow reads by wire colour regardless of what colour each link
+was saved with.
