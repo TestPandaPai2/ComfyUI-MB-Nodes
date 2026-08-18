@@ -71,6 +71,13 @@ upstream has an image yet, it falls back to the copy cached in
 `output/MBNodesCache` on the last run, so the crop box still has its picture
 after a restart.
 
+### Image Compare (MB)
+Two image inputs, A and B, drawn one over the other with a wipe slider. Hover
+the preview and the split follows the cursor in real time, so the difference
+between the pair reads as you move. `direction` picks which way it wipes:
+**Left to Right** (A gives way to B), **Right to Left** (B on the left) or
+**Up to Down**. Only the first image of a batch is shown.
+
 ### Save Image (MB)
 Saves images as png, jpg or webp — png is lossless and carries the workflow,
 jpg is the smallest and drops alpha and metadata, webp sits in between with an

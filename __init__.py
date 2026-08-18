@@ -9,6 +9,7 @@ from typing_extensions import override
 from comfy_api.latest import ComfyExtension, io
 
 from .nodes.combine_text_node import NODES as _combine_text
+from .nodes.compare_image_node import NODES as _compare_image
 from .nodes.crop_image_node import NODES as _crop_image
 from .nodes.get_lines_node import NODES as _get_lines
 from .nodes.image_info import NODES as _image_info
@@ -42,6 +43,7 @@ NODES: list[type[io.ComfyNode]] = [
     *_get_lines,
     *_combine_text,
     *_crop_image,
+    *_compare_image,
     *_upscale_latent,
     *_pad_image,
 ]
