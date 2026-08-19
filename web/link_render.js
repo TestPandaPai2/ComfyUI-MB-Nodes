@@ -178,10 +178,11 @@ function install() {
     proto._mbLinkRenderPatched = true;
 
     proto.renderLink = function (ctx, a, b, link, skipBorder, flow, colour, startDir, endDir, options) {
-        // A reroute point carries its own control points and its own segment
-        // maths; bending those by hand would detach the link from the dot the
-        // user drags, so they keep the stock renderer.
-        if (mode === DEFAULT || options?.reroute) {
+        // Reroute segments are drawn with the same a/b points as any other
+        // segment, so the custom routing applies to them too -- otherwise a
+        // link would switch back to the native spline the moment it touched
+        // a reroute dot.
+        if (mode === DEFAULT) {
             return original.apply(this, arguments);
         }
 
