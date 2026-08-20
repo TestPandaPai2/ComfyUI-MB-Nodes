@@ -19,6 +19,7 @@ from .nodes.load_image_crop_node import NODES as _load_image_crop
 from .nodes.load_image_node import NODES as _load_image
 from .nodes.load_video_node import NODES as _load_video
 from .nodes.pad_image_node import NODES as _pad_image
+from .nodes.preview_audio_node import NODES as _preview_audio
 from .nodes.prompt_pad_node import NODES as _prompt_pad
 from .nodes.resolution_node import NODES as _resolution
 from .nodes.save_image_node import NODES as _save_image
@@ -48,6 +49,7 @@ NODES: list[type[io.ComfyNode]] = [
     *_upscale_latent,
     *_pad_image,
     *_branch_runner,
+    *_preview_audio,
 ]
 
 

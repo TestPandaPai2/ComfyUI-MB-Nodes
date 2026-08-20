@@ -1,21 +1,31 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 import { getWidget, setWidgetVisible, addButton, resizeToContent } from "./common.js";
+import { openDialog } from "./dialog.js";
 import {
-    MIN_FRACTION, HANDLES, snapSpan, fractionRatio, normalizeRect, refitRect,
-    offRatio, resizeRect, newRect, frameOf, hitTest, drawCrop,
+    MIN_FRACTION, snapSpan, fractionRatio, normalizeRect, refitRect,
+    resizeRect, newRect, frameOf, hitTest, drawCrop,
 } from "./crop_geometry.js";
 
 // The crop rect lives in these four widgets as fractions of the image, so it
-// stays valid whatever resolution turns up on the input dot.
+// stays valid whatever resolution turns up on the input dot. Along with the
+// aspect/divisor widgets, they are hidden from the node body and edited only
+// inside the crop dialog.
 const RECT_WIDGETS = ["crop_x", "crop_y", "crop_width", "crop_height"];
+const DIALOG_WIDGETS = ["aspect_ratio", "divisible_by", ...RECT_WIDGETS];
 
-const MARGIN = 15;      // matches the inset LiteGraph uses for its own widgets
-const MIN_HEIGHT = 140; // the editor never collapses below this
-const MAX_HEIGHT = 420;
+// Keyed the same as RATIOS in nodes/crop_image_node.py.
+const RATIO_OPTIONS = [
+    "free", "source",
+    "1:1", "4:3", "3:2", "16:10", "16:9", "1.85:1", "2:1", "21:9",
+    "3:4", "2:3", "10:16", "9:16", "1:1.85", "1:2", "9:21",
+];
+const DIVISOR_OPTIONS = ["1", "8", "16", "32", "64"];
 
-const EMPTY_BG = "#1a1a1a";
-const TEXT = "#dcdcdc";
+const DIALOG_WIDTH = 1000;
+const CANVAS_W = 940;
+const CANVAS_H = 600;
+const EMPTY_BG = "#0d0d0d";
 
 // ---------------------------------------------------------------- crop rect
 
@@ -32,43 +42,14 @@ function getRect(node) {
     };
 }
 
-function setRect(node, rect, ratio = null) {
-    const values = normalizeRect(rect, ratio);
+function setRect(node, rect) {
     const named = {
-        crop_x: values.x,
-        crop_y: values.y,
-        crop_width: values.w,
-        crop_height: values.h,
+        crop_x: rect.x, crop_y: rect.y, crop_width: rect.w, crop_height: rect.h,
     };
     for (const [name, value] of Object.entries(named)) {
         const widget = getWidget(node, name);
         if (widget) widget.value = value;
     }
-}
-
-// Target aspect in fraction space, or null when the box is unconstrained.
-function ratioOf(node, aspect) {
-    return fractionRatio(getWidget(node, "aspect_ratio")?.value ?? "free", aspect);
-}
-
-function refit(node, imageAspect) {
-    const ratio = ratioOf(node, imageAspect);
-    if (ratio === null) return;
-    setRect(node, refitRect(getRect(node), ratio), ratio);
-}
-
-function resetRect(node, imageAspect) {
-    setRect(node, { x: 0, y: 0, w: 1, h: 1 });
-    refit(node, imageAspect);
-}
-
-// A locked ratio is a ratio of pixels, so the same box stops matching when an
-// image of a different shape arrives. Called whenever one loads, which also
-// repairs a rect saved by an older version that let the box go off-ratio.
-function enforceRatio(node) {
-    const aspect = imageAspect(node);
-    const ratio = ratioOf(node, aspect);
-    if (offRatio(getRect(node), ratio)) refit(node, aspect);
 }
 
 // ------------------------------------------------------------ source image
@@ -83,17 +64,11 @@ function loadImage(node, src, size) {
         node.__mbCropSize = size?.width && size?.height
             ? [size.width, size.height]
             : [img.naturalWidth, img.naturalHeight];
-        enforceRatio(node);
-        node.__mbCropEditor?.triggerDraw?.();
-        resizeToContent(node);
-        node.setDirtyCanvas(true, true);
     };
     // The URL is kept on failure, so the once-a-second watch does not sit there
     // retrying an image that is not there.
     img.onerror = () => {
         node.__mbCropImage = null;
-        node.__mbCropEditor?.triggerDraw?.();
-        node.setDirtyCanvas(true, true);
     };
     img.src = src;
 }
@@ -192,8 +167,6 @@ async function refreshSource(node) {
     if (node.inputs?.[0]?.link == null) {
         node.__mbCropSrc = null;
         node.__mbCropImage = null;
-        node.__mbCropEditor?.triggerDraw?.();
-        node.setDirtyCanvas(true, true);
         return;
     }
     await loadFromCache(node);
@@ -218,156 +191,184 @@ function startWatch(node) {
     };
 }
 
-// ------------------------------------------------------------------ widget
+// ------------------------------------------------------------- crop dialog
 
-function imageAspect(node) {
-    const size = node.__mbCropSize;
-    return size ? size[0] / size[1] : 1;
-}
+function openCropDialog(node) {
+    const image = node.__mbCropImage;
+    if (!image) {
+        alert(node.inputs?.[0]?.link == null ? "Connect an image first." : "No preview yet — run once.");
+        return;
+    }
 
-function makeEditorWidget(node) {
-    return {
-        type: "mb_crop_editor",
-        name: "crop_editor",
-        // draw() records the geometry it used; mouse() hit tests against the
-        // same numbers, so the two agree in either renderer.
-        y: 0,
-        width: 0,
-        frame: null,
-        drag: null,
-        // The serializer checks widget.serialize, not options.serialize.
-        serialize: false,
-        options: { serialize: false },
+    const [imgW, imgH] = node.__mbCropSize ?? [image.naturalWidth, image.naturalHeight];
+    const aspect = imgW / imgH;
 
-        computeSize(width) {
-            const boxW = Math.max(1, (width || node.size[0]) - MARGIN * 2);
-            const wanted = node.__mbCropImage ? boxW / imageAspect(node) : boxW * 0.6;
-            return [width || node.size[0], Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, wanted))];
-        },
+    // Edited on a copy, so Cancel simply throws it away.
+    let rect = getRect(node);
+    let choice = getWidget(node, "aspect_ratio")?.value ?? "free";
+    let divisor = getWidget(node, "divisible_by")?.value ?? "1";
 
-        draw(ctx, drawNode, widgetWidth, y, height) {
-            this.y = y;
-            this.width = widgetWidth || drawNode.size[0];
-            const image = drawNode.__mbCropImage;
-            const frame = frameOf(
-                MARGIN, y, this.width - MARGIN * 2, height,
-                image ? imageAspect(drawNode) : 0
+    let canvas;
+    let frame = null;
+    let drag = null;
+
+    const ratioNow = () => fractionRatio(choice, aspect);
+
+    function draw() {
+        const ctx = canvas.getContext("2d");
+        const dpr = window.devicePixelRatio || 1;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.fillStyle = EMPTY_BG;
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+        frame = frameOf(0, 0, CANVAS_W, CANVAS_H, aspect);
+        const step = Number(divisor) || 1;
+        const label = `${snapSpan(rect.w * imgW, imgW, step)} x ${snapSpan(rect.h * imgH, imgH, step)}`;
+        drawCrop(ctx, frame, image, rect, label);
+    }
+
+    function apply(next) {
+        rect = normalizeRect(next, ratioNow());
+        draw();
+    }
+
+    function select(options, value, onChange) {
+        const el = document.createElement("select");
+        el.className = "mb-dialog-select";
+        for (const option of options) {
+            const item = document.createElement("option");
+            item.value = option;
+            item.textContent = option;
+            el.appendChild(item);
+        }
+        el.value = value;
+        el.addEventListener("change", () => onChange(el.value));
+        return el;
+    }
+
+    function field(label, control) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "mb-dialog-field";
+        const text = document.createElement("span");
+        text.textContent = label;
+        wrapper.append(text, control);
+        return wrapper;
+    }
+
+    openDialog({
+        title: "Crop image",
+        width: DIALOG_WIDTH,
+        applyLabel: "Apply crop",
+        render(body) {
+            canvas = document.createElement("canvas");
+            canvas.className = "mb-dialog-canvas";
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = CANVAS_W * dpr;
+            canvas.height = CANVAS_H * dpr;
+            canvas.style.aspectRatio = `${CANVAS_W} / ${CANVAS_H}`;
+            body.appendChild(canvas);
+
+            const row = document.createElement("div");
+            row.className = "mb-dialog-field";
+            row.style.justifyContent = "space-between";
+
+            const left = document.createElement("div");
+            left.className = "mb-dialog-field";
+            left.append(
+                field("aspect", select(RATIO_OPTIONS, choice, (value) => {
+                    choice = value;
+                    apply(refitRect(rect, ratioNow()));
+                })),
+                field("divisible by", select(DIVISOR_OPTIONS, divisor, (value) => {
+                    divisor = value;
+                    draw();
+                })),
             );
-            this.frame = frame;
 
-            if (!image) {
-                ctx.save();
-                ctx.fillStyle = EMPTY_BG;
-                ctx.beginPath();
-                ctx.roundRect(frame.x, frame.y, frame.w, frame.h, 6);
-                ctx.fill();
-                ctx.fillStyle = TEXT;
-                ctx.font = "12px Arial";
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                const hint = drawNode.inputs?.[0]?.link == null
-                    ? "connect an image"
-                    : "no preview yet — run once";
-                ctx.fillText(hint, frame.x + frame.w / 2, frame.y + frame.h / 2);
-                ctx.restore();
-                return;
-            }
+            const reset = document.createElement("button");
+            reset.className = "mb-dialog-button";
+            reset.textContent = "Reset";
+            reset.addEventListener("click", () => apply(refitRect({ x: 0, y: 0, w: 1, h: 1 }, ratioNow())));
 
-            const rect = getRect(drawNode);
-            const [sw, sh] = drawNode.__mbCropSize ?? [image.naturalWidth, image.naturalHeight];
-            const step = Number(getWidget(drawNode, "divisible_by")?.value ?? 1) || 1;
-            const label = `${snapSpan(rect.w * sw, sw, step)} x ${snapSpan(rect.h * sh, sh, step)}`;
-            drawCrop(ctx, frame, image, rect, label);
-        },
+            row.append(left, reset);
+            body.appendChild(row);
 
-        // LiteGraph keeps forwarding move/up to whichever widget claimed the
-        // pointerdown, which is what makes the drag work.
-        mouse(event, pos, mouseNode) {
-            const frame = this.frame;
-            if (!frame || !mouseNode.__mbCropImage) return false;
+            const hint = document.createElement("div");
+            hint.className = "mb-dialog-hint";
+            hint.style.margin = "0";
+            hint.textContent = "Drag inside the box to move it, a corner or edge to resize, or on empty image to start a new one.";
+            body.appendChild(hint);
 
-            const fx = (pos[0] - frame.x) / frame.w;
-            const fy = (pos[1] - frame.y) / frame.h;
-            const type = event.type;
+            // The canvas is laid out in CSS pixels but drawn at device
+            // resolution, so pointer coordinates are scaled back to the former.
+            const pointAt = (event) => {
+                const box = canvas.getBoundingClientRect();
+                return [
+                    ((event.clientX - box.left) / box.width) * CANVAS_W,
+                    ((event.clientY - box.top) / box.height) * CANVAS_H,
+                ];
+            };
 
-            if (type === "pointerdown" || type === "mousedown") {
-                const mode = hitTest(frame, getRect(mouseNode), pos[0], pos[1]);
-                if (mode === "new" && (fx < -0.05 || fx > 1.05 || fy < -0.05 || fy > 1.05)) {
-                    return false; // outside the image altogether, let the node have it
+            canvas.addEventListener("pointerdown", (event) => {
+                if (!frame) return;
+                const [px, py] = pointAt(event);
+                const from = [(px - frame.x) / frame.w, (py - frame.y) / frame.h];
+                if (from[0] < -0.05 || from[0] > 1.05 || from[1] < -0.05 || from[1] > 1.05) return;
+
+                canvas.setPointerCapture(event.pointerId);
+                drag = { mode: hitTest(frame, rect, px, py), start: rect, from };
+                if (drag.mode === "new") {
+                    apply({ x: from[0], y: from[1], w: MIN_FRACTION, h: MIN_FRACTION });
                 }
-                this.drag = { mode, start: getRect(mouseNode), from: [fx, fy] };
-                if (mode === "new") {
-                    const ratio = ratioOf(mouseNode, imageAspect(mouseNode));
-                    setRect(mouseNode, { x: fx, y: fy, w: MIN_FRACTION, h: MIN_FRACTION }, ratio);
+            });
+
+            canvas.addEventListener("pointermove", (event) => {
+                if (!drag || !frame) return;
+                const [px, py] = pointAt(event);
+                const fx = (px - frame.x) / frame.w;
+                const fy = (py - frame.y) / frame.h;
+                const ratio = ratioNow();
+                const { mode, start, from } = drag;
+
+                if (mode === "move") {
+                    apply({ ...start, x: start.x + (fx - from[0]), y: start.y + (fy - from[1]) });
+                } else if (mode === "new") {
+                    apply(newRect(from, fx, fy, ratio));
+                } else {
+                    apply(resizeRect(mode, start, fx - from[0], fy - from[1], ratio));
                 }
-                this.triggerDraw?.();
-                return true;
-            }
+            });
 
-            if (!this.drag) return false;
+            const end = (event) => {
+                if (!drag) return;
+                drag = null;
+                canvas.releasePointerCapture?.(event.pointerId);
+            };
+            canvas.addEventListener("pointerup", end);
+            canvas.addEventListener("pointercancel", end);
 
-            if (type === "pointerup" || type === "mouseup") {
-                this.drag = null;
-                mouseNode.setDirtyCanvas(true, true);
-                return true;
-            }
-
-            if (type !== "pointermove" && type !== "mousemove") return false;
-
-            const { mode, start, from } = this.drag;
-            const ratio = ratioOf(mouseNode, imageAspect(mouseNode));
-            const dx = fx - from[0];
-            const dy = fy - from[1];
-
-            let rect;
-            if (mode === "move") {
-                rect = { ...start, x: start.x + dx, y: start.y + dy };
-            } else if (mode === "new") {
-                rect = newRect(from, fx, fy, ratio);
-            } else {
-                rect = resizeRect(mode, start, dx, dy, ratio);
-            }
-
-            setRect(mouseNode, rect, ratio);
-            // Under Nodes 2.0 the widget owns its own canvas and only repaints
-            // when asked; setDirtyCanvas alone is not enough.
-            this.triggerDraw?.();
-            mouseNode.setDirtyCanvas(true, true);
-            return true;
+            draw();
         },
-    };
+        onApply() {
+            setRect(node, rect);
+            const aspectWidget = getWidget(node, "aspect_ratio");
+            if (aspectWidget) aspectWidget.value = choice;
+            const divisorWidget = getWidget(node, "divisible_by");
+            if (divisorWidget) divisorWidget.value = divisor;
+            node.setDirtyCanvas(true, true);
+        },
+    });
 }
+
+// ------------------------------------------------------------------ widget
 
 // Must run synchronously from nodeCreated: a workflow restores widget values by
 // position, so every widget this adds has to already be in place — appended at
 // the end, which leaves the indices of the real inputs untouched.
 function wireNode(node) {
-    for (const name of RECT_WIDGETS) setWidgetVisible(node, name, false);
+    for (const name of DIALOG_WIDGETS) setWidgetVisible(node, name, false);
 
-    for (const name of ["aspect_ratio", "divisible_by"]) {
-        const widget = getWidget(node, name);
-        if (!widget) continue;
-        const prev = widget.callback;
-        widget.callback = function (...args) {
-            const r = prev?.apply(this, args);
-            // Only the aspect changes the box; the divisor just changes the
-            // size that is reported for it.
-            if (name === "aspect_ratio") refit(node, imageAspect(node));
-            node.__mbCropEditor?.triggerDraw?.();
-            node.setDirtyCanvas(true, true);
-            return r;
-        };
-    }
-
-    addButton(node, "Reset crop", () => {
-        resetRect(node, imageAspect(node));
-        node.__mbCropEditor?.triggerDraw?.();
-        node.setDirtyCanvas(true, true);
-    });
-
-    const editor = makeEditorWidget(node);
-    node.__mbCropEditor = editor;
-    node.addCustomWidget(editor);
+    addButton(node, "Crop Image", () => openCropDialog(node));
 
     // Connecting or rerouting the input dot should show the new image at once,
     // ahead of the next tick of the watch.

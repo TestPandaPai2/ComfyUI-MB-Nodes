@@ -51,25 +51,25 @@ height, and the aspect ratio as a string.
 
 ### Crop Image (MB)
 Crops whatever comes in on the `image` dot — there is no file picker, the image
-always arrives from another node. Drag a box over the preview on the node to set
-the crop: drag inside it to move, grab a corner or edge to resize, or drag on
-empty image to start a fresh box. The `aspect_ratio` widget locks the box to a
+always arrives from another node. The node itself just shows a **Crop Image**
+button; clicking it opens a large dialog with the box editor: drag inside the
+box to move it, grab a corner or edge to resize, or drag on empty image to
+start a fresh box. The `aspect_ratio` picker in the dialog locks the box to a
 preset (1:1 through 21:9, portrait ones too), `source` keeps the input's own
 aspect and `free` lets you drag anything. The crop is stored as fractions of the
-image, so it stays correct if the input resolution changes. `divisible_by` rounds
-the cropped width and height down to a multiple of 8, 16, 32 or 64, trimming
-evenly from both sides so the crop keeps its centre — the readout on the image
-shows the size you will actually get. Outputs the cropped image, its width and
-its height.
+image, so it stays correct if the input resolution changes. `divisible_by`
+rounds the cropped width and height down to a multiple of 8, 16, 32 or 64,
+trimming evenly from both sides so the crop keeps its centre — the readout in
+the dialog shows the size you will actually get. Outputs the cropped image, its
+width and its height.
 
-The preview appears as soon as something is plugged into the `image` dot — no
-run needed. The node walks back up the chain (through reroutes and anything else
-that has no image of its own) until it finds a node that can hand one over,
-including a loader that has only picked a file. Change the file or reroute the
-link and the preview follows within a second. Behind a sampler, where nothing
-upstream has an image yet, it falls back to the copy cached in
-`output/MBNodesCache` on the last run, so the crop box still has its picture
-after a restart.
+The dialog has an image to crop as soon as something is plugged into the
+`image` dot — no run needed. The node walks back up the chain (through
+reroutes and anything else that has no image of its own) until it finds a node
+that can hand one over, including a loader that has only picked a file. Behind
+a sampler, where nothing upstream has an image yet, it falls back to the copy
+cached in `output/MBNodesCache` on the last run, so the dialog still has a
+picture to crop after a restart.
 
 ### Image Compare (MB)
 Two image inputs, A and B, drawn one over the other with a wipe slider. Hover
@@ -94,6 +94,17 @@ muxed in. `trim_to_audio` cuts the video down to whichever of the two tracks end
 first, so it stops when the music does. It writes to the ComfyUI output folder by
 default or to any folder you type in, and the `preview_only` switch keeps the
 file in temp instead. Either way the finished video plays back on the node.
+
+### Preview Audio (MB)
+Plays the incoming audio on the node and passes it straight through unchanged.
+The `volume` slider only controls that on-node playback — it never touches the
+output audio or a saved file. Flip `save_to_file` to `save` and the format,
+quality, filename and output folder options appear: pick `mp3`, `opus`, `wav`
+or `flac`, leave `filename` blank for an auto-numbered name (using
+`filename_prefix`) or type an exact one, and leave `output_folder` blank for
+the ComfyUI output folder or point it anywhere else. `quality` is a bitrate and
+only applies to mp3/opus (`V0` is mp3's variable-bitrate top quality); wav and
+flac ignore it.
 
 ### Prompt Pad (MB)
 A scratchpad for prompts. Type into the text box, put a name in the filename
@@ -162,6 +173,12 @@ without wiring a Branch Runner into it at all.
 ## Settings
 
 Open ComfyUI's settings dialog and pick the **MB** panel.
+
+### Theme → Accent colour
+Every MB node shares a dark title bar; this picks its colour from five
+presets — **Green**, **Pink**, **Purple**, **Teal**, **Gold** (default Green).
+Switching presets recolours every MB node already on the canvas immediately,
+not just ones added afterwards.
 
 ### Links → Link render mode
 Circuit-board routing for every link on the canvas, on top of ComfyUI's own
