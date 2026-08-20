@@ -5,234 +5,87 @@ Just a bunch of comfy nodes. All of them live under the **MBNodes** category.
 ## Nodes
 
 ### Text (MB)
-A plain multiline text box, with ComfyUI's dynamic prompt system (wildcards,
-`{a|b|c}` random choices) turned on by default.
+Plain multiline text box with dynamic prompts (`{a|b|c}` wildcards) on by default.
 
 ### Combine Text (MB)
-Joins any number of text inputs with a chosen `delimiter` (newline, comma,
-space, dash or blank line). The input list grows a slot at a time as the
-existing ones are connected, up to 32. Blank or unconnected slots are kept as
-empty strings, so the spacing of the result stays predictable.
+Joins any number of text inputs with a chosen delimiter. Input slots auto-grow up to 32.
 
 ### Random Line Select (MB)
-Splits an incoming text into its non-blank lines and outputs one of them,
-picked by a KSampler-style `seed` widget (with the usual randomize/increment/
-decrement control) wrapped onto however many lines the text has — any seed
-value always lands on a real line. Outputs the picked `line`, its 1-indexed
-`line_number`, and the total `line_count`.
+Splits text into lines, outputs one picked by a seed widget (wraps to the line count).
 
 ### Show Text (MB)
-Displays incoming text on the node itself as a live, read-only preview after
-every run, and passes it through unchanged as a `text` output. It's an output
-node, so it can be run on its own (with whatever feeds it) instead of queuing
-the whole workflow.
+Live read-only preview of incoming text, passed through as output. Runnable standalone.
 
 ### Resolution (MB)
-Pick an aspect ratio from the dropdown (1:1 through 21:9) and a resolution from
-the presets it offers. Every size is a multiple of 64 and stays inside a sane area window, with a
-portrait toggle to flip the orientation. Outputs width, height, an empty latent
-and the batch size.
+Aspect ratio + resolution presets, multiples of 64, portrait toggle. Outputs width, height, empty latent, batch size.
 
 ### Slider (MB)
-A slider with an editable range and step. Turn `live` on and the prompt re-queues
-while you drag, so you can watch a parameter change in real time. Outputs the
-value as float, int and string.
+Editable-range slider with a `live` toggle that re-queues while dragging. Outputs float, int and string.
 
 ### Load Image (MB)
-Select an image from the input folder or upload a new one, with a preview on the
-node. Flip `resize` on to scale the image to the closest resolution matching a
-target megapixel count, keeping the aspect ratio. Outputs the image, its width
-and height, and the aspect ratio as a string such as `16:9`.
-
-**📋 Paste from clipboard** takes whatever image you copied last — a screenshot,
-a crop from another app, an image copied out of a browser — writes it into the
-input folder as `clipboard-<date>-<time>.png` and selects it, so nothing is
-overwritten and the paste is still there next session. The browser asks for
-clipboard permission the first time.
+Picks or uploads an image, with a preview and optional megapixel-target resize. **📋 Paste from clipboard** saves whatever you last copied into the input folder and selects it.
 
 ### Load Image with Crop (MB)
-Load Image (MB) with a crop step built in. Same file picker, upload button,
-clipboard paste and megapixel resize, plus a **Crop...** button that opens a dialog holding the
-picked image: drag inside the box to move it, grab a corner or edge to resize,
-or drag on empty image to start a fresh one. The dialog also carries the
-`aspect` preset (1:1 through 21:9, portrait ones too, plus `source` and `free`)
-and `divisible by`, and a Reset button. Nothing is written to the node until you
-hit Apply crop.
-
-The crop is stored as fractions of the image, so picking a file of another size
-keeps it meaningful. Cropping happens first and the megapixel resize is applied
-to the result, so the target describes what comes out. The readout on the node
-shows the chain — source size, cropped size, resized size — with the aspect
-ratio and megapixels of the final image. Outputs the image, its width and
-height, and the aspect ratio as a string.
+Load Image (MB) plus a crop dialog (drag/resize box, aspect presets, divisible-by). Crop applies before the megapixel resize.
 
 ### Crop Image (MB)
-Crops whatever comes in on the `image` dot — there is no file picker, the image
-always arrives from another node. The node itself just shows a **Crop Image**
-button; clicking it opens a large dialog with the box editor: drag inside the
-box to move it, grab a corner or edge to resize, or drag on empty image to
-start a fresh box. The `aspect_ratio` picker in the dialog locks the box to a
-preset (1:1 through 21:9, portrait ones too), `source` keeps the input's own
-aspect and `free` lets you drag anything. The crop is stored as fractions of the
-image, so it stays correct if the input resolution changes. `divisible_by`
-rounds the cropped width and height down to a multiple of 8, 16, 32 or 64,
-trimming evenly from both sides so the crop keeps its centre — the readout in
-the dialog shows the size you will actually get. Outputs the cropped image, its
-width and its height.
-
-The dialog has an image to crop as soon as something is plugged into the
-`image` dot — no run needed. The node walks back up the chain (through
-reroutes and anything else that has no image of its own) until it finds a node
-that can hand one over, including a loader that has only picked a file. Behind
-a sampler, where nothing upstream has an image yet, it falls back to the copy
-cached in `output/MBNodesCache` on the last run, so the dialog still has a
-picture to crop after a restart.
+Same crop dialog as above, but for an `image` input instead of a file picker. Crop is stored as fractions of the image so it survives resolution changes; falls back to a cached preview when nothing upstream has an image yet.
 
 ### Image Compare (MB)
-Two image inputs, A and B, drawn one over the other with a wipe slider. Hover
-the preview and the split follows the cursor in real time, so the difference
-between the pair reads as you move. `direction` picks which way it wipes:
-**Left to Right** (A gives way to B), **Right to Left** (B on the left) or
-**Up to Down**. Only the first image of a batch is shown.
+Wipe-slider comparison between two images, direction configurable, follows the cursor on hover.
 
 ### Save Image (MB)
-Saves images as png, jpg or webp — png is lossless and carries the workflow,
-jpg is the smallest and drops alpha and metadata, webp sits in between with an
-optional lossless mode. It writes to the ComfyUI output folder by default, or to
-any folder you type in (absolute, or relative to the output folder). Switch
-`mode` to `preview` and nothing is written to that folder at all. Either way a
-copy is cached in `output/MBNodesCache` — full size in `save` mode, half size in
-`preview` mode — and the node pulls it back in after a ComfyUI restart so the
-preview never goes blank.
+Saves png/jpg/webp to the output folder or anywhere you type. `preview` mode skips the write; a cached copy always survives a restart.
 
 ### SaveMP4 (MB)
-Encodes an image batch into an h264 mp4 at the fps you set, with optional audio
-muxed in. `trim_to_audio` cuts the video down to whichever of the two tracks ends
-first, so it stops when the music does. It writes to the ComfyUI output folder by
-default or to any folder you type in, and the `preview_only` switch keeps the
-file in temp instead. Either way the finished video plays back on the node.
+Encodes an image batch to h264 mp4 with optional muxed audio; `trim_to_audio` and `preview_only` included.
 
 ### Preview Audio (MB)
-Plays the incoming audio on the node and passes it straight through unchanged.
-The `volume` slider only controls that on-node playback — it never touches the
-output audio or a saved file. Flip `save_to_file` to `save` and the format,
-quality, filename and output folder options appear: pick `mp3`, `opus`, `wav`
-or `flac`, leave `filename` blank for an auto-numbered name (using
-`filename_prefix`) or type an exact one, and leave `output_folder` blank for
-the ComfyUI output folder or point it anywhere else. `quality` is a bitrate and
-only applies to mp3/opus (`V0` is mp3's variable-bitrate top quality); wav and
-flac ignore it.
+Plays incoming audio on the node (own volume slider, doesn't touch output) and can optionally save it as mp3/opus/wav/flac.
 
 ### Prompt Pad (MB)
-A scratchpad for prompts. Type into the text box, put a name in the filename
-field, and the Save button writes it to the `SavedPrompts` folder inside the node
-pack as a .txt file — it asks before overwriting one that already exists. The
-Load button opens the same picker as System Prompt (MB) below. The optional
-`text_in` dot takes over the output when connected, so a generated prompt can be
-piped in and kept. Outputs the text.
+Prompt scratchpad — save/load `.txt` files from a `SavedPrompts` folder. `text_in` overrides the output when connected.
 
 ### System Prompt (MB)
-The same idea aimed at LLM system prompts, with its own library. Save writes the
-box to the `SystemPrompts` folder inside the node pack, asking before it
-overwrites. Load opens a picker: choose a folder, choose a file, and the text
-drops into the box — a double click loads it straight away.
-
-The folder dropdown lists **System Prompts** and **Saved Prompts** to start
-with, and **Add folder...** takes the full path of any other folder — a prompt
-library kept elsewhere, a repo, a synced drive. Folders you add are remembered
-in the browser and can be dropped again with **Forget**. Only `.txt` and `.md`
-files are listed. Outputs the text as `system_prompt`.
+Same idea for LLM system prompts, with its own library folder, an "Add folder..." picker for outside libraries, and `.txt`/`.md` loading.
 
 ### Get Lines (MB)
-Takes a text input and hands back one output per line. It has no text box of its
-own: it reads whatever is feeding it and grows or shrinks its output dots to
-match the number of lines, rechecking every 3 seconds. Blank lines are skipped
-and trailing spaces are trimmed. Up to 32 lines.
-
-Right-click the node for **MB Settings**, which opens a small dialog: leave it
-detecting lines by itself, or pin it to a fixed number of outputs, which turns
-the 3 second recheck off. The choice is saved with the workflow.
+Grows one output per line of incoming text (up to 32), auto-detected or pinned via right-click settings.
 
 ### Pad Image (MB)
-Adds a solid colour border around an image. In `pixels` mode you set top,
-bottom, left and right yourself; in `aspect ratio` mode you pick a ratio (1:1
-through 21:9, with a portrait toggle) and the node pads the short axis evenly
-until the image reaches it — it never crops. The colour comes from a colour
-picker, and the fields for the other mode stay hidden.
-
-`all_sides` is the shortcut: set it above 0 and every side gets that many pixels,
-with the mode, the four side fields and the ratio all ignored and hidden until it
-goes back to 0.
+Adds a solid-colour border, either exact pixels per side or padded to an aspect ratio. `all_sides` is a shortcut for uniform padding.
 
 ### Upscale Latent (MB)
-Takes a latent and scales it by a multiplier picked from a row of clickable
-buttons — 0.5x, 1x, 1.5x, 2x, 2.5x and 3x out of the box. `upscale_method`
-chooses the interpolation. 1x passes the latent straight through.
-
-Right-click the node for **MB Settings** to edit the button list: it shows one
-row per multiplier, **Add New** appends another and the × next to a row removes
-it, with a reset back to the defaults. The node updates as you type, and the list
-is saved with the workflow.
+Scales a latent by a multiplier from a row of clickable buttons (customizable via right-click settings).
 
 ### Sampler (MB)
-KSampler and VAE decode in one node. Model, positive, negative and vae all
-pass straight through their own outputs too, so a chain of these (base →
-refiner, or a hires-fix pass) doesn't need re-wiring at every stage. The usual
-step-by-step sampling preview shows up on the node while it runs, the same as
-core KSampler.
-
-`upscale_latent` scales the incoming latent by the `upscale_multiplier`
-slider before sampling starts. `decode_image` turns the VAE decode on or off
-(off just skips it, faster when only the latent is needed) — if it's on but
-no `vae` is connected, the decode is skipped rather than failing the run.
-`tiled_vae_decoding` swaps in VAEDecodeTiled for large images, with `tile_size`
-and `overlap` to tune it.
+KSampler + VAE decode in one node, with model/positive/negative/vae pass-through for chaining stages. Live sampling preview included. `upscale_latent` scales the incoming latent before sampling; `decode_image` toggles the VAE decode (skipped gracefully if no vae is connected); `tiled_vae_decoding` swaps in tiled decode for large images.
 
 ### Branch Runner (MB)
-A sink for one wire, of any type — nothing is done with what it receives.
-Drop it at the end of a branch you want to test in isolation, and its **Run
-Branch** button queues just that branch (every node connected to it, either
-direction) instead of the whole workflow. It uses ComfyUI's own
-partial-execution support, so it needs at least one output node — Branch
-Runner is one itself — reachable somewhere in the branch.
-
-Leave its input unwired and Run Branch instead runs the branch attached to
-whichever output node (Save Image, Preview Image, another Branch Runner, …)
-you most recently clicked on the canvas — handy for re-running a branch
-without wiring a Branch Runner into it at all.
+A no-op sink with a **Run Branch** button that queues only the branch connected to it (via ComfyUI's partial execution), or the branch under whichever output node you last clicked if left unwired.
 
 ## Settings
 
 Open ComfyUI's settings dialog and pick the **MB** panel.
 
 ### Theme → Accent colour
-Every MB node shares a dark title bar; this picks its colour from five
-presets — **Green**, **Pink**, **Purple**, **Teal**, **Gold** (default Green).
-Switching presets recolours every MB node already on the canvas immediately,
-not just ones added afterwards.
+Recolours every MB node's title bar — **Green** (default), **Pink**, **Purple**, **Teal**, **Gold**.
 
 ### Links → Link render mode
-Circuit-board routing for every link on the canvas, on top of ComfyUI's own
-three styles:
+Custom routing for every link on the canvas, on top of ComfyUI's own three styles:
 
 - **Default** — hands back to whatever ComfyUI is set to.
-- **Manhattan** — right angles only, elbowing across a shared mid-line, with the corners rounded off.
-- **Mitred** — the same route with the corners cut at 45°, like an etched trace.
+- **Manhattan** — right angles, rounded corners.
+- **Mitred** — right angles, 45° cut corners.
 - **Diagonal Bus** — horizontal runs joined by a true 45° diagonal.
-- **Bezier Snap** — a flattened spline that leaves and enters each slot level.
-- **Circuit** — the same right-angle routing as Manhattan, but with square corners, like plain wires in a schematic diagram.
-- **Telephone Line** — a wire drooping between its two slots like a cable strung between poles, sagging more the further apart they are. Tunable via two extra settings — sag amount and a max-dip cap.
-- **Claude** — a flat bezier in Claude's signature terracotta, solid colour throughout with no per-type tinting. The centre marker is a six-spoke asterisk instead of a dot, echoing Claude's own logo mark.
-- **Dashed** — the same flat bezier as Bezier Snap, drawn with a static dash pattern. Not animated.
-- **Ghost Wire** — a Telephone Line link that only draws fully while one of its two nodes is selected. Otherwise each end shows a short nub, enough to know a connection exists without cluttering the graph with every wire at once.
+- **Bezier Snap** — a flattened spline, level at each slot.
+- **Circuit** — Manhattan routing with square corners.
+- **Telephone Line** — sags between its two slots like a strung cable; tunable sag and max-dip.
+- **Claude** — flat bezier in Claude's terracotta, solid colour, six-spoke asterisk centre marker.
+- **Dashed** — flat bezier with a static (non-animated) dash pattern.
+- **Ghost Wire** — a Telephone Line that only draws fully while one of its nodes is selected; otherwise just a short nub at each end.
 
-Links attached to a reroute point keep ComfyUI's own rendering, so the dot stays
-draggable.
-
-Links in the custom modes take their colour from the type of the input they
-land on, so a workflow reads by wire colour regardless of what colour each link
-was saved with.
+Links on a reroute keep ComfyUI's own rendering. Custom-mode links are coloured by the input type they land on.
 
 ### Links → Link opacity
-Opacity of links drawn by whichever mode is picked above, from 0 to 100%
-(default 100). Has no effect on Default. Applies live as you drag the slider.
+Opacity of links in whichever mode is picked above, 0–100% (default 100), live.
