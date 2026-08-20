@@ -21,9 +21,12 @@ from .nodes.load_video_node import NODES as _load_video
 from .nodes.pad_image_node import NODES as _pad_image
 from .nodes.preview_audio_node import NODES as _preview_audio
 from .nodes.prompt_pad_node import NODES as _prompt_pad
+from .nodes.random_line_node import NODES as _random_line
 from .nodes.resolution_node import NODES as _resolution
+from .nodes.sampler_node import NODES as _sampler
 from .nodes.save_image_node import NODES as _save_image
 from .nodes.save_mp4_node import NODES as _save_mp4
+from .nodes.show_text_node import NODES as _show_text
 from .nodes.slider_node import NODES as _slider
 from .nodes.system_prompt_node import NODES as _system_prompt
 from .nodes.text_node import NODES as _text
@@ -50,6 +53,9 @@ NODES: list[type[io.ComfyNode]] = [
     *_pad_image,
     *_branch_runner,
     *_preview_audio,
+    *_random_line,
+    *_show_text,
+    *_sampler,
 ]
 
 

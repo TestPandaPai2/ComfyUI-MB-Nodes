@@ -17,6 +17,13 @@ const DIAGONAL = "Diagonal Bus";
 const BEZIER = "Bezier Snap";
 const CIRCUIT = "Circuit";
 const TELEPHONE = "Telephone Line";
+const CLAUDE = "Claude";
+const DASHED = "Dashed";
+const GHOST = "Ghost Wire";
+
+const CLAUDE_COLOR = "#D97757"; // Claude's signature terracotta
+const DASH_PATTERN = [10, 6]; // dash, gap -- in canvas units, scales with zoom
+const GHOST_STUB = 22; // length of the visible nub when the wire itself is hidden
 
 const STUB = 10; // straight run off a slot before the first bend
 const CORNER = 10; // corner radius for Manhattan, cut length for Mitred
@@ -117,13 +124,13 @@ function bezierOffset(ax, bx) {
 }
 
 function tracePath(ctx, ax, ay, bx, by, pts) {
-    if (mode === BEZIER) {
+    if (mode === BEZIER || mode === CLAUDE || mode === DASHED) {
         const d = bezierOffset(ax, bx);
         ctx.moveTo(ax, ay);
         ctx.bezierCurveTo(ax + d, ay, bx - d, by, bx, by);
         return;
     }
-    if (mode === TELEPHONE) {
+    if (mode === TELEPHONE || mode === GHOST) {
         const [mx, my] = telephoneControl(ax, ay, bx, by);
         ctx.moveTo(ax, ay);
         ctx.quadraticCurveTo(mx, my, bx, by);
@@ -162,13 +169,80 @@ function polylineCentre(pts) {
     return pts[pts.length - 1];
 }
 
+// --- hover hit-testing -----------------------------------------------------
+//
+// LiteGraph only tracks hover for the little centre dot (over_link_center),
+// not the wire itself. The custom routes get their own along-the-path hit
+// test so the whole link can light up under the cursor.
+
+const HOVER_PX = 6; // hit radius, in screen pixels, converted per-frame by scale
+
+function distToSegment(px, py, x1, y1, x2, y2) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const lenSq = dx * dx + dy * dy;
+    const t = lenSq ? Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / lenSq)) : 0;
+    return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
+}
+
+function polylineDist(mx, my, pts) {
+    let min = Infinity;
+    for (let i = 1; i < pts.length; i++) {
+        min = Math.min(min, distToSegment(mx, my, pts[i - 1][0], pts[i - 1][1], pts[i][0], pts[i][1]));
+    }
+    return min;
+}
+
+function quadPoint(t, ax, ay, cx, cy, bx, by) {
+    const mt = 1 - t;
+    return [mt * mt * ax + 2 * mt * t * cx + t * t * bx, mt * mt * ay + 2 * mt * t * cy + t * t * by];
+}
+
+function cubicPoint(t, ax, ay, c1x, c1y, c2x, c2y, bx, by) {
+    const mt = 1 - t;
+    return [
+        mt * mt * mt * ax + 3 * mt * mt * t * c1x + 3 * mt * t * t * c2x + t * t * t * bx,
+        mt * mt * mt * ay + 3 * mt * mt * t * c1y + 3 * mt * t * t * c2y + t * t * t * by,
+    ];
+}
+
+function sampledCurveDist(mx, my, pointAt, steps = 20) {
+    let min = Infinity;
+    let prev = pointAt(0);
+    for (let i = 1; i <= steps; i++) {
+        const cur = pointAt(i / steps);
+        min = Math.min(min, distToSegment(mx, my, prev[0], prev[1], cur[0], cur[1]));
+        prev = cur;
+    }
+    return min;
+}
+
+function pathDist(mx, my, ax, ay, bx, by, pts) {
+    if (mode === BEZIER || mode === CLAUDE || mode === DASHED) {
+        const d = bezierOffset(ax, bx);
+        return sampledCurveDist(mx, my, (t) => cubicPoint(t, ax, ay, ax + d, ay, bx - d, by, bx, by));
+    }
+    if (mode === TELEPHONE || mode === GHOST) {
+        const [cx, cy] = telephoneControl(ax, ay, bx, by);
+        return sampledCurveDist(mx, my, (t) => quadPoint(t, ax, ay, cx, cy, bx, by));
+    }
+    return polylineDist(mx, my, pts);
+}
+
+function isHovered(canvas, ax, ay, bx, by, pts) {
+    const mouse = canvas.graph_mouse;
+    if (!mouse) return false;
+    const scale = Math.max(canvas.ds?.scale ?? 1, 0.05);
+    return pathDist(mouse[0], mouse[1], ax, ay, bx, by, pts) <= HOVER_PX / scale;
+}
+
 function centreOf(ax, ay, bx, by, pts) {
-    if (mode === BEZIER) {
+    if (mode === BEZIER || mode === CLAUDE || mode === DASHED) {
         const d = bezierOffset(ax, bx);
         // A cubic bezier at t = 0.5 reduces to this weighted average.
         return [(ax + 3 * (ax + d) + 3 * (bx - d) + bx) / 8, (ay + 3 * ay + 3 * by + by) / 8];
     }
-    if (mode === TELEPHONE) {
+    if (mode === TELEPHONE || mode === GHOST) {
         const [mx, my] = telephoneControl(ax, ay, bx, by);
         // A quadratic bezier at t = 0.5 reduces to this weighted average.
         return [(ax + 2 * mx + bx) / 4, (ay + 2 * my + by) / 4];
@@ -176,10 +250,39 @@ function centreOf(ax, ay, bx, by, pts) {
     return polylineCentre(pts);
 }
 
+// Claude's link-centre marker: a six-spoke asterisk (the shape of Claude's own
+// logo mark) instead of a plain dot, drawn as tapered triangles so it stays
+// crisp at small sizes rather than thinning to invisible hairlines.
+function drawAsterisk(ctx, cx, cy, r) {
+    const spokeWidth = r * 0.16;
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2 - Math.PI / 2;
+        const tipX = cx + Math.cos(a) * r;
+        const tipY = cy + Math.sin(a) * r;
+        const perp = a + Math.PI / 2;
+        const baseX = cx + Math.cos(perp) * spokeWidth;
+        const baseY = cy + Math.sin(perp) * spokeWidth;
+        const base2X = cx - Math.cos(perp) * spokeWidth;
+        const base2Y = cy - Math.sin(perp) * spokeWidth;
+        ctx.moveTo(baseX, baseY);
+        ctx.lineTo(tipX, tipY);
+        ctx.lineTo(base2X, base2Y);
+    }
+    ctx.fill();
+}
+
 // --- canvas patch --------------------------------------------------------
 
 // LLink carries its own type, but a link restored from an older workflow can
 // come back without one — the input slot it lands on always knows.
+// Ghost Wire visibility: a link is "live" while either end is selected.
+// node.selected is the plain per-node flag LiteGraph already maintains for
+// box-select and click-select alike, so this needs no bookkeeping of its own.
+function nodeSelected(canvas, id) {
+    return !!canvas.graph?.getNodeById?.(id)?.selected;
+}
+
 function linkType(canvas, link) {
     if (link?.type != null && link.type !== -1 && link.type !== "*") return link.type;
     const node = canvas.graph?.getNodeById?.(link?.target_id);
@@ -209,6 +312,19 @@ function install() {
     const original = proto.renderLink;
     proto._mbLinkRenderPatched = true;
 
+    // The hover glow needs a fresh redraw every frame the mouse moves --
+    // LiteGraph itself only marks the canvas dirty when the link-centre dot
+    // is entered or left, not while crossing the body of a wire.
+    if (proto.processMouseMove && !proto._mbLinkHoverPatched) {
+        const originalMouseMove = proto.processMouseMove;
+        proto._mbLinkHoverPatched = true;
+        proto.processMouseMove = function (e) {
+            const result = originalMouseMove.apply(this, arguments);
+            if (mode !== DEFAULT) this.dirty_bgcanvas = true;
+            return result;
+        };
+    }
+
     proto.renderLink = function (ctx, a, b, link, skipBorder, flow, colour, startDir, endDir, options) {
         // Reroute segments are drawn with the same a/b points as any other
         // segment, so the custom routing applies to them too -- otherwise a
@@ -220,17 +336,53 @@ function install() {
 
         const [ax, ay] = a;
         const [bx, by] = b;
-        const stroke = resolveColour(this, link, colour);
+        // Claude mode is solid brand colour throughout -- no per-type tinting --
+        // so it reads as one consistent identity regardless of what a link carries.
+        const stroke = mode === CLAUDE ? CLAUDE_COLOR : resolveColour(this, link, colour);
         const width = this.connections_width || 3;
 
-        // Bezier and Telephone are drawn as a single curve command, so they
-        // don't need a discrete point list the way the polyline modes do.
-        const pts = mode === BEZIER || mode === TELEPHONE ? null : pointsFor(ax, ay, bx, by);
+        // Ghost Wire: the full telephone-sag curve only appears while one of
+        // its two nodes is selected. Otherwise just a short nub pokes out of
+        // each slot, enough to show a connection exists without cluttering
+        // the graph with every wire at once.
+        if (mode === GHOST && !nodeSelected(this, link?.origin_id) && !nodeSelected(this, link?.target_id)) {
+            ctx.save();
+            ctx.globalAlpha *= opacity * 0.6;
+            ctx.strokeStyle = stroke;
+            ctx.lineWidth = width;
+            ctx.lineCap = "round";
+            ctx.beginPath();
+            ctx.moveTo(ax, ay);
+            ctx.lineTo(ax + GHOST_STUB, ay);
+            ctx.moveTo(bx, by);
+            ctx.lineTo(bx - GHOST_STUB, by);
+            ctx.stroke();
+            ctx.restore();
+
+            if (link) {
+                const [cx, cy] = telephoneControl(ax, ay, bx, by);
+                link._pos ??= new Float32Array(2);
+                link._pos[0] = (ax + 2 * cx + bx) / 4;
+                link._pos[1] = (ay + 2 * cy + by) / 4;
+                link._centreAngle = 0;
+            }
+            return;
+        }
+
+        // Bezier, Telephone, Claude and Dashed are drawn as a single curve
+        // command, so they don't need a discrete point list the way the
+        // polyline modes do.
+        const pts = mode === BEZIER || mode === TELEPHONE || mode === CLAUDE || mode === DASHED ? null : pointsFor(ax, ay, bx, by);
+
+        const hover = !skipBorder && !!link && isHovered(this, ax, ay, bx, by, pts);
 
         ctx.save();
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
         ctx.globalAlpha *= opacity;
+        // Dash pattern lives inside this save/restore scope so it never leaks
+        // into unrelated drawing (node borders, other links) once we're done.
+        if (mode === DASHED) ctx.setLineDash(DASH_PATTERN);
 
         if (this.render_connections_border && this.ds.scale > 0.6 && !skipBorder) {
             ctx.strokeStyle = "rgba(0,0,0,0.6)";
@@ -240,8 +392,17 @@ function install() {
             ctx.stroke();
         }
 
+        if (hover) {
+            ctx.strokeStyle = "#fff";
+            ctx.globalAlpha = Math.min(1, ctx.globalAlpha + 0.35);
+            ctx.lineWidth = width + 6;
+            ctx.beginPath();
+            tracePath(ctx, ax, ay, bx, by, pts);
+            ctx.stroke();
+        }
+
         ctx.strokeStyle = stroke;
-        ctx.lineWidth = width;
+        ctx.lineWidth = hover ? width + 2 : width;
         if (flow) ctx.globalAlpha *= flow;
         ctx.beginPath();
         tracePath(ctx, ax, ay, bx, by, pts);
@@ -260,9 +421,13 @@ function install() {
             ctx.save();
             ctx.globalAlpha *= opacity;
             ctx.fillStyle = stroke;
-            ctx.beginPath();
-            ctx.arc(cx, cy, width * 0.9, 0, Math.PI * 2);
-            ctx.fill();
+            if (mode === CLAUDE) {
+                drawAsterisk(ctx, cx, cy, width * 2.2);
+            } else {
+                ctx.beginPath();
+                ctx.arc(cx, cy, width * 0.9, 0, Math.PI * 2);
+                ctx.fill();
+            }
             ctx.restore();
         }
     };
@@ -280,7 +445,7 @@ app.registerExtension({
             name: "Link render mode",
             tooltip: "Circuit-board routing for links. Default hands back to ComfyUI's own link style.",
             type: "combo",
-            options: [DEFAULT, MANHATTAN, MITRED, DIAGONAL, BEZIER, CIRCUIT, TELEPHONE],
+            options: [DEFAULT, MANHATTAN, MITRED, DIAGONAL, BEZIER, CIRCUIT, TELEPHONE, CLAUDE, DASHED, GHOST],
             defaultValue: DEFAULT,
             onChange: (value) => {
                 mode = value ?? DEFAULT;

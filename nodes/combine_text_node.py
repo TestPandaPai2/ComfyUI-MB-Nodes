@@ -20,7 +20,7 @@ class MBCombineText(io.ComfyNode):
         template = io.Autogrow.TemplatePrefix(
             input=io.String.Input("text", force_input=True),
             prefix="text",
-            min=2,
+            min=0,
             max=MAX_INPUTS,
         )
         return io.Schema(
