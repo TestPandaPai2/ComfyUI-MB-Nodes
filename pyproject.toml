@@ -1,7 +1,7 @@
 [project]
 name = "comfyui-mbnodes"
-description = "A small pack of quality-of-life ComfyUI nodes: text, resolution, slider, load/crop/save image, mp4 saving, prompt pad and line picking."
-version = "0.1"
+description = "A small pack of quality-of-life ComfyUI nodes: text, resolution, slider, load/crop/save image, compare, mp4 and audio saving, prompt pad and line picking."
+version = "0.2"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
 
