@@ -5,10 +5,27 @@ Just a bunch of comfy nodes. All of them live under the **MBNodes** category.
 ## Nodes
 
 ### Text (MB)
-A multiline text box with clipboard paste/append and replace buttons. An optional
-`text_in` input is merged with the typed text using a chosen separator (newline,
-comma, space or none), and `priority` decides whether the incoming text lands
-before or after your own.
+A plain multiline text box, with ComfyUI's dynamic prompt system (wildcards,
+`{a|b|c}` random choices) turned on by default.
+
+### Combine Text (MB)
+Joins any number of text inputs with a chosen `delimiter` (newline, comma,
+space, dash or blank line). The input list grows a slot at a time as the
+existing ones are connected, up to 32. Blank or unconnected slots are kept as
+empty strings, so the spacing of the result stays predictable.
+
+### Random Line Select (MB)
+Splits an incoming text into its non-blank lines and outputs one of them,
+picked by a KSampler-style `seed` widget (with the usual randomize/increment/
+decrement control) wrapped onto however many lines the text has — any seed
+value always lands on a real line. Outputs the picked `line`, its 1-indexed
+`line_number`, and the total `line_count`.
+
+### Show Text (MB)
+Displays incoming text on the node itself as a live, read-only preview after
+every run, and passes it through unchanged as a `text` output. It's an output
+node, so it can be run on its own (with whatever feeds it) instead of queuing
+the whole workflow.
 
 ### Resolution (MB)
 Pick an aspect ratio from the dropdown (1:1 through 21:9) and a resolution from
@@ -157,6 +174,20 @@ row per multiplier, **Add New** appends another and the × next to a row removes
 it, with a reset back to the defaults. The node updates as you type, and the list
 is saved with the workflow.
 
+### Sampler (MB)
+KSampler and VAE decode in one node. Model, positive, negative and vae all
+pass straight through their own outputs too, so a chain of these (base →
+refiner, or a hires-fix pass) doesn't need re-wiring at every stage. The usual
+step-by-step sampling preview shows up on the node while it runs, the same as
+core KSampler.
+
+`upscale_latent` scales the incoming latent by the `upscale_multiplier`
+slider before sampling starts. `decode_image` turns the VAE decode on or off
+(off just skips it, faster when only the latent is needed) — if it's on but
+no `vae` is connected, the decode is skipped rather than failing the run.
+`tiled_vae_decoding` swaps in VAEDecodeTiled for large images, with `tile_size`
+and `overlap` to tune it.
+
 ### Branch Runner (MB)
 A sink for one wire, of any type — nothing is done with what it receives.
 Drop it at the end of a branch you want to test in isolation, and its **Run
@@ -191,6 +222,9 @@ three styles:
 - **Bezier Snap** — a flattened spline that leaves and enters each slot level.
 - **Circuit** — the same right-angle routing as Manhattan, but with square corners, like plain wires in a schematic diagram.
 - **Telephone Line** — a wire drooping between its two slots like a cable strung between poles, sagging more the further apart they are. Tunable via two extra settings — sag amount and a max-dip cap.
+- **Claude** — a flat bezier in Claude's signature terracotta, solid colour throughout with no per-type tinting. The centre marker is a six-spoke asterisk instead of a dot, echoing Claude's own logo mark.
+- **Dashed** — the same flat bezier as Bezier Snap, drawn with a static dash pattern. Not animated.
+- **Ghost Wire** — a Telephone Line link that only draws fully while one of its two nodes is selected. Otherwise each end shows a short nub, enough to know a connection exists without cluttering the graph with every wire at once.
 
 Links attached to a reroute point keep ComfyUI's own rendering, so the dot stays
 draggable.
