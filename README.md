@@ -146,6 +146,19 @@ row per multiplier, **Add New** appends another and the × next to a row removes
 it, with a reset back to the defaults. The node updates as you type, and the list
 is saved with the workflow.
 
+### Branch Runner (MB)
+A sink for one wire, of any type — nothing is done with what it receives.
+Drop it at the end of a branch you want to test in isolation, and its **Run
+Branch** button queues just that branch (every node connected to it, either
+direction) instead of the whole workflow. It uses ComfyUI's own
+partial-execution support, so it needs at least one output node — Branch
+Runner is one itself — reachable somewhere in the branch.
+
+Leave its input unwired and Run Branch instead runs the branch attached to
+whichever output node (Save Image, Preview Image, another Branch Runner, …)
+you most recently clicked on the canvas — handy for re-running a branch
+without wiring a Branch Runner into it at all.
+
 ## Settings
 
 Open ComfyUI's settings dialog and pick the **MB** panel.
@@ -159,6 +172,8 @@ three styles:
 - **Mitred** — the same route with the corners cut at 45°, like an etched trace.
 - **Diagonal Bus** — horizontal runs joined by a true 45° diagonal.
 - **Bezier Snap** — a flattened spline that leaves and enters each slot level.
+- **Circuit** — the same right-angle routing as Manhattan, but with square corners, like plain wires in a schematic diagram.
+- **Telephone Line** — a wire drooping between its two slots like a cable strung between poles, sagging more the further apart they are. Tunable via two extra settings — sag amount and a max-dip cap.
 
 Links attached to a reroute point keep ComfyUI's own rendering, so the dot stays
 draggable.
@@ -166,3 +181,7 @@ draggable.
 Links in the custom modes take their colour from the type of the input they
 land on, so a workflow reads by wire colour regardless of what colour each link
 was saved with.
+
+### Links → Link opacity
+Opacity of links drawn by whichever mode is picked above, from 0 to 100%
+(default 100). Has no effect on Default. Applies live as you drag the slider.

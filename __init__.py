@@ -8,6 +8,7 @@ from typing_extensions import override
 
 from comfy_api.latest import ComfyExtension, io
 
+from .nodes.branch_runner_node import NODES as _branch_runner
 from .nodes.combine_text_node import NODES as _combine_text
 from .nodes.compare_image_node import NODES as _compare_image
 from .nodes.crop_image_node import NODES as _crop_image
@@ -46,6 +47,7 @@ NODES: list[type[io.ComfyNode]] = [
     *_compare_image,
     *_upscale_latent,
     *_pad_image,
+    *_branch_runner,
 ]
 
 
