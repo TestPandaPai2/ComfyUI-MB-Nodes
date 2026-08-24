@@ -20,6 +20,7 @@ const TELEPHONE = "Telephone Line";
 const CLAUDE = "Claude";
 const DASHED = "Dashed";
 const GHOST = "Ghost Wire";
+const TENSION = "Tension";
 
 const CLAUDE_COLOR = "#D97757"; // Claude's signature terracotta
 const DASH_PATTERN = [10, 6]; // dash, gap -- in canvas units, scales with zoom
@@ -37,6 +38,15 @@ let opacity = 1; // 0-1, only applied to the custom render modes below
 
 // Tunables for Telephone Line mode, backed by their own settings below.
 const telephone = { sag: 0.18, maxDip: 160 };
+
+// Tunables for Tension mode, backed by their own settings below. Unlike
+// Telephone Line's sag (which grows with span), tension works backwards: a
+// short link is slack and bows like loose rope, while a link stretched past
+// `reach` pulls taut into a straight line -- and thins out as it does, like a
+// rubber band pulled tight.
+const tension = { bow: 90, reach: 260 };
+const TENSION_MIN_WIDTH = 0.6;
+const TENSION_MAX_WIDTH = 1.4;
 
 // --- routing -------------------------------------------------------------
 
@@ -83,6 +93,28 @@ function telephoneControl(ax, ay, bx, by) {
     const span = Math.hypot(bx - ax, by - ay);
     const dip = Math.min(span * telephone.sag, telephone.maxDip);
     return [(ax + bx) / 2, (ay + by) / 2 + dip];
+}
+
+// --- tension ---------------------------------------------------------------
+//
+// The mirror image of Telephone Line: bow shrinks as the link stretches, so a
+// link between neighbours hangs loose while one spanning the graph is pulled
+// straight. `t` (0 = fully slack, 1 = fully taut) drives both the bow and the
+// stroke width, so a taut link reads as thinner, not just straighter.
+function tensionAmount(ax, ay, bx, by) {
+    const span = Math.hypot(bx - ax, by - ay);
+    return Math.min(span / tension.reach, 1);
+}
+
+function tensionControl(ax, ay, bx, by) {
+    const t = tensionAmount(ax, ay, bx, by);
+    const bow = tension.bow * (1 - t);
+    return [(ax + bx) / 2, (ay + by) / 2 + bow];
+}
+
+function tensionWidthMul(ax, ay, bx, by) {
+    const t = tensionAmount(ax, ay, bx, by);
+    return TENSION_MAX_WIDTH - (TENSION_MAX_WIDTH - TENSION_MIN_WIDTH) * t;
 }
 
 // --- path building -------------------------------------------------------
@@ -132,6 +164,12 @@ function tracePath(ctx, ax, ay, bx, by, pts) {
     }
     if (mode === TELEPHONE || mode === GHOST) {
         const [mx, my] = telephoneControl(ax, ay, bx, by);
+        ctx.moveTo(ax, ay);
+        ctx.quadraticCurveTo(mx, my, bx, by);
+        return;
+    }
+    if (mode === TENSION) {
+        const [mx, my] = tensionControl(ax, ay, bx, by);
         ctx.moveTo(ax, ay);
         ctx.quadraticCurveTo(mx, my, bx, by);
         return;
@@ -226,6 +264,10 @@ function pathDist(mx, my, ax, ay, bx, by, pts) {
         const [cx, cy] = telephoneControl(ax, ay, bx, by);
         return sampledCurveDist(mx, my, (t) => quadPoint(t, ax, ay, cx, cy, bx, by));
     }
+    if (mode === TENSION) {
+        const [cx, cy] = tensionControl(ax, ay, bx, by);
+        return sampledCurveDist(mx, my, (t) => quadPoint(t, ax, ay, cx, cy, bx, by));
+    }
     return polylineDist(mx, my, pts);
 }
 
@@ -245,6 +287,10 @@ function centreOf(ax, ay, bx, by, pts) {
     if (mode === TELEPHONE || mode === GHOST) {
         const [mx, my] = telephoneControl(ax, ay, bx, by);
         // A quadratic bezier at t = 0.5 reduces to this weighted average.
+        return [(ax + 2 * mx + bx) / 4, (ay + 2 * my + by) / 4];
+    }
+    if (mode === TENSION) {
+        const [mx, my] = tensionControl(ax, ay, bx, by);
         return [(ax + 2 * mx + bx) / 4, (ay + 2 * my + by) / 4];
     }
     return polylineCentre(pts);
@@ -339,7 +385,9 @@ function install() {
         // Claude mode is solid brand colour throughout -- no per-type tinting --
         // so it reads as one consistent identity regardless of what a link carries.
         const stroke = mode === CLAUDE ? CLAUDE_COLOR : resolveColour(this, link, colour);
-        const width = this.connections_width || 3;
+        const width = mode === TENSION
+            ? (this.connections_width || 3) * tensionWidthMul(ax, ay, bx, by)
+            : this.connections_width || 3;
 
         // Ghost Wire: the full telephone-sag curve only appears while one of
         // its two nodes is selected. Otherwise just a short nub pokes out of
@@ -372,7 +420,7 @@ function install() {
         // Bezier, Telephone, Claude and Dashed are drawn as a single curve
         // command, so they don't need a discrete point list the way the
         // polyline modes do.
-        const pts = mode === BEZIER || mode === TELEPHONE || mode === CLAUDE || mode === DASHED ? null : pointsFor(ax, ay, bx, by);
+        const pts = mode === BEZIER || mode === TELEPHONE || mode === CLAUDE || mode === DASHED || mode === TENSION ? null : pointsFor(ax, ay, bx, by);
 
         const hover = !skipBorder && !!link && isHovered(this, ax, ay, bx, by, pts);
 
@@ -445,7 +493,7 @@ app.registerExtension({
             name: "Link render mode",
             tooltip: "Circuit-board routing for links. Default hands back to ComfyUI's own link style.",
             type: "combo",
-            options: [DEFAULT, MANHATTAN, MITRED, DIAGONAL, BEZIER, CIRCUIT, TELEPHONE, CLAUDE, DASHED, GHOST],
+            options: [DEFAULT, MANHATTAN, MITRED, DIAGONAL, BEZIER, CIRCUIT, TELEPHONE, CLAUDE, DASHED, GHOST, TENSION],
             defaultValue: DEFAULT,
             onChange: (value) => {
                 mode = value ?? DEFAULT;
@@ -490,6 +538,30 @@ app.registerExtension({
                 telephone.maxDip = value ?? telephone.maxDip;
             },
         },
+        {
+            id: "MBNodes.Tension.Bow",
+            category: ["MB", "Links", "Tension: bow"],
+            name: "Tension: bow",
+            tooltip: "How far a fully slack Tension link bows, in pixels. A link stretched past the reach distance below straightens out regardless.",
+            type: "slider",
+            attrs: { min: 0, max: 300, step: 10 },
+            defaultValue: tension.bow,
+            onChange: (value) => {
+                tension.bow = value ?? tension.bow;
+            },
+        },
+        {
+            id: "MBNodes.Tension.Reach",
+            category: ["MB", "Links", "Tension: reach"],
+            name: "Tension: reach",
+            tooltip: "Distance, in pixels, at which a Tension link goes fully taut -- straight and thin. Shorter links stay slack and bowed.",
+            type: "slider",
+            attrs: { min: 40, max: 800, step: 20 },
+            defaultValue: tension.reach,
+            onChange: (value) => {
+                tension.reach = value ?? tension.reach;
+            },
+        },
     ],
 
     async setup() {
@@ -502,5 +574,7 @@ app.registerExtension({
         opacity = (setting?.get("MBNodes.LinkOpacity") ?? 100) / 100;
         telephone.sag = setting?.get("MBNodes.Telephone.Sag") ?? telephone.sag;
         telephone.maxDip = setting?.get("MBNodes.Telephone.MaxDip") ?? telephone.maxDip;
+        tension.bow = setting?.get("MBNodes.Tension.Bow") ?? tension.bow;
+        tension.reach = setting?.get("MBNodes.Tension.Reach") ?? tension.reach;
     },
 });

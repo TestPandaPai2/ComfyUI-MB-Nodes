@@ -64,6 +64,9 @@ KSampler + VAE decode in one node, with model/positive/negative/vae pass-through
 ### Branch Runner (MB)
 A no-op sink with a **Run Branch** button that queues only the branch connected to it (via ComfyUI's partial execution), or the branch under whichever output node you last clicked if left unwired.
 
+### Preview Anything (MB)
+Accepts any input type. Image/mask/audio/video get a real live preview on the node; everything else shows its text repr. Passes the value through unchanged. Runnable standalone.
+
 ## Settings
 
 Open ComfyUI's settings dialog and pick the **MB** panel.
@@ -84,6 +87,7 @@ Custom routing for every link on the canvas, on top of ComfyUI's own three style
 - **Claude** — flat bezier in Claude's terracotta, solid colour, six-spoke asterisk centre marker.
 - **Dashed** — flat bezier with a static (non-animated) dash pattern.
 - **Ghost Wire** — a Telephone Line that only draws fully while one of its nodes is selected; otherwise just a short nub at each end.
+- **Tension** — the reverse of Telephone Line: short links bow like loose rope, links stretched past a tunable reach pull straight and thin.
 
 Links on a reroute keep ComfyUI's own rendering. Custom-mode links are coloured by the input type they land on.
 
