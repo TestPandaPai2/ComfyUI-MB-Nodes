@@ -10,19 +10,21 @@ from comfy_api.latest import ComfyExtension, io
 
 from .nodes.branch_runner_node import NODES as _branch_runner
 from .nodes.combine_text_node import NODES as _combine_text
-from .nodes.compare_image_node import NODES as _compare_image
 from .nodes.crop_image_node import NODES as _crop_image
 from .nodes.get_lines_node import NODES as _get_lines
 from .nodes.image_info import NODES as _image_info
 from .nodes.load_folder_node import NODES as _load_folder
 from .nodes.load_image_crop_node import NODES as _load_image_crop
+from .nodes.load_image_mini_node import NODES as _load_image_mini
 from .nodes.load_image_node import NODES as _load_image
 from .nodes.load_video_node import NODES as _load_video
 from .nodes.pad_image_node import NODES as _pad_image
+from .nodes.preview_anything_node import NODES as _preview_anything
 from .nodes.preview_audio_node import NODES as _preview_audio
 from .nodes.prompt_pad_node import NODES as _prompt_pad
 from .nodes.random_line_node import NODES as _random_line
 from .nodes.resolution_node import NODES as _resolution
+from .nodes.route66_node import NODES as _route66
 from .nodes.sampler_node import NODES as _sampler
 from .nodes.save_image_node import NODES as _save_image
 from .nodes.save_mp4_node import NODES as _save_mp4
@@ -37,6 +39,7 @@ NODES: list[type[io.ComfyNode]] = [
     *_resolution,
     *_slider,
     *_load_image,
+    *_load_image_mini,
     *_load_image_crop,
     *_image_info,
     *_load_video,
@@ -48,14 +51,15 @@ NODES: list[type[io.ComfyNode]] = [
     *_get_lines,
     *_combine_text,
     *_crop_image,
-    *_compare_image,
     *_upscale_latent,
     *_pad_image,
     *_branch_runner,
+    *_preview_anything,
     *_preview_audio,
     *_random_line,
     *_show_text,
     *_sampler,
+    *_route66,
 ]
 
 

@@ -25,14 +25,14 @@ Editable-range slider with a `live` toggle that re-queues while dragging. Output
 ### Load Image (MB)
 Picks or uploads an image, with a preview and optional megapixel-target resize. **📋 Paste from clipboard** saves whatever you last copied into the input folder and selects it.
 
+### Load Image Mini (MB)
+Compact Load Image with a custom face: toolbar (upload/paste/settings), arrow + thumbnail file picker, preview, and two size cards (input/output). The full resize engine — max megapixels, longest side, scale by, fit inside, crop to fill, match ratio, plus snap/resample/upscale and a per-node accent — lives in the ⚙ gear. Outputs image and image_info only.
+
 ### Load Image with Crop (MB)
 Load Image (MB) plus a crop dialog (drag/resize box, aspect presets, divisible-by). Crop applies before the megapixel resize.
 
 ### Crop Image (MB)
 Same crop dialog as above, but for an `image` input instead of a file picker. Crop is stored as fractions of the image so it survives resolution changes; falls back to a cached preview when nothing upstream has an image yet.
-
-### Image Compare (MB)
-Wipe-slider comparison between two images, direction configurable, follows the cursor on hover.
 
 ### Save Image (MB)
 Saves png/jpg/webp to the output folder or anywhere you type. `preview` mode skips the write; a cached copy always survives a restart.
@@ -67,12 +67,15 @@ A no-op sink with a **Run Branch** button that queues only the branch connected 
 ### Preview Anything (MB)
 Accepts any input type. Image/mask/audio/video get a real live preview on the node; everything else shows its text repr. Passes the value through unchanged. Runnable standalone.
 
+### Route 66 (MB)
+Multi-lane reroute. Each lane passes its input straight through to the matching output; a fresh empty lane appears as you connect more wires (up to 20), and each socket takes the colour/type of what plugs in. One tidy node to carry many wires across the graph instead of a pile of single reroute dots.
+
 ## Settings
 
 Open ComfyUI's settings dialog and pick the **MB** panel.
 
 ### Theme → Accent colour
-Recolours every MB node's title bar — **Green** (default), **Pink**, **Purple**, **Teal**, **Gold**.
+Recolours every MB node's title bar — **Green** (default), **Pink**, **Purple**, **Teal**, **Gold**, **Blue**, **Red**, **Orange**, **Indigo**, **Slate**, **Orchid**.
 
 ### Links → Link render mode
 Custom routing for every link on the canvas, on top of ComfyUI's own three styles:

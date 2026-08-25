@@ -1,15 +1,16 @@
 import torch
 
-from comfy_api.latest import io
+from comfy_api.latest import io, ui
 
 # Aliased: "image_info" is also this node's optional input, which would
 # shadow the module inside execute().
 from . import image_info as _info
 from .resolution_node import RATIOS
 
-MODES = ["pixels", "aspect ratio"]
 RATIO_NAMES = [name for name, _ in RATIOS]
 RATIO_BY_NAME = dict(RATIOS)
+NO_RATIO = "none"
+PAD_FROM = ["both", "first", "second"]
 MAX_PAD = 8192
 
 
@@ -37,16 +38,28 @@ def _rgb(color):
     return [0.0, 0.0, 0.0]
 
 
-def _ratio_padding(width, height, ratio):
-    """Even padding on one axis so the image reaches `ratio`; never crops."""
+def _split(extra, pad_from):
+    """How much of `extra` goes to the first side vs. the second."""
+    if pad_from == "first":
+        return extra, 0
+    if pad_from == "second":
+        return 0, extra
+    first = extra // 2
+    return first, extra - first
+
+
+def _ratio_padding(width, height, ratio, pad_from):
+    """Padding on whichever axis reaches `ratio`; never crops. `pad_from`
+    biases the split of that axis: first (left/top), second (right/bottom),
+    or both (even)."""
     if width / height < ratio:
         extra = max(0, round(height * ratio) - width)
-        left = extra // 2
-        return 0, 0, left, extra - left
+        left, right = _split(extra, pad_from)
+        return 0, 0, left, right
 
     extra = max(0, round(width / ratio) - height)
-    top = extra // 2
-    return top, extra - top, 0, 0
+    top, bottom = _split(extra, pad_from)
+    return top, bottom, 0, 0
 
 
 class MBPadImage(io.ComfyNode):
@@ -63,41 +76,28 @@ class MBPadImage(io.ComfyNode):
             search_aliases=["pad image", "border", "letterbox", "extend canvas"],
             inputs=[
                 io.Image.Input("image"),
-                io.Combo.Input(
-                    "mode",
-                    options=MODES,
-                    default="pixels",
-                    tooltip="pixels: pad each side by hand. aspect ratio: pad evenly until the image reaches the ratio.",
-                ),
-                io.Int.Input("top", default=0, min=0, max=MAX_PAD, socketless=True),
-                io.Int.Input("bottom", default=0, min=0, max=MAX_PAD, socketless=True),
                 io.Int.Input("left", default=0, min=0, max=MAX_PAD, socketless=True),
                 io.Int.Input("right", default=0, min=0, max=MAX_PAD, socketless=True),
+                io.Int.Input("top", default=0, min=0, max=MAX_PAD, socketless=True),
+                io.Int.Input("bottom", default=0, min=0, max=MAX_PAD, socketless=True),
                 io.Combo.Input(
                     "aspect_ratio",
-                    options=RATIO_NAMES,
-                    default="16:9",
+                    options=[NO_RATIO] + RATIO_NAMES,
+                    default=NO_RATIO,
                     socketless=True,
-                    tooltip="aspect ratio mode only. The image is padded, never cropped.",
+                    tooltip="none: pad by the four pixel fields. Any other value: pad evenly until "
+                            "the image reaches that ratio, ignoring the pixel fields. The image is "
+                            "never cropped.",
                 ),
-                io.Boolean.Input(
-                    "portrait",
-                    default=False,
-                    label_on="portrait",
-                    label_off="landscape",
-                    tooltip="aspect ratio mode only. Flips the target ratio.",
+                io.Combo.Input(
+                    "pad_from",
+                    options=PAD_FROM,
+                    default="both",
+                    socketless=True,
+                    tooltip="aspect ratio mode only. Which side of the padded axis gets the extra "
+                            "space: both (even), first (left/top) or second (right/bottom).",
                 ),
                 io.Color.Input("color", default="#000000", tooltip="Colour of the padding."),
-                # Declared last so the widget order of workflows saved before it
-                # existed still lines up on load.
-                io.Int.Input(
-                    "all_sides",
-                    default=0,
-                    min=0,
-                    max=MAX_PAD,
-                    socketless=True,
-                    tooltip="Above 0 this pads every side by this many pixels and the mode, the four side fields and the ratio are all ignored.",
-                ),
                 _info.ImageInfo.Input(
                     "image_info",
                     optional=True,
@@ -112,50 +112,57 @@ class MBPadImage(io.ComfyNode):
 
     @classmethod
     def execute(
-        cls, image, mode, top, bottom, left, right, aspect_ratio, portrait, color, all_sides=0,
+        cls, image, left, right, top, bottom, aspect_ratio, pad_from, color,
         image_info=None,
     ) -> io.NodeOutput:
         height, width = image.shape[1], image.shape[2]
 
-        if all_sides > 0:
-            top = bottom = left = right = all_sides
-        elif mode == "aspect ratio":
+        if aspect_ratio != NO_RATIO:
             ratio = RATIO_BY_NAME.get(aspect_ratio, 1.0)
-            if portrait:
-                ratio = 1 / ratio
-            top, bottom, left, right = _ratio_padding(width, height, ratio)
+            top, bottom, left, right = _ratio_padding(width, height, ratio, pad_from)
 
         source = image_info or {}
         if not (top or bottom or left or right):
-            return io.NodeOutput(image, _info.make(image, source.get("mask"), source.get("filename", "")))
-
-        channels = image.shape[3]
-        fill = _rgb(color)
-        if channels == 4:
-            fill.append(1.0)  # opaque padding around an image that carries alpha
-        elif channels == 1:
-            fill = [sum(fill) / 3.0]
-
-        padded = torch.empty(
-            (image.shape[0], height + top + bottom, width + left + right, channels),
-            dtype=image.dtype,
-            device=image.device,
-        )
-        padded[:] = torch.tensor(fill[:channels], dtype=image.dtype, device=image.device)
-        padded[:, top:top + height, left:left + width, :] = image
-
-        # The mask describes the original pixels, so it is padded to match with
-        # 0 (unmasked) around the edge rather than stretched over the border.
-        mask = _info.fit_mask(source.get("mask"), image)
-        if mask is not None:
-            grown = torch.zeros(
-                (mask.shape[0], height + top + bottom, width + left + right),
-                dtype=mask.dtype, device=mask.device,
+            result = image
+            info = _info.make(
+                image, source.get("mask"), source.get("filename", ""),
+                filenames=source.get("filenames"),
             )
-            grown[:, top:top + height, left:left + width] = mask
-            mask = grown
+        else:
+            channels = image.shape[3]
+            fill = _rgb(color)
+            if channels == 4:
+                fill.append(1.0)  # opaque padding around an image that carries alpha
+            elif channels == 1:
+                fill = [sum(fill) / 3.0]
 
-        return io.NodeOutput(padded, _info.make(padded, mask, source.get("filename", "")))
+            padded = torch.empty(
+                (image.shape[0], height + top + bottom, width + left + right, channels),
+                dtype=image.dtype,
+                device=image.device,
+            )
+            padded[:] = torch.tensor(fill[:channels], dtype=image.dtype, device=image.device)
+            padded[:, top:top + height, left:left + width, :] = image
+
+            # The mask describes the original pixels, so it is padded to match
+            # with 0 (unmasked) around the edge rather than stretched over the
+            # border.
+            mask = _info.fit_mask(source.get("mask"), image)
+            if mask is not None:
+                grown = torch.zeros(
+                    (mask.shape[0], height + top + bottom, width + left + right),
+                    dtype=mask.dtype, device=mask.device,
+                )
+                grown[:, top:top + height, left:left + width] = mask
+                mask = grown
+
+            result = padded
+            info = _info.make(
+                padded, mask, source.get("filename", ""),
+                filenames=source.get("filenames"),
+            )
+
+        return io.NodeOutput(result, info, ui=ui.PreviewImage(result, cls=cls))
 
 
 NODES = [MBPadImage]

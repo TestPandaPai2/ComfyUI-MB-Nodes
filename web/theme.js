@@ -2,7 +2,7 @@ import { app } from "../../scripts/app.js";
 
 const SETTING_ID = "MBNodes.Theme";
 
-// Five dark presets, one accent colour apiece. The body stays the same
+// Eleven dark presets, one accent colour apiece. The body stays the same
 // near-black across all of them -- only the title bar changes.
 const BODY_COLOR = "#0d0d0d";
 const PRESETS = {
@@ -11,6 +11,12 @@ const PRESETS = {
     Purple: "#9d4edd",
     Teal: "#14b8a6",
     Gold: "#d4a017",
+    Blue: "#3b82f6",
+    Red: "#e5484d",
+    Orange: "#f97316",
+    Indigo: "#6366f1",
+    Slate: "#64748b",
+    Orchid: "#bb00ff",
 };
 const DEFAULT_PRESET = "Green";
 
@@ -47,7 +53,7 @@ app.registerExtension({
             id: SETTING_ID,
             category: ["MB", "Theme", "Accent colour"],
             name: "Accent colour",
-            tooltip: "Title bar colour for every MB node. All five presets share the same dark body.",
+            tooltip: "Title bar colour for every MB node. All eleven presets share the same dark body.",
             type: "combo",
             options: Object.keys(PRESETS),
             defaultValue: DEFAULT_PRESET,
