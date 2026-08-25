@@ -67,6 +67,9 @@ A no-op sink with a **Run Branch** button that queues only the branch connected 
 ### Preview Anything (MB)
 Accepts any input type. Image/mask/audio/video get a real live preview on the node; everything else shows its text repr. Passes the value through unchanged. Runnable standalone.
 
+### Krea2 Styles (MB)
+Category + style dropdowns over the bundled Krea2 prompt-styles table (286 styles, 15 categories). Outputs `"StyleName: Prompt"`. `randomize` picks a random style within the selected category only; `bypass` outputs an empty string.
+
 ### Route 66 (MB)
 Multi-lane reroute. Each lane passes its input straight through to the matching output; a fresh empty lane appears as you connect more wires (up to 20), and each socket takes the colour/type of what plugs in. One tidy node to carry many wires across the graph instead of a pile of single reroute dots.
 

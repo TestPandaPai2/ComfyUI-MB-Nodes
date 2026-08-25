@@ -14,6 +14,7 @@ const DEFAULT = "Default";
 const MANHATTAN = "Manhattan";
 const MITRED = "Mitred";
 const DIAGONAL = "Diagonal Bus";
+const PCB = "PCB Trace";
 const BEZIER = "Bezier Snap";
 const CIRCUIT = "Circuit";
 const TELEPHONE = "Telephone Line";
@@ -79,7 +80,7 @@ function diagonalPoints(ax, ay, bx, by) {
 }
 
 function pointsFor(ax, ay, bx, by) {
-    return mode === DIAGONAL ? diagonalPoints(ax, ay, bx, by) : orthoPoints(ax, ay, bx, by);
+    return mode === DIAGONAL || mode === PCB ? diagonalPoints(ax, ay, bx, by) : orthoPoints(ax, ay, bx, by);
 }
 
 // --- telephone line --------------------------------------------------------
@@ -318,6 +319,33 @@ function drawAsterisk(ctx, cx, cy, r) {
     ctx.fill();
 }
 
+// PCB Trace decoration: a filled dot at each diagonal bend (the two inner
+// corners of the diagonal path -- the stub corners right off the slots are
+// skipped, they'd sit too close to the endpoint rings to read) and a hollow
+// ring at each end, like the pads/vias in a circuit-board trace.
+function drawPcbDots(ctx, pts, stroke, width) {
+    ctx.save();
+    ctx.globalAlpha *= opacity;
+    ctx.fillStyle = stroke;
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = Math.max(1, width * 0.35);
+
+    const dotR = width * 0.9;
+    for (let i = 2; i <= pts.length - 3; i++) {
+        ctx.beginPath();
+        ctx.arc(pts[i][0], pts[i][1], dotR, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    const ringR = width * 1.1;
+    for (const [ex, ey] of [pts[0], pts[pts.length - 1]]) {
+        ctx.beginPath();
+        ctx.arc(ex, ey, ringR, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+    ctx.restore();
+}
+
 // --- canvas patch --------------------------------------------------------
 
 // LLink carries its own type, but a link restored from an older workflow can
@@ -440,22 +468,17 @@ function install() {
             ctx.stroke();
         }
 
-        if (hover) {
-            ctx.strokeStyle = "#fff";
-            ctx.globalAlpha = Math.min(1, ctx.globalAlpha + 0.35);
-            ctx.lineWidth = width + 6;
-            ctx.beginPath();
-            tracePath(ctx, ax, ay, bx, by, pts);
-            ctx.stroke();
-        }
-
         ctx.strokeStyle = stroke;
-        ctx.lineWidth = hover ? width + 2 : width;
+        ctx.lineWidth = hover ? width + 1 : width;
         if (flow) ctx.globalAlpha *= flow;
         ctx.beginPath();
         tracePath(ctx, ax, ay, bx, by, pts);
         ctx.stroke();
         ctx.restore();
+
+        if (mode === PCB && this.ds.scale >= 0.6 && !skipBorder) {
+            drawPcbDots(ctx, pts, stroke, width);
+        }
 
         if (!link) return;
 
@@ -493,7 +516,7 @@ app.registerExtension({
             name: "Link render mode",
             tooltip: "Circuit-board routing for links. Default hands back to ComfyUI's own link style.",
             type: "combo",
-            options: [DEFAULT, MANHATTAN, MITRED, DIAGONAL, BEZIER, CIRCUIT, TELEPHONE, CLAUDE, DASHED, GHOST, TENSION],
+            options: [DEFAULT, MANHATTAN, MITRED, DIAGONAL, PCB, BEZIER, CIRCUIT, TELEPHONE, CLAUDE, DASHED, GHOST, TENSION],
             defaultValue: DEFAULT,
             onChange: (value) => {
                 mode = value ?? DEFAULT;

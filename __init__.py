@@ -13,6 +13,7 @@ from .nodes.combine_text_node import NODES as _combine_text
 from .nodes.crop_image_node import NODES as _crop_image
 from .nodes.get_lines_node import NODES as _get_lines
 from .nodes.image_info import NODES as _image_info
+from .nodes.krea_styles_node import NODES as _krea_styles
 from .nodes.load_folder_node import NODES as _load_folder
 from .nodes.load_image_crop_node import NODES as _load_image_crop
 from .nodes.load_image_mini_node import NODES as _load_image_mini
@@ -60,6 +61,7 @@ NODES: list[type[io.ComfyNode]] = [
     *_show_text,
     *_sampler,
     *_route66,
+    *_krea_styles,
 ]
 
 
