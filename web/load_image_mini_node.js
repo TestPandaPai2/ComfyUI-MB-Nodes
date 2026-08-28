@@ -1,79 +1,106 @@
 // Load Image Mini (MB): a compact custom face for the loader. The stock file
-// combo is kept (hidden) as the serialized source of truth for `image`, while a
-// DOM panel draws the toolbar, an arrow/thumbnail file picker, a preview and two
-// size cards. The whole resize engine lives in the gear dialog.
+// combo is kept (hidden) as the serialized source of truth for `image`, while
+// canvas-drawn pill/segment widgets (matching the pattern pad_image_node.js
+// pioneered) draw the toolbar, file browser, resize-mode picker and toggles
+// directly on the node face — no gear-panel dialog. A DOM `<img>` widget still
+// carries the real preview bitmap, since canvas re-drawing a photo every frame
+// is more code for no visual benefit over a plain <img>.
 
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 import { getWidget, setWidgetVisible, resizeToContent, notify } from "./common.js";
-import { openDialog, radioRow } from "./dialog.js";
+import { openDialog } from "./dialog.js";
 import { pasteImage } from "./clipboard_image.js";
 
 // Keep in step with nodes/load_image_mini_node.py.
 const MODES = ["none", "max megapixels", "longest side", "scale by", "fit inside", "crop to fill", "match ratio"];
+const MODE_LABELS = { "none": "Off", "max megapixels": "Max MP", "longest side": "Longest side", "scale by": "Scale by ×", "fit inside": "Fit inside", "crop to fill": "Crop to fill", "match ratio": "Match ratio" };
 const MEGAPIXELS = ["0.25", "0.5", "1.0", "1.25", "1.5", "2.0", "3.0", "4.0"];
 const MATCH_RATIOS = ["1:1", "4:3", "3:2", "16:10", "16:9", "1.85:1", "2:1", "21:9", "3:4", "2:3", "10:16", "9:16", "1:1.85", "1:2", "9:21"];
-const SNAP_OPTIONS = ["1", "2", "4", "8", "16", "32", "64"];
+const QUICK_SNAPS = ["1", "8", "16", "32", "64"]; // "1" reads as "Off"
 const RESAMPLES = ["lanczos", "bicubic", "bilinear", "area", "nearest-exact"];
 
-// Accent swatches for the gear panel. "" clears the override back to the pack theme.
-const SWATCHES = [
-    ["Theme", ""], ["Green", "#1fae65"], ["Pink", "#e0399c"], ["Purple", "#9d4edd"],
-    ["Teal", "#14b8a6"], ["Gold", "#d4a017"], ["Blue", "#3b82f6"], ["Red", "#e5484d"],
-    ["Orange", "#f97316"], ["Indigo", "#6366f1"], ["Slate", "#64748b"], ["Orchid", "#bb00ff"],
-];
-
-// Gear widgets: hidden from the body, edited only through the panel.
-const GEAR_WIDGETS = [
+// Gear widgets: hidden from the body, still serialize/drive execute().
+const HIDDEN_WIDGETS = [
     "resize_mode", "megapixels", "longest_side", "scale_by", "fit_width", "fit_height",
     "fill_width", "fill_height", "match_ratio", "snap", "resample", "allow_upscale", "accent",
 ];
+
+// --- palette -----------------------------------------------------------------
+// This node's own two-tone experiment (see plan): pink for the primary/active
+// state, purple for chrome (arrows, borders, the node title via `accent`).
+const ACCENT_PINK = "#e0399c";
+const ACCENT_PURPLE = "#9d4edd";
+const BODY_BG = "#141414";
+const FIELD_BG = "#0d0d0d";
+const TEXT_DIM = "#9a9a9a";
+const TEXT_BRIGHT = "#f0f0f0";
+
+const MARGIN = 14;
+const GAP = 6;
+const ROW_H = 30;
+const BOX_H = 46;
+const SEG_H = 26;
+const ARROW_W = 26;
+const SEG_COLS = 4;
+const SEG_MIN_W = 62;
+
+function shade(hex, amt) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || ""));
+    if (!m) return hex;
+    const n = parseInt(m[1], 16);
+    const mix = (c) => Math.round(amt >= 0 ? c + (255 - c) * amt : c * (1 + amt));
+    const r = mix((n >> 16) & 255);
+    const g = mix((n >> 8) & 255);
+    const b = mix(n & 255);
+    return `rgb(${r}, ${g}, ${b})`;
+}
+
+function drawPill(ctx, x, y, w, h, { selected = false, accent = ACCENT_PINK, radius = 8 } = {}) {
+    const grad = ctx.createLinearGradient(0, y, 0, y + h);
+    if (selected) {
+        grad.addColorStop(0, shade(accent, 0.28));
+        grad.addColorStop(1, shade(accent, -0.08));
+    } else {
+        grad.addColorStop(0, "#3d3d3d");
+        grad.addColorStop(1, "#242424");
+    }
+    ctx.fillStyle = grad;
+    ctx.strokeStyle = selected ? shade(accent, 0.4) : `${accent}55`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, radius);
+    ctx.fill();
+    ctx.stroke();
+}
+
+function fitText(ctx, text, maxWidth) {
+    if (maxWidth <= 0) return "";
+    if (ctx.measureText(text).width <= maxWidth) return text;
+    let cut = text;
+    while (cut.length > 1 && ctx.measureText(cut + "…").width > maxWidth) cut = cut.slice(0, -1);
+    return cut + "…";
+}
+
+function hit(pos, x, y, w, h) {
+    return pos[0] >= x && pos[0] <= x + w && pos[1] >= y && pos[1] <= y + h;
+}
 
 const STYLE_ID = "mb-mini-style";
 const ANNOTATED = /^(.*?)\s*\[(\w+)\]\s*$/;
 
 const CSS = `
-.mb-mini {
-    display: flex; flex-direction: column; gap: 6px;
-    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-    color: #dcdcdc; box-sizing: border-box; width: 100%;
-}
-.mb-mini-bar { display: flex; gap: 6px; }
-.mb-mini-btn {
-    flex: 1; padding: 5px 0; text-align: center; font-size: 12px;
-    background: #353535; border: 1px solid #1a1a1a; border-radius: 8px;
-    color: #dcdcdc; cursor: pointer; user-select: none;
-}
-.mb-mini-btn:hover { background: #404040; }
-.mb-mini-file { display: flex; align-items: center; gap: 4px; }
-.mb-mini-arrow {
-    flex: none; width: 26px; padding: 5px 0; text-align: center; font-size: 12px;
-    background: #262626; border: 1px solid #3a3a3a; border-radius: 8px;
-    color: #cfcfcf; cursor: pointer; user-select: none;
-}
-.mb-mini-arrow:hover { background: #333; }
-.mb-mini-name {
-    flex: 1; min-width: 0; padding: 5px 8px; font-size: 12px;
-    background: #0d0d0d; border: 1px solid #3a3a3a; border-radius: 8px;
-    color: #e8e8e8; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.mb-mini-name:hover { border-color: #555; }
+.mb-mini-preview-wrap { width: 100%; box-sizing: border-box; }
 .mb-mini-preview {
-    width: 100%; height: 150px; border-radius: 8px; background: #0d0d0d;
-    border: 1px solid #2a2a2a; object-fit: contain; display: block;
+    width: 100%; height: 150px; border-radius: 10px; background: ${FIELD_BG};
+    border: 1px solid ${ACCENT_PURPLE}55; object-fit: contain; display: block;
 }
 .mb-mini-empty {
-    width: 100%; height: 150px; border-radius: 8px; background: #0d0d0d;
-    border: 1px dashed #333; display: flex; align-items: center; justify-content: center;
-    color: #6a6a6a; font-size: 11px;
+    width: 100%; height: 150px; border-radius: 10px; background: ${FIELD_BG};
+    border: 1px dashed #3a2a3a; display: flex; align-items: center; justify-content: center;
+    color: #6a6a6a; font-size: 11px; font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    box-sizing: border-box;
 }
-.mb-mini-cards { display: flex; gap: 6px; }
-.mb-mini-card {
-    flex: 1; min-width: 0; padding: 5px 8px; background: #161616;
-    border: 1px solid #2a2a2a; border-radius: 8px;
-}
-.mb-mini-card b { display: block; font-size: 9px; color: #8f8f8f; text-transform: uppercase; letter-spacing: 0.5px; }
-.mb-mini-card span { font-size: 12px; color: #e8e8e8; }
 .mb-mini-grid {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
     gap: 6px; max-height: 340px; overflow-y: auto; padding: 2px;
@@ -83,19 +110,10 @@ const CSS = `
     border-radius: 6px; overflow: hidden; background: #161616; cursor: pointer;
 }
 .mb-mini-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.mb-mini-tile.mb-on { border-color: #e01010; }
+.mb-mini-tile.mb-on { border-color: ${ACCENT_PINK}; }
 .mb-mini-tile .mb-mini-cap {
     position: absolute; left: 0; right: 0; bottom: 0; padding: 2px 4px; font-size: 9px;
     color: #e8e8e8; background: rgba(0,0,0,0.65); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.mb-mini-swatches { display: flex; flex-wrap: wrap; gap: 6px; }
-.mb-mini-swatch {
-    width: 24px; height: 24px; border-radius: 6px; cursor: pointer;
-    border: 2px solid transparent; box-sizing: border-box;
-}
-.mb-mini-swatch.mb-on { border-color: #ffffff; }
-.mb-mini-swatch.mb-theme {
-    background: repeating-conic-gradient(#555 0% 25%, #333 0% 50%) 50% / 10px 10px;
 }
 `;
 
@@ -188,7 +206,7 @@ function stepFile(node, dir) {
 
 // ---------------------------------------------------------------- resize mirror
 
-function snap(value, multiple) {
+function snapTo(value, multiple) {
     const m = Math.max(1, Number(multiple) || 1);
     return Math.max(m, Math.round(value / m) * m);
 }
@@ -210,21 +228,21 @@ function computeOut(node, w, h) {
     if (mode === "max megapixels") {
         const f = Math.sqrt((parseFloat(g("megapixels")) * 1e6) / (w * h));
         if (f > 1 && !up) return [w, h];
-        return [snap(w * f, s), snap(h * f, s)];
+        return [snapTo(w * f, s), snapTo(h * f, s)];
     }
     if (mode === "longest side") {
         const f = (Number(g("longest_side")) || 1024) / Math.max(w, h);
         if (f > 1 && !up) return [w, h];
-        return [snap(w * f, s), snap(h * f, s)];
+        return [snapTo(w * f, s), snapTo(h * f, s)];
     }
     if (mode === "scale by") {
         const f = Number(g("scale_by")) || 1;
-        return [snap(w * f, s), snap(h * f, s)];
+        return [snapTo(w * f, s), snapTo(h * f, s)];
     }
     if (mode === "fit inside") {
         const f = Math.min((Number(g("fit_width")) || 1024) / w, (Number(g("fit_height")) || 1024) / h);
         if (f > 1 && !up) return [w, h];
-        return [snap(w * f, s), snap(h * f, s)];
+        return [snapTo(w * f, s), snapTo(h * f, s)];
     }
     if (mode === "crop to fill") {
         return [Number(g("fill_width")) || 1024, Number(g("fill_height")) || 1024];
@@ -245,47 +263,15 @@ function aspect(w, h) {
     return r >= 1 ? `${r.toFixed(2)}:1` : `1:${(1 / r).toFixed(2)}`;
 }
 
-// ---------------------------------------------------------------- panel refresh
-
-async function refresh(node) {
-    const panel = node.__mbMini;
-    if (!panel) return;
-    const value = getWidget(node, "image")?.value;
-    panel.name.textContent = value || "no image";
-
-    const size = await measure(value);
-    if (!size) {
-        panel.preview.style.display = "none";
-        panel.empty.style.display = "flex";
-        panel.inCard.textContent = "—";
-        panel.outCard.textContent = "—";
-        node.imgs = undefined;
-        node.setDirtyCanvas(true, false);
-        return;
-    }
-
-    const [w, h] = size;
-    const [ow, oh] = computeOut(node, w, h);
-    panel.preview.src = viewURL(value);
-    panel.preview.style.display = "block";
-    panel.empty.style.display = "none";
-    panel.inCard.textContent = `${w} x ${h}`;
-    panel.outCard.textContent = `${ow} x ${oh}  ·  ${aspect(ow, oh)}  ·  ${((ow * oh) / 1e6).toFixed(2)} MP`;
-
-    // Give MaskEditor / Clipspace something to read.
-    const img = new Image();
-    img.onload = () => { node.imgs = [img]; };
-    img.src = panel.preview.src;
-
-    node.setDirtyCanvas(true, false);
-}
-
 // ---------------------------------------------------------------- accent
 
 function applyAccent(node) {
-    const accent = getWidget(node, "accent")?.value;
-    if (accent) {
-        node.color = accent;
+    const widget = getWidget(node, "accent");
+    if (widget && !widget.value) {
+        widget.value = ACCENT_PURPLE; // this node defaults to the purple/pink experiment
+    }
+    if (widget?.value) {
+        node.color = widget.value;
         node.setDirtyCanvas(true, true);
     }
 }
@@ -337,179 +323,692 @@ function openPicker(node) {
     });
 }
 
-// ---------------------------------------------------------------- gear panel
+// ---------------------------------------------------------------- shared widget bits
 
-function selectEl(options, value, onChange) {
-    const el = document.createElement("select");
-    el.className = "mb-dialog-select";
-    for (const opt of options) {
-        const o = document.createElement("option");
-        o.value = o.textContent = opt;
-        el.appendChild(o);
+// Row geometry a widget can use to know how wide it has to paint, and to keep a
+// minimum width so segmented rows never overlap.
+function widgetWidthOf(node, widgetWidth) {
+    return widgetWidth || node.size[0];
+}
+
+function modeGridRows() {
+    return Math.ceil(MODES.length / SEG_COLS);
+}
+
+function modeGridMinWidth() {
+    return MARGIN * 2 + SEG_COLS * SEG_MIN_W + (SEG_COLS - 1) * GAP;
+}
+
+// ---------------------------------------------------------------- size row widget
+
+function makeSizeRowWidget(node) {
+    return {
+        type: "mb_size_row",
+        name: "mb_size_row",
+        y: 0,
+        serialize: false,
+        options: { serialize: false },
+
+        computeSize() { return [node.size[0], BOX_H]; },
+        computeLayoutSize() { return { minHeight: BOX_H, maxHeight: BOX_H, minWidth: 220, maxWidth: Infinity }; },
+
+        draw(ctx, drawNode, widgetWidth, y) {
+            this.y = y;
+            const width = widgetWidthOf(drawNode, widgetWidth);
+            const boxW = (width - MARGIN * 2 - 28) / 2;
+
+            const info = drawNode.__mbMiniInfo ?? null;
+
+            const drawBox = (x, label, line1, line2) => {
+                ctx.save();
+                ctx.fillStyle = "#161616";
+                ctx.strokeStyle = `${ACCENT_PURPLE}55`;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.roundRect(x, y, boxW, BOX_H, 8);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.textAlign = "center";
+                ctx.fillStyle = TEXT_DIM;
+                ctx.font = "9px Arial";
+                ctx.fillText(label, x + boxW / 2, y + 11);
+
+                ctx.fillStyle = TEXT_BRIGHT;
+                ctx.font = "bold 13px Arial";
+                ctx.fillText(fitText(ctx, line1, boxW - 8), x + boxW / 2, y + 26);
+
+                ctx.fillStyle = TEXT_DIM;
+                ctx.font = "9px Arial";
+                ctx.fillText(fitText(ctx, line2, boxW - 8), x + boxW / 2, y + 38);
+                ctx.restore();
+            };
+
+            const inX = MARGIN;
+            const outX = MARGIN + boxW + 28;
+            if (info) {
+                drawBox(inX, "INPUT", `${info.w}×${info.h}`, `~${aspect(info.w, info.h)}`);
+                drawBox(outX, "OUTPUT", `${info.ow}×${info.oh}`, `${((info.ow * info.oh) / 1e6).toFixed(2)} MP`);
+            } else {
+                drawBox(inX, "INPUT", "—", "");
+                drawBox(outX, "OUTPUT", "—", "");
+            }
+
+            ctx.save();
+            ctx.fillStyle = ACCENT_PURPLE;
+            ctx.font = "14px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("›", inX + boxW + 14, y + BOX_H / 2);
+            ctx.restore();
+        },
+    };
+}
+
+// ---------------------------------------------------------------- action row (upload/paste)
+
+function makeActionRowWidget(node) {
+    return {
+        type: "mb_actions",
+        name: "mb_actions",
+        y: 0,
+        width: 0,
+        serialize: false,
+        options: { serialize: false },
+
+        computeSize() { return [node.size[0], ROW_H]; },
+        computeLayoutSize() { return { minHeight: ROW_H, maxHeight: ROW_H, minWidth: 200, maxWidth: Infinity }; },
+
+        draw(ctx, drawNode, widgetWidth, y) {
+            this.y = y;
+            this.width = widgetWidthOf(drawNode, widgetWidth);
+            const uploadW = this.width - MARGIN * 2 - 90;
+            const uploadX = MARGIN;
+            const pasteX = uploadX + uploadW + GAP;
+            const pasteW = 90 - GAP;
+
+            drawPill(ctx, uploadX, y, uploadW, ROW_H, { selected: true, accent: ACCENT_PINK });
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 12px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("⬆ Upload Image", uploadX + uploadW / 2, y + ROW_H / 2);
+
+            drawPill(ctx, pasteX, y, pasteW, ROW_H, { accent: ACCENT_PURPLE });
+            ctx.fillStyle = "#dcdcdc";
+            ctx.font = "11px Arial";
+            ctx.fillText("📋 Paste", pasteX + pasteW / 2, y + ROW_H / 2);
+
+            this._uploadRect = [uploadX, y, uploadW, ROW_H];
+            this._pasteRect = [pasteX, y, pasteW, ROW_H];
+        },
+
+        mouse(event, pos, mouseNode) {
+            if (event.type !== "pointerdown" && event.type !== "mousedown") return false;
+            for (const originY of [this.y, 0]) {
+                if (!this._uploadRect) continue;
+                const [ux, , uw] = this._uploadRect;
+                if (hit(pos, ux, originY, uw, ROW_H)) { openUpload(mouseNode); return true; }
+                const [px, , pw] = this._pasteRect;
+                if (hit(pos, px, originY, pw, ROW_H)) {
+                    pasteImage(mouseNode).then?.(() => refresh(mouseNode)) ?? refresh(mouseNode);
+                    return true;
+                }
+            }
+            return false;
+        },
+    };
+}
+
+// ---------------------------------------------------------------- file browser row
+
+function makeFileRowWidget(node) {
+    return {
+        type: "mb_file_row",
+        name: "mb_file_row",
+        y: 0,
+        width: 0,
+        serialize: false,
+        options: { serialize: false },
+
+        computeSize() { return [node.size[0], ROW_H]; },
+        computeLayoutSize() { return { minHeight: ROW_H, maxHeight: ROW_H, minWidth: 160, maxWidth: Infinity }; },
+
+        draw(ctx, drawNode, widgetWidth, y) {
+            this.y = y;
+            this.width = widgetWidthOf(drawNode, widgetWidth);
+            const prevX = MARGIN;
+            const nextX = this.width - MARGIN - ARROW_W;
+            const nameX = prevX + ARROW_W + GAP;
+            const nameW = nextX - GAP - nameX;
+
+            drawPill(ctx, prevX, y, ARROW_W, ROW_H, { accent: ACCENT_PURPLE });
+            drawPill(ctx, nextX, y, ARROW_W, ROW_H, { accent: ACCENT_PURPLE });
+            ctx.fillStyle = "#dcdcdc";
+            ctx.font = "12px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("◀", prevX + ARROW_W / 2, y + ROW_H / 2);
+            ctx.fillText("▶", nextX + ARROW_W / 2, y + ROW_H / 2);
+
+            ctx.fillStyle = FIELD_BG;
+            ctx.strokeStyle = "#3a3a3a";
+            ctx.beginPath();
+            ctx.roundRect(nameX, y, nameW, ROW_H, 8);
+            ctx.fill();
+            ctx.stroke();
+
+            const value = getWidget(drawNode, "image")?.value;
+            const list = fileList(drawNode);
+            const index = value ? list.indexOf(value) : -1;
+            const counter = list.length ? `${index + 1}/${list.length}` : "";
+            const counterW = counter ? ctx.measureText(counter).width + 10 : 0;
+
+            ctx.fillStyle = "#e8e8e8";
+            ctx.font = "12px Arial";
+            ctx.textAlign = "left";
+            ctx.fillText(fitText(ctx, value || "no image", nameW - 16 - counterW), nameX + 8, y + ROW_H / 2);
+
+            if (counter) {
+                ctx.fillStyle = TEXT_DIM;
+                ctx.font = "10px Arial";
+                ctx.textAlign = "right";
+                ctx.fillText(counter, nameX + nameW - 8, y + ROW_H / 2);
+            }
+
+            this._prevRect = [prevX, y, ARROW_W, ROW_H];
+            this._nextRect = [nextX, y, ARROW_W, ROW_H];
+            this._nameRect = [nameX, y, nameW, ROW_H];
+        },
+
+        mouse(event, pos, mouseNode) {
+            if (event.type !== "pointerdown" && event.type !== "mousedown") return false;
+            for (const originY of [this.y, 0]) {
+                if (!this._prevRect) continue;
+                const [px, , pw] = this._prevRect;
+                if (hit(pos, px, originY, pw, ROW_H)) { stepFile(mouseNode, -1); return true; }
+                const [nx, , nw] = this._nextRect;
+                if (hit(pos, nx, originY, nw, ROW_H)) { stepFile(mouseNode, 1); return true; }
+                const [mx, , mw] = this._nameRect;
+                if (hit(pos, mx, originY, mw, ROW_H)) { openPicker(mouseNode); return true; }
+            }
+            return false;
+        },
+    };
+}
+
+// ---------------------------------------------------------------- resize mode grid
+
+function makeModeGridWidget(node) {
+    return {
+        type: "mb_mode_grid",
+        name: "mb_mode_grid",
+        y: 0,
+        width: 0,
+        serialize: false,
+        options: { serialize: false },
+
+        computeSize() {
+            const rows = modeGridRows();
+            return [node.size[0], rows * SEG_H + (rows - 1) * GAP];
+        },
+        computeLayoutSize() {
+            const [, h] = this.computeSize();
+            return { minHeight: h, maxHeight: h, minWidth: modeGridMinWidth(), maxWidth: Infinity };
+        },
+
+        draw(ctx, drawNode, widgetWidth, y) {
+            this.y = y;
+            this.width = widgetWidthOf(drawNode, widgetWidth);
+            const active = getWidget(drawNode, "resize_mode")?.value ?? "none";
+            const usable = this.width - MARGIN * 2;
+            const segW = (usable - (SEG_COLS - 1) * GAP) / SEG_COLS;
+
+            this._rects = [];
+            MODES.forEach((mode, i) => {
+                const col = i % SEG_COLS;
+                const row = Math.floor(i / SEG_COLS);
+                const x = MARGIN + col * (segW + GAP);
+                const by = y + row * (SEG_H + GAP);
+                const selected = mode === active;
+                drawPill(ctx, x, by, segW, SEG_H, { selected, accent: ACCENT_PINK });
+                ctx.fillStyle = selected ? "#ffffff" : "#c8c8c8";
+                ctx.font = (selected ? "bold " : "") + "10px Arial";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(fitText(ctx, MODE_LABELS[mode], segW - 6), x + segW / 2, by + SEG_H / 2);
+                this._rects.push([x, by, segW, SEG_H, mode]);
+            });
+        },
+
+        mouse(event, pos, mouseNode) {
+            if (event.type !== "pointerdown" && event.type !== "mousedown") return false;
+            for (const originY of [this.y, 0]) {
+                if (!this._rects) continue;
+                for (const [x, by, w, h, mode] of this._rects) {
+                    if (hit(pos, x, originY + (by - this.y), w, h)) {
+                        const widget = getWidget(mouseNode, "resize_mode");
+                        if (widget) {
+                            widget.value = mode;
+                            widget.callback?.(mode);
+                            mouseNode.setDirtyCanvas(true, true);
+                            refresh(mouseNode);
+                        }
+                        return true;
+                    }
+                }
+            }
+            return false;
+        },
+    };
+}
+
+// ---------------------------------------------------------------- mode-specific field
+
+// A pager row: "<  Label: value  >" cycling through `options`.
+function drawPager(ctx, x, y, w, h, label, value, accent) {
+    const arrowW = ARROW_W;
+    drawPill(ctx, x, y, arrowW, h, { accent });
+    drawPill(ctx, x + w - arrowW, y, arrowW, h, { accent });
+    ctx.fillStyle = "#dcdcdc";
+    ctx.font = "12px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("◀", x + arrowW / 2, y + h / 2);
+    ctx.fillText("▶", x + w - arrowW / 2, y + h / 2);
+
+    const midX = x + arrowW + GAP;
+    const midW = w - arrowW * 2 - GAP * 2;
+    ctx.fillStyle = FIELD_BG;
+    ctx.strokeStyle = "#3a3a3a";
+    ctx.beginPath();
+    ctx.roundRect(midX, y, midW, h, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#e8e8e8";
+    ctx.font = "11px Arial";
+    ctx.fillText(fitText(ctx, `${label}: ${value}`, midW - 10), midX + midW / 2, y + h / 2);
+
+    return { prev: [x, y, arrowW, h], next: [x + w - arrowW, y, arrowW, h] };
+}
+
+function drawNumberBox(ctx, x, y, w, h, label, value) {
+    ctx.fillStyle = TEXT_DIM;
+    ctx.font = "10px Arial";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText(label, x, y + h / 2);
+    const boxX = x + 78;
+    const boxW = w - 78;
+    ctx.fillStyle = FIELD_BG;
+    ctx.strokeStyle = "#3a3a3a";
+    ctx.beginPath();
+    ctx.roundRect(boxX, y, boxW, h, 8);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = TEXT_BRIGHT;
+    ctx.font = "12px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(String(value), boxX + boxW / 2, y + h / 2);
+    return [boxX, y, boxW, h];
+}
+
+function makeModeFieldWidget(node) {
+    return {
+        type: "mb_mode_field",
+        name: "mb_mode_field",
+        y: 0,
+        width: 0,
+        serialize: false,
+        options: { serialize: false },
+
+        _mode() { return getWidget(node, "resize_mode")?.value ?? "none"; },
+
+        computeSize() {
+            return [node.size[0], this._mode() === "none" ? 0 : ROW_H];
+        },
+        computeLayoutSize() {
+            const h = this.computeSize()[1];
+            return { minHeight: h, maxHeight: h, minWidth: 200, maxWidth: Infinity };
+        },
+
+        draw(ctx, drawNode, widgetWidth, y) {
+            this.y = y;
+            this.width = widgetWidthOf(drawNode, widgetWidth);
+            const mode = getWidget(drawNode, "resize_mode")?.value ?? "none";
+            this._hits = null;
+            if (mode === "none") return;
+
+            const w = this.width - MARGIN * 2;
+            const x = MARGIN;
+
+            if (mode === "max megapixels") {
+                const value = getWidget(drawNode, "megapixels")?.value ?? "1.0";
+                this._hits = { type: "pager", name: "megapixels", options: MEGAPIXELS, ...drawPager(ctx, x, y, w, ROW_H, "Megapixels", value, ACCENT_PURPLE) };
+            } else if (mode === "match ratio") {
+                const value = getWidget(drawNode, "match_ratio")?.value ?? "1:1";
+                this._hits = { type: "pager", name: "match_ratio", options: MATCH_RATIOS, ...drawPager(ctx, x, y, w, ROW_H, "Ratio", value, ACCENT_PURPLE) };
+            } else if (mode === "longest side") {
+                const value = getWidget(drawNode, "longest_side")?.value ?? 1024;
+                const rect = drawNumberBox(ctx, x, y, w, ROW_H, "Longest side", value);
+                this._hits = { type: "number", name: "longest_side", min: 8, max: 16384, step: 1, rect };
+            } else if (mode === "scale by") {
+                const value = getWidget(drawNode, "scale_by")?.value ?? 1.0;
+                const rect = drawNumberBox(ctx, x, y, w, ROW_H, "Scale by", value);
+                this._hits = { type: "number", name: "scale_by", min: 0.05, max: 8, step: 0.05, rect };
+            } else if (mode === "fit inside" || mode === "crop to fill") {
+                const wName = mode === "fit inside" ? "fit_width" : "fill_width";
+                const hName = mode === "fit inside" ? "fit_height" : "fill_height";
+                const half = (w - GAP) / 2;
+                const rectW = drawNumberBox(ctx, x, y, half, ROW_H, "Width", getWidget(drawNode, wName)?.value ?? 1024);
+                const rectH = drawNumberBox(ctx, x + half + GAP, y, half, ROW_H, "Height", getWidget(drawNode, hName)?.value ?? 1024);
+                this._hits = {
+                    type: "twoNumber",
+                    fields: [
+                        { name: wName, min: 8, max: 16384, step: 1, rect: rectW },
+                        { name: hName, min: 8, max: 16384, step: 1, rect: rectH },
+                    ],
+                };
+            }
+        },
+
+        mouse(event, pos, mouseNode) {
+            if (event.type !== "pointerdown" && event.type !== "mousedown") return false;
+            if (!this._hits) return false;
+
+            for (const originY of [this.y, 0]) {
+                if (this._hits.type === "pager") {
+                    const { name, options, prev, next } = this._hits;
+                    const [px, , pw, ph] = prev;
+                    const [nx, , nw] = next;
+                    let dir = 0;
+                    if (hit(pos, px, originY, pw, ph)) dir = -1;
+                    else if (hit(pos, nx, originY, nw, ph)) dir = 1;
+                    if (dir) {
+                        const widget = getWidget(mouseNode, name);
+                        if (widget) {
+                            const idx = Math.max(0, options.indexOf(widget.value));
+                            const value = options[(idx + dir + options.length) % options.length];
+                            widget.value = value;
+                            widget.callback?.(value);
+                            refresh(mouseNode);
+                        }
+                        return true;
+                    }
+                } else if (this._hits.type === "number") {
+                    const { name, min, max, rect } = this._hits;
+                    const [bx, , bw, bh] = rect;
+                    if (hit(pos, bx, originY, bw, bh)) {
+                        const widget = getWidget(mouseNode, name);
+                        if (!widget) return true;
+                        const typed = window.prompt(name.replace(/_/g, " "), widget.value);
+                        if (typed !== null && !Number.isNaN(Number(typed))) {
+                            const clamped = Math.min(max, Math.max(min, Number(typed)));
+                            widget.value = clamped;
+                            widget.callback?.(clamped);
+                            refresh(mouseNode);
+                        }
+                        return true;
+                    }
+                } else if (this._hits.type === "twoNumber") {
+                    for (const { name, min, max, rect } of this._hits.fields) {
+                        const [bx, , bw, bh] = rect;
+                        if (hit(pos, bx, originY, bw, bh)) {
+                            const widget = getWidget(mouseNode, name);
+                            if (!widget) return true;
+                            const typed = window.prompt(name.replace(/_/g, " "), widget.value);
+                            if (typed !== null && !Number.isNaN(Number(typed))) {
+                                const clamped = Math.min(max, Math.max(min, Number(typed)));
+                                widget.value = clamped;
+                                widget.callback?.(clamped);
+                                refresh(mouseNode);
+                            }
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        },
+    };
+}
+
+// ---------------------------------------------------------------- snap row
+
+function makeSnapRowWidget(node) {
+    return {
+        type: "mb_snap_row",
+        name: "mb_snap_row",
+        y: 0,
+        width: 0,
+        serialize: false,
+        options: { serialize: false },
+
+        computeSize() { return [node.size[0], ROW_H]; },
+        computeLayoutSize() { return { minHeight: ROW_H, maxHeight: ROW_H, minWidth: 220, maxWidth: Infinity }; },
+
+        draw(ctx, drawNode, widgetWidth, y) {
+            this.y = y;
+            this.width = widgetWidthOf(drawNode, widgetWidth);
+            const labelW = 40;
+            const active = String(getWidget(drawNode, "snap")?.value ?? "8");
+
+            ctx.fillStyle = TEXT_DIM;
+            ctx.font = "10px Arial";
+            ctx.textAlign = "left";
+            ctx.textBaseline = "middle";
+            ctx.fillText("SNAP", MARGIN, y + ROW_H / 2);
+
+            const x0 = MARGIN + labelW;
+            const usable = this.width - MARGIN - labelW - MARGIN;
+            const segW = (usable - (QUICK_SNAPS.length - 1) * GAP) / QUICK_SNAPS.length;
+
+            this._rects = [];
+            QUICK_SNAPS.forEach((value, i) => {
+                const x = x0 + i * (segW + GAP);
+                const selected = value === active;
+                drawPill(ctx, x, y, segW, ROW_H, { selected, accent: ACCENT_PINK });
+                ctx.fillStyle = selected ? "#ffffff" : "#c8c8c8";
+                ctx.font = (selected ? "bold " : "") + "10px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText(value === "1" ? "Off" : value, x + segW / 2, y + ROW_H / 2);
+                this._rects.push([x, y, segW, ROW_H, value]);
+            });
+        },
+
+        mouse(event, pos, mouseNode) {
+            if (event.type !== "pointerdown" && event.type !== "mousedown") return false;
+            for (const originY of [this.y, 0]) {
+                if (!this._rects) continue;
+                for (const [x, , w, h, value] of this._rects) {
+                    if (hit(pos, x, originY, w, h)) {
+                        const widget = getWidget(mouseNode, "snap");
+                        if (widget) {
+                            widget.value = value;
+                            widget.callback?.(value);
+                            refresh(mouseNode);
+                        }
+                        return true;
+                    }
+                }
+            }
+            return false;
+        },
+    };
+}
+
+// ---------------------------------------------------------------- resample pager row
+
+function makeResampleRowWidget(node) {
+    return {
+        type: "mb_resample_row",
+        name: "mb_resample_row",
+        y: 0,
+        width: 0,
+        serialize: false,
+        options: { serialize: false },
+
+        computeSize() { return [node.size[0], ROW_H]; },
+        computeLayoutSize() { return { minHeight: ROW_H, maxHeight: ROW_H, minWidth: 160, maxWidth: Infinity }; },
+
+        draw(ctx, drawNode, widgetWidth, y) {
+            this.y = y;
+            this.width = widgetWidthOf(drawNode, widgetWidth);
+            const value = getWidget(drawNode, "resample")?.value ?? "lanczos";
+            this._hits = drawPager(ctx, MARGIN, y, this.width - MARGIN * 2, ROW_H, "Resample", value, ACCENT_PURPLE);
+        },
+
+        mouse(event, pos, mouseNode) {
+            if (event.type !== "pointerdown" && event.type !== "mousedown") return false;
+            if (!this._hits) return false;
+            for (const originY of [this.y, 0]) {
+                const [px, , pw, ph] = this._hits.prev;
+                const [nx, , nw] = this._hits.next;
+                let dir = 0;
+                if (hit(pos, px, originY, pw, ph)) dir = -1;
+                else if (hit(pos, nx, originY, nw, ph)) dir = 1;
+                if (dir) {
+                    const widget = getWidget(mouseNode, "resample");
+                    if (widget) {
+                        const idx = Math.max(0, RESAMPLES.indexOf(widget.value));
+                        const value = RESAMPLES[(idx + dir + RESAMPLES.length) % RESAMPLES.length];
+                        widget.value = value;
+                        widget.callback?.(value);
+                        mouseNode.setDirtyCanvas(true, true);
+                    }
+                    return true;
+                }
+            }
+            return false;
+        },
+    };
+}
+
+// ---------------------------------------------------------------- upscaling toggle
+
+function makeUpscaleToggleWidget(node) {
+    return {
+        type: "mb_upscale_toggle",
+        name: "mb_upscale_toggle",
+        y: 0,
+        width: 0,
+        serialize: false,
+        options: { serialize: false },
+
+        computeSize() { return [node.size[0], ROW_H]; },
+        computeLayoutSize() { return { minHeight: ROW_H, maxHeight: ROW_H, minWidth: 160, maxWidth: Infinity }; },
+
+        draw(ctx, drawNode, widgetWidth, y) {
+            this.y = y;
+            this.width = widgetWidthOf(drawNode, widgetWidth);
+            const on = getWidget(drawNode, "allow_upscale")?.value === true;
+            const x = MARGIN;
+            const w = this.width - MARGIN * 2;
+
+            drawPill(ctx, x, y, w, ROW_H, { selected: on, accent: ACCENT_PINK });
+            ctx.fillStyle = on ? "#ffffff" : "#c8c8c8";
+            ctx.font = "bold 12px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(`Upscaling: ${on ? "On" : "Off"}`, x + w / 2, y + ROW_H / 2);
+
+            this._rect = [x, y, w, ROW_H];
+        },
+
+        mouse(event, pos, mouseNode) {
+            if (event.type !== "pointerdown" && event.type !== "mousedown") return false;
+            for (const originY of [this.y, 0]) {
+                if (!this._rect) continue;
+                const [x, , w, h] = this._rect;
+                if (hit(pos, x, originY, w, h)) {
+                    const widget = getWidget(mouseNode, "allow_upscale");
+                    if (widget) {
+                        widget.value = !(widget.value === true);
+                        widget.callback?.(widget.value);
+                        mouseNode.setDirtyCanvas(true, true);
+                    }
+                    return true;
+                }
+            }
+            return false;
+        },
+    };
+}
+
+// ---------------------------------------------------------------- panel refresh
+
+async function refresh(node) {
+    const panel = node.__mbMiniPreview;
+    const value = getWidget(node, "image")?.value;
+
+    const size = await measure(value);
+    if (!size) {
+        node.__mbMiniInfo = null;
+        if (panel) {
+            panel.preview.style.display = "none";
+            panel.empty.style.display = "flex";
+        }
+        node.imgs = undefined;
+        node.setDirtyCanvas(true, true);
+        return;
     }
-    el.value = value;
-    if (onChange) el.addEventListener("change", () => onChange(el.value));
-    return el;
+
+    const [w, h] = size;
+    const [ow, oh] = computeOut(node, w, h);
+    node.__mbMiniInfo = { w, h, ow, oh };
+
+    if (panel) {
+        panel.preview.src = viewURL(value);
+        panel.preview.style.display = "block";
+        panel.empty.style.display = "none";
+    }
+
+    // node.imgs is deliberately left untouched here: LiteGraph auto-draws it as
+    // a second on-node preview, duplicating the DOM one above. It is only
+    // populated just-in-time, for MaskEditor/Clipspace (see loadImgs()).
+    node.setDirtyCanvas(true, true);
 }
 
-function numberEl(value, step) {
-    const el = document.createElement("input");
-    el.type = "number";
-    el.className = "mb-dialog-number";
-    if (step) el.step = String(step);
-    el.value = String(value);
-    return el;
-}
-
-function twoNumbers(w, h) {
-    const wrap = document.createElement("span");
-    wrap.style.cssText = "margin-left:auto;display:flex;gap:4px;align-items:center;";
-    const wi = numberEl(w);
-    const hi = numberEl(h);
-    wi.style.width = hi.style.width = "58px";
-    const x = document.createElement("span");
-    x.textContent = "x";
-    x.style.color = "#8f8f8f";
-    wrap.append(wi, x, hi);
-    return { wrap, wi, hi };
-}
-
-function openSettings(node) {
-    ensureStyle();
-    const g = (name) => getWidget(node, name)?.value;
-
-    let mode = g("resize_mode") ?? "none";
-    const controls = {};       // per-mode trailing controls, read on Apply
-    let accent = g("accent") ?? "";
-
-    openDialog({
-        title: "Load Image Mini — settings",
-        applyLabel: "Apply",
-        width: 380,
-        render(body) {
-            // --- resize modes ---------------------------------------------
-            const megaSel = selectEl(MEGAPIXELS, g("megapixels") ?? "1.0");
-            const longNum = numberEl(g("longest_side") ?? 1024);
-            const scaleNum = numberEl(g("scale_by") ?? 1.0, 0.05);
-            const fit = twoNumbers(g("fit_width") ?? 1024, g("fit_height") ?? 1024);
-            const fill = twoNumbers(g("fill_width") ?? 1024, g("fill_height") ?? 1024);
-            const ratioSel = selectEl(MATCH_RATIOS, g("match_ratio") ?? "1:1");
-            controls.mega = megaSel;
-            controls.long = longNum;
-            controls.scale = scaleNum;
-            controls.fit = fit;
-            controls.fill = fill;
-            controls.ratio = ratioSel;
-
-            const rows = {
-                "none": null,
-                "max megapixels": megaSel,
-                "longest side": longNum,
-                "scale by": scaleNum,
-                "fit inside": fit.wrap,
-                "crop to fill": fill.wrap,
-                "match ratio": ratioSel,
-            };
-            const hints = {
-                "max megapixels": "Scale to a target pixel count, aspect kept.",
-                "longest side": "Set the longest dimension in pixels.",
-                "scale by": "Multiply both sides by this factor.",
-                "fit inside": "Scale to fit inside the box; no crop.",
-                "crop to fill": "Cover the box, then centre-crop to it.",
-                "match ratio": "Centre-crop to this aspect ratio.",
-            };
-
-            for (const name of MODES) {
-                const { wrapper, radio } = radioRow({
-                    group: "mb-mini-mode",
-                    value: name,
-                    label: name,
-                    checked: name === mode,
-                    hint: hints[name],
-                    control: rows[name] ?? undefined,
-                });
-                radio.addEventListener("change", () => { if (radio.checked) mode = name; });
-                body.appendChild(wrapper);
-            }
-
-            // --- shared options -------------------------------------------
-            const opts = document.createElement("div");
-            opts.style.cssText = "display:flex;flex-direction:column;gap:8px;margin-top:4px;padding-top:10px;border-top:1px solid #2a2a2a;";
-
-            const snapSel = selectEl(SNAP_OPTIONS, String(g("snap") ?? "8"));
-            const resSel = selectEl(RESAMPLES, g("resample") ?? "lanczos");
-            controls.snap = snapSel;
-            controls.res = resSel;
-
-            const field = (label, control) => {
-                const row = document.createElement("div");
-                row.className = "mb-dialog-field";
-                row.style.justifyContent = "space-between";
-                const span = document.createElement("span");
-                span.textContent = label;
-                row.append(span, control);
-                return row;
-            };
-            opts.append(field("snap to multiple", snapSel), field("resample", resSel));
-
-            const upWrap = document.createElement("label");
-            upWrap.className = "mb-dialog-field";
-            upWrap.style.cursor = "pointer";
-            const up = document.createElement("input");
-            up.type = "checkbox";
-            up.checked = g("allow_upscale") === true;
-            up.style.accentColor = "#e01010";
-            controls.up = up;
-            const upText = document.createElement("span");
-            upText.textContent = "allow upscaling (enlarge past the source)";
-            upWrap.append(up, upText);
-            opts.appendChild(upWrap);
-            body.appendChild(opts);
-
-            // --- accent ---------------------------------------------------
-            const acc = document.createElement("div");
-            acc.style.cssText = "margin-top:4px;padding-top:10px;border-top:1px solid #2a2a2a;";
-            const accLabel = document.createElement("div");
-            accLabel.className = "mb-dialog-field";
-            accLabel.textContent = "accent colour";
-            acc.appendChild(accLabel);
-            const swatches = document.createElement("div");
-            swatches.className = "mb-mini-swatches";
-            swatches.style.marginTop = "6px";
-            for (const [title, hex] of SWATCHES) {
-                const sw = document.createElement("div");
-                sw.className = "mb-mini-swatch" + (hex === accent ? " mb-on" : "") + (hex ? "" : " mb-theme");
-                sw.title = title;
-                if (hex) sw.style.background = hex;
-                sw.addEventListener("click", () => {
-                    accent = hex;
-                    for (const s of swatches.children) s.classList.remove("mb-on");
-                    sw.classList.add("mb-on");
-                });
-                swatches.appendChild(sw);
-            }
-            acc.appendChild(swatches);
-            body.appendChild(acc);
-        },
-        onApply() {
-            const set = (name, value) => { const w = getWidget(node, name); if (w) w.value = value; };
-            set("resize_mode", mode);
-            set("megapixels", controls.mega.value);
-            set("longest_side", Number(controls.long.value) || 0);
-            set("scale_by", Number(controls.scale.value) || 1);
-            set("fit_width", Number(controls.fit.wi.value) || 0);
-            set("fit_height", Number(controls.fit.hi.value) || 0);
-            set("fill_width", Number(controls.fill.wi.value) || 0);
-            set("fill_height", Number(controls.fill.hi.value) || 0);
-            set("match_ratio", controls.ratio.value);
-            set("snap", controls.snap.value);
-            set("resample", controls.res.value);
-            set("allow_upscale", controls.up.checked);
-            set("accent", accent);
-            applyAccent(node);
-            refresh(node);
-        },
+// Loads the current image into node.imgs right before a MaskEditor/Clipspace
+// call needs it, and only then — see the comment in refresh().
+function loadImgs(node) {
+    const value = getWidget(node, "image")?.value;
+    if (!value) return Promise.resolve(false);
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => { node.imgs = [img]; resolve(true); };
+        img.onerror = () => resolve(false);
+        img.src = viewURL(value);
     });
+}
+
+// ---------------------------------------------------------------- preview DOM widget
+
+function buildPreview(node) {
+    ensureStyle();
+    const wrap = document.createElement("div");
+    wrap.className = "mb-mini-preview-wrap";
+
+    const preview = document.createElement("img");
+    preview.className = "mb-mini-preview";
+    preview.style.display = "none";
+    const empty = document.createElement("div");
+    empty.className = "mb-mini-empty";
+    empty.textContent = "drop an image here, or upload / paste / pick";
+    wrap.append(preview, empty);
+
+    wrap.addEventListener("dragover", (e) => { e.preventDefault(); wrap.style.opacity = "0.7"; });
+    wrap.addEventListener("dragleave", () => { wrap.style.opacity = "1"; });
+    wrap.addEventListener("drop", (e) => {
+        e.preventDefault();
+        wrap.style.opacity = "1";
+        const file = e.dataTransfer?.files?.[0];
+        if (file && file.type.startsWith("image/")) uploadFile(node, file);
+    });
+
+    node.__mbMiniPreview = { wrap, preview, empty };
+    return wrap;
 }
 
 // ---------------------------------------------------------------- MaskEditor / Clipspace
@@ -518,9 +1017,18 @@ function clipspaceApp() {
     return app?.constructor; // ComfyApp class carries the static clipspace helpers
 }
 
-function copyClipspace(node) {
-    try { clipspaceApp()?.copyToClipspace?.(node); notify("success", "Copied", "Image sent to Clipspace."); }
-    catch (e) { notify("error", "Copy failed", e?.message ?? String(e)); }
+async function copyClipspace(node) {
+    try {
+        await loadImgs(node);
+        clipspaceApp()?.copyToClipspace?.(node);
+        notify("success", "Copied", "Image sent to Clipspace.");
+    } catch (e) {
+        notify("error", "Copy failed", e?.message ?? String(e));
+    } finally {
+        // One-shot: don't leave node.imgs around to trigger the native preview.
+        node.imgs = undefined;
+        node.setDirtyCanvas(true, true);
+    }
 }
 
 function pasteClipspace(node) {
@@ -528,8 +1036,8 @@ function pasteClipspace(node) {
     catch (e) { notify("error", "Paste failed", e?.message ?? String(e)); }
 }
 
-function openMaskEditor(node) {
-    if (!node.imgs?.length) {
+async function openMaskEditor(node) {
+    if (!(await loadImgs(node))) {
         notify("warn", "No image", "Pick an image before opening the mask editor.");
         return;
     }
@@ -548,101 +1056,33 @@ function openMaskEditor(node) {
     }
 }
 
-// ---------------------------------------------------------------- panel build
-
-function buildPanel(node) {
-    ensureStyle();
-
-    const root = document.createElement("div");
-    root.className = "mb-mini";
-
-    // toolbar
-    const bar = document.createElement("div");
-    bar.className = "mb-mini-bar";
-    const btn = (label, onClick) => {
-        const b = document.createElement("div");
-        b.className = "mb-mini-btn";
-        b.textContent = label;
-        b.addEventListener("click", onClick);
-        return b;
-    };
-    bar.append(
-        btn("⬆ Upload", () => openUpload(node)),
-        btn("📋 Paste", () => pasteImage(node).then?.(() => refresh(node)) ?? refresh(node)),
-        btn("⚙ Settings", () => openSettings(node)),
-    );
-    root.appendChild(bar);
-
-    // file row: ◀ name ▶
-    const fileRow = document.createElement("div");
-    fileRow.className = "mb-mini-file";
-    const prev = document.createElement("div");
-    prev.className = "mb-mini-arrow";
-    prev.textContent = "◀";
-    prev.addEventListener("click", () => stepFile(node, -1));
-    const name = document.createElement("div");
-    name.className = "mb-mini-name";
-    name.textContent = "no image";
-    name.title = "Click to pick from thumbnails";
-    name.addEventListener("click", () => openPicker(node));
-    const next = document.createElement("div");
-    next.className = "mb-mini-arrow";
-    next.textContent = "▶";
-    next.addEventListener("click", () => stepFile(node, 1));
-    fileRow.append(prev, name, next);
-    root.appendChild(fileRow);
-
-    // preview
-    const preview = document.createElement("img");
-    preview.className = "mb-mini-preview";
-    preview.style.display = "none";
-    const empty = document.createElement("div");
-    empty.className = "mb-mini-empty";
-    empty.textContent = "drop an image here, or upload / paste / pick";
-    root.append(preview, empty);
-
-    // size cards
-    const cards = document.createElement("div");
-    cards.className = "mb-mini-cards";
-    const makeCard = (title) => {
-        const c = document.createElement("div");
-        c.className = "mb-mini-card";
-        const b = document.createElement("b");
-        b.textContent = title;
-        const s = document.createElement("span");
-        s.textContent = "—";
-        c.append(b, s);
-        return { card: c, value: s };
-    };
-    const inCard = makeCard("input");
-    const outCard = makeCard("output");
-    cards.append(inCard.card, outCard.card);
-    root.appendChild(cards);
-
-    // drag & drop onto the panel
-    root.addEventListener("dragover", (e) => { e.preventDefault(); root.style.opacity = "0.7"; });
-    root.addEventListener("dragleave", () => { root.style.opacity = "1"; });
-    root.addEventListener("drop", (e) => {
-        e.preventDefault();
-        root.style.opacity = "1";
-        const file = e.dataTransfer?.files?.[0];
-        if (file && file.type.startsWith("image/")) uploadFile(node, file);
-    });
-
-    node.__mbMini = { root, name, preview, empty, inCard: inCard.value, outCard: outCard.value };
-    return root;
-}
-
 // ---------------------------------------------------------------- wiring
 
 function wireNode(node) {
-    for (const name of GEAR_WIDGETS) setWidgetVisible(node, name, false);
+    for (const name of HIDDEN_WIDGETS) setWidgetVisible(node, name, false);
 
-    const element = buildPanel(node);
+    const widgets = [
+        makeSizeRowWidget(node),
+        makeActionRowWidget(node),
+        makeFileRowWidget(node),
+        makeModeGridWidget(node),
+        makeModeFieldWidget(node),
+        makeSnapRowWidget(node),
+        makeResampleRowWidget(node),
+        makeUpscaleToggleWidget(node),
+    ];
+    for (const widget of widgets) node.addCustomWidget(widget);
+    // addCustomWidget appends; move them to the top, in display order.
+    for (const widget of [...widgets].reverse()) {
+        node.widgets.splice(node.widgets.indexOf(widget), 1);
+        node.widgets.unshift(widget);
+    }
+
+    const element = buildPreview(node);
     node.addDOMWidget("mb_mini_panel", "mb_mini_panel", element, {
         serialize: false,
         hideOnZoom: false,
-        getHeight: () => 320,
+        getHeight: () => 158,
     });
 
     // Keep the (hidden) stock combo as the source of truth; mirror its changes.
@@ -669,8 +1109,8 @@ function wireNode(node) {
         return prevMenu?.apply(this, arguments);
     };
 
-    resizeToContent(node);
     applyAccent(node);
+    resizeToContent(node);
     refresh(node);
 }
 

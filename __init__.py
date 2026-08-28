@@ -10,6 +10,7 @@ from comfy_api.latest import ComfyExtension, io
 
 from .nodes.branch_runner_node import NODES as _branch_runner
 from .nodes.combine_text_node import NODES as _combine_text
+from .nodes.control_panel_node import NODES as _control_panel
 from .nodes.crop_image_node import NODES as _crop_image
 from .nodes.get_lines_node import NODES as _get_lines
 from .nodes.image_info import NODES as _image_info
@@ -19,12 +20,14 @@ from .nodes.load_image_crop_node import NODES as _load_image_crop
 from .nodes.load_image_mini_node import NODES as _load_image_mini
 from .nodes.load_image_node import NODES as _load_image
 from .nodes.load_video_node import NODES as _load_video
+from .nodes.model_combo_node import NODES as _model_combo
 from .nodes.pad_image_node import NODES as _pad_image
 from .nodes.preview_anything_node import NODES as _preview_anything
 from .nodes.preview_audio_node import NODES as _preview_audio
 from .nodes.prompt_pad_node import NODES as _prompt_pad
 from .nodes.random_line_node import NODES as _random_line
 from .nodes.resolution_node import NODES as _resolution
+from .nodes.rotate_image_node import NODES as _rotate_image
 from .nodes.route66_node import NODES as _route66
 from .nodes.sampler_node import NODES as _sampler
 from .nodes.save_image_node import NODES as _save_image
@@ -45,6 +48,7 @@ NODES: list[type[io.ComfyNode]] = [
     *_image_info,
     *_load_video,
     *_load_folder,
+    *_model_combo,
     *_save_image,
     *_save_mp4,
     *_prompt_pad,
@@ -54,6 +58,7 @@ NODES: list[type[io.ComfyNode]] = [
     *_crop_image,
     *_upscale_latent,
     *_pad_image,
+    *_rotate_image,
     *_branch_runner,
     *_preview_anything,
     *_preview_audio,
@@ -62,6 +67,7 @@ NODES: list[type[io.ComfyNode]] = [
     *_sampler,
     *_route66,
     *_krea_styles,
+    *_control_panel,
 ]
 
 

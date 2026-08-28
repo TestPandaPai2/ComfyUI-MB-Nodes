@@ -23,6 +23,9 @@ const DEFAULT_PRESET = "Green";
 let titleColor = PRESETS[DEFAULT_PRESET];
 
 function isMBNode(node) {
+    // MBControlPanel paints itself (per-node colour, savable as its own
+    // default) -- the pack-wide accent must never override that.
+    if (node?.comfyClass === "MBControlPanel") return false;
     const category = node?.constructor?.nodeData?.category;
     return category === "MBNodes" || /^MB[A-Z]/.test(node?.comfyClass ?? "");
 }

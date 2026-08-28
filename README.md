@@ -55,6 +55,9 @@ Grows one output per line of incoming text (up to 32), auto-detected or pinned v
 ### Pad Image (MB)
 Adds a solid-colour border, either exact pixels per side or padded to an aspect ratio. `all_sides` is a shortcut for uniform padding.
 
+### Rotate Image (MB)
+Rotates an image 90, 180 or 270 degrees. The three toggles behave like radio buttons, and `clockwise` flips the direction (ignored by 180).
+
 ### Upscale Latent (MB)
 Scales a latent by a multiplier from a row of clickable buttons (customizable via right-click settings).
 
@@ -72,6 +75,12 @@ Category + style dropdowns over the bundled Krea2 prompt-styles table (286 style
 
 ### Route 66 (MB)
 Multi-lane reroute. Each lane passes its input straight through to the matching output; a fresh empty lane appears as you connect more wires (up to 20), and each socket takes the colour/type of what plugs in. One tidy node to carry many wires across the graph instead of a pile of single reroute dots.
+
+### Control Panel (MB)
+Up to 16 controls (slider, switch, dropdown, seed, text) in one node. Each control is blank until you wire its output to something — it then adopts that input's shape (drag-slider, toggle, filtered dropdown, seed with randomize/reroll, or text) and reverts to blank on disconnect. Right-click for settings: add/remove/rename controls, slider ranges, switch labels, dropdown option filtering, and node colour.
+
+### Load Models Combo (MB)
+Load Diffusion Model + Load CLIP + Load VAE combined into one node. Outputs MODEL, CLIP, and VAE.
 
 ## Settings
 
