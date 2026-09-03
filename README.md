@@ -31,6 +31,9 @@ Compact Load Image with a custom face: toolbar (upload/paste/settings), arrow + 
 ### Load Image with Crop (MB)
 Load Image (MB) plus a crop dialog (drag/resize box, aspect presets, divisible-by). Crop applies before the megapixel resize.
 
+### Load Image & Crop (MB)
+Load Image (MB) with the crop box drawn on the node itself: drag to move, grab a corner or edge to resize, drag on empty image to start a new box, with aspect presets. The crop rect is stored as fractions of the image, and the megapixel combo resizes the crop afterwards (`original` skips it). Outputs image and mask only.
+
 ### Crop Image (MB)
 Same crop dialog as above, but for an `image` input instead of a file picker. Crop is stored as fractions of the image so it survives resolution changes; falls back to a cached preview when nothing upstream has an image yet.
 
@@ -81,6 +84,12 @@ Up to 16 controls (slider, switch, dropdown, seed, text) in one node. Each contr
 
 ### Load Models Combo (MB)
 Load Diffusion Model + Load CLIP + Load VAE combined into one node. Outputs MODEL, CLIP, and VAE.
+
+### Wildcard Select (MB)
+Picks one item out of a `.txt` in ComfyUI's `wildcards` folder and wraps it in a prompt weight. `seed` is a KSampler-style widget mapped onto the item count, `weight` is a 0–5 slider, and `weight_format` decides whether the parentheses appear at weight 1.0 (`auto`), always, or never. Blank lines and `#` comments are skipped; `bypass` outputs an empty string.
+
+### Civitai Info (MB)
+Reads Civitai metadata for a model file. `folder` picks the model directory (checkpoints, diffusion_models, loras, text_encoders, vae) and `model` narrows to that folder's files. Sources are tried in order: the `.civitai.info` sidecar, a manager-written `.metadata.json`, the safetensors header's own `__metadata__`, and finally civitai.com by SHA256 when `online_lookup` is on (`allow_hashing` additionally lets it hash the file when no hash is known yet). Outputs model/version names, base model, creator, trained words, tags, plain-text description, model and download URLs, preview image URLs, AIR, SHA256, ids, an nsfw flag and the raw JSON. Nothing found means empty strings and `found` false, never an error.
 
 ## Settings
 

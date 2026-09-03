@@ -9,6 +9,7 @@ from typing_extensions import override
 from comfy_api.latest import ComfyExtension, io
 
 from .nodes.branch_runner_node import NODES as _branch_runner
+from .nodes.civitai_info_node import NODES as _civitai_info
 from .nodes.combine_text_node import NODES as _combine_text
 from .nodes.control_panel_node import NODES as _control_panel
 from .nodes.crop_image_node import NODES as _crop_image
@@ -17,6 +18,7 @@ from .nodes.image_info import NODES as _image_info
 from .nodes.krea_styles_node import NODES as _krea_styles
 from .nodes.load_folder_node import NODES as _load_folder
 from .nodes.load_image_crop_node import NODES as _load_image_crop
+from .nodes.load_image_inline_crop_node import NODES as _load_image_inline_crop
 from .nodes.load_image_mini_node import NODES as _load_image_mini
 from .nodes.load_image_node import NODES as _load_image
 from .nodes.load_video_node import NODES as _load_video
@@ -37,6 +39,7 @@ from .nodes.slider_node import NODES as _slider
 from .nodes.system_prompt_node import NODES as _system_prompt
 from .nodes.text_node import NODES as _text
 from .nodes.upscale_latent_node import NODES as _upscale_latent
+from .nodes.wildcard_select_node import NODES as _wildcard_select
 
 NODES: list[type[io.ComfyNode]] = [
     *_text,
@@ -45,6 +48,7 @@ NODES: list[type[io.ComfyNode]] = [
     *_load_image,
     *_load_image_mini,
     *_load_image_crop,
+    *_load_image_inline_crop,
     *_image_info,
     *_load_video,
     *_load_folder,
@@ -68,6 +72,8 @@ NODES: list[type[io.ComfyNode]] = [
     *_route66,
     *_krea_styles,
     *_control_panel,
+    *_wildcard_select,
+    *_civitai_info,
 ]
 
 

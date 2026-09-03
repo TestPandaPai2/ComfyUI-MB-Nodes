@@ -146,7 +146,13 @@ try:
 
     @PromptServer.instance.routes.get("/mbnodes/resolutions")
     async def _mbnodes_resolutions(request):
-        return web.json_response({"ratios": [n for n, _ in RATIOS], "table": TABLE})
+        return web.json_response({
+            "ratios": [n for n, _ in RATIOS],
+            # Numeric W/H per name, so the frontend never has to parse the
+            # label back into a ratio and drift from this table.
+            "values": {n: v for n, v in RATIOS},
+            "table": TABLE,
+        })
 except Exception:  # server missing (unit runs) or route already registered
     pass
 

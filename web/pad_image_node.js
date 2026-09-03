@@ -8,12 +8,21 @@ import { openDialog } from "./dialog.js";
 const STORAGE_KEY = "MBNodes.PadImage.ratios";
 const SLOTS = 7;
 
+// Mirrors NO_RATIO and PAD_FROM in pad_image_node.py. Declared here rather than
+// beside the migration code so every use below reads the same constant.
+const NO_RATIO = "none";
+const PAD_FROM_VALUES = ["both", "first", "second"];
+const PAD_FROM_LABELS = ["Both", "First", "Second"];
+
 const MARGIN = 14;
 const GAP = 8;
 const FIELD_H = 26;
 // Slider drag range. The backend still accepts up to 8192 (see clamp/sanitize);
 // the track maps 0..SLIDER_MAX, and a double-click types an exact/larger value.
 const SLIDER_MAX = 2048;
+// Mirrors MAX_PAD in pad_image_node.py: the largest padding either mode may
+// produce on one side.
+const MAX_PAD = 8192;
 const RATIO_BOX_H = 34;
 const TOGGLE_H = 26;
 const PREVIEW_H = 132; // schematic pad-layout preview row
@@ -91,13 +100,20 @@ function fitText(ctx, text, maxWidth) {
     return cut + "…";
 }
 
-// { ratios: [...] }, fetched once — the same table resolution_node.js uses, so
-// both nodes agree on names and order without duplicating the list.
+// { ratios: [...], values: { name: w/h } }, fetched once — the same table
+// resolution_node.js uses, so both nodes agree on names and order without
+// duplicating the list. `values` is the backend's own RATIOS numbers, so the
+// preview maths cannot drift from what execute() will do.
 let ALL_RATIOS = [];
+let RATIO_VALUES = {};
 const READY = api
     .fetchApi("/mbnodes/resolutions")
     .then((response) => response.json())
-    .then((data) => (ALL_RATIOS = data.ratios ?? []))
+    .then((data) => {
+        ALL_RATIOS = data.ratios ?? [];
+        RATIO_VALUES = data.values ?? {};
+        invalidateRatioCache();
+    })
     .catch((e) => console.error("[MBNodes] ratio table fetch failed", e));
 
 function shortLabel(name) {
@@ -108,21 +124,20 @@ function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
 }
 
-// Numeric W/H from a ratio name ("16:9 (Widescreen)" -> 1.777…), or null. The
-// table only ships names to the frontend, so the value is parsed back out.
+// Numeric W/H for a ratio name, straight from the backend table. Unknown names
+// return null, which is exactly what execute() now treats as "no padding", so
+// the preview and the run agree.
 function ratioValue(name) {
-    const parts = shortLabel(String(name || "")).split(":");
-    if (parts.length !== 2) return null;
-    const w = parseFloat(parts[0]);
-    const h = parseFloat(parts[1]);
-    return w > 0 && h > 0 ? w / h : null;
+    const value = RATIO_VALUES[String(name ?? "")];
+    return typeof value === "number" && value > 0 ? value : null;
 }
 
 // The split + ratio-padding maths from pad_image_node.py, kept in lockstep so
 // the schematic preview shows exactly what the backend will produce.
 function splitExtra(extra, padFrom) {
-    if (padFrom === "first") return [extra, 0];
-    if (padFrom === "second") return [0, extra];
+    extra = clamp(extra, 0, MAX_PAD * 2);
+    if (padFrom === "first") return [Math.min(extra, MAX_PAD), 0];
+    if (padFrom === "second") return [0, Math.min(extra, MAX_PAD)];
     const first = Math.floor(extra / 2);
     return [first, extra - first];
 }
@@ -156,9 +171,11 @@ function sourceDims(node) {
 
 // The padding the current widget values imply, in image pixels.
 function currentPadding(node, sw, sh) {
-    const ratioName = getWidget(node, "aspect_ratio")?.value ?? "none";
-    const ratio = ratioName !== "none" ? ratioValue(ratioName) : null;
-    if (ratio) {
+    const ratioName = getWidget(node, "aspect_ratio")?.value ?? NO_RATIO;
+    if (ratioName !== NO_RATIO) {
+        const ratio = ratioValue(ratioName);
+        // Unknown name: the backend skips padding entirely, so the preview does too.
+        if (!ratio) return { top: 0, bottom: 0, left: 0, right: 0 };
         const padFrom = getWidget(node, "pad_from")?.value ?? "both";
         return ratioPadding(sw, sh, ratio, padFrom);
     }
@@ -166,7 +183,12 @@ function currentPadding(node, sw, sh) {
     return { top: px("top"), bottom: px("bottom"), left: px("left"), right: px("right") };
 }
 
+// draw() runs every frame for every Pad node, so the parsed list is cached and
+// only rebuilt when the stored set or the ratio table changes.
+let activeRatiosCache = null;
+
 function loadActiveRatios() {
+    if (activeRatiosCache) return activeRatiosCache;
     let stored = [];
     try {
         stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
@@ -174,11 +196,18 @@ function loadActiveRatios() {
         stored = [];
     }
     const valid = stored.filter((name) => ALL_RATIOS.includes(name));
-    return valid.length ? valid.slice(0, SLOTS) : ALL_RATIOS.slice(0, SLOTS);
+    activeRatiosCache = valid.length ? valid.slice(0, SLOTS) : ALL_RATIOS.slice(0, SLOTS);
+    return activeRatiosCache;
+}
+
+// Called whenever the stored ratios or the fetched table change.
+function invalidateRatioCache() {
+    activeRatiosCache = null;
 }
 
 function saveActiveRatios(list) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    invalidateRatioCache();
     for (const node of app.graph?._nodes ?? []) {
         if (node.comfyClass === "MBPadImage") relayout(node);
     }
@@ -236,7 +265,7 @@ function drawSliderField(ctx, x, y, w, h, label, value, { min = 0, max = SLIDER_
     ctx.fillText(String(value), tx + tw / 2, cy);
 }
 
-function makeSliderPairWidget(node, widgetName, aName, bName, labelA, labelB, { min = 0, max = 8192 } = {}) {
+function makeSliderPairWidget(node, widgetName, aName, bName, labelA, labelB, { min = 0, max = MAX_PAD } = {}) {
     return {
         type: "mb_slider_pair",
         name: widgetName,
@@ -257,11 +286,11 @@ function makeSliderPairWidget(node, widgetName, aName, bName, labelA, labelB, { 
         draw(ctx, drawNode, widgetWidth, y) {
             this.y = y;
             this.width = widgetWidth || drawNode.size[0];
-            const active = getWidget(drawNode, "aspect_ratio")?.value ?? "none";
+            const active = getWidget(drawNode, "aspect_ratio")?.value ?? NO_RATIO;
             const accent = accentColor(drawNode);
 
             ctx.save();
-            ctx.globalAlpha = active !== "none" ? 0.4 : 1;
+            ctx.globalAlpha = active !== NO_RATIO ? 0.4 : 1;
             [[0, aName, labelA], [1, bName, labelB]].forEach(([col, name, text]) => {
                 const [x, colW] = subColRect(this.width, col, 2);
                 const value = Number(getWidget(drawNode, name)?.value ?? 0);
@@ -280,7 +309,7 @@ function makeSliderPairWidget(node, widgetName, aName, bName, labelA, labelB, { 
         mouse(event, pos, mouseNode) {
             // In aspect-ratio mode the pixel fields are ignored by the backend and
             // drawn dimmed, so they must not respond to input either.
-            if ((getWidget(mouseNode, "aspect_ratio")?.value ?? "none") !== "none") return false;
+            if ((getWidget(mouseNode, "aspect_ratio")?.value ?? NO_RATIO) !== NO_RATIO) return false;
             const width = this.width || mouseNode.size[0];
 
             const setFrom = (name, px, x, colW) => {
@@ -290,6 +319,12 @@ function makeSliderPairWidget(node, widgetName, aName, bName, labelA, labelB, { 
                 widget.callback?.(widget.value);
                 mouseNode.setDirtyCanvas(true, true);
             };
+
+            // The two renderers measure pos differently: the canvas one gives it
+            // relative to the node, so a row starts at the widget's y, while
+            // Nodes 2.0 hands the widget its own canvas and starts at 0. Every
+            // hit test below tries both origins, which is safe because a widget
+            // only receives clicks that landed inside its own box.
 
             // Continue an in-progress drag regardless of vertical position, so the
             // knob keeps tracking the cursor even if it strays off the row.
@@ -410,7 +445,7 @@ function makeRatioGridWidget(node) {
             this.y = y;
             this.width = widgetWidth || drawNode.size[0];
             const h = RATIO_BOX_H;
-            const active = getWidget(drawNode, "aspect_ratio")?.value ?? "none";
+            const active = getWidget(drawNode, "aspect_ratio")?.value ?? NO_RATIO;
             const ratios = loadActiveRatios();
             const gearW = GEAR_W;
             const accent = accentColor(drawNode);
@@ -473,7 +508,7 @@ function makeRatioGridWidget(node) {
                     if (pos[0] >= bx && pos[0] <= bx + this._boxW) {
                         const widget = getWidget(mouseNode, "aspect_ratio");
                         if (widget) {
-                            const next = widget.value === ratios[i] ? "none" : ratios[i];
+                            const next = widget.value === ratios[i] ? NO_RATIO : ratios[i];
                             widget.value = next;
                             widget.callback?.(next);
                             mouseNode.setDirtyCanvas(true, true);
@@ -489,13 +524,6 @@ function makeRatioGridWidget(node) {
 
 // --- pad-from toggle + pad color swatch, one row ---
 
-// Neutral labels: which axis actually gets padded depends on the source image's
-// aspect vs the target ratio, which the frontend cannot know before a run. First
-// = left/top side, Second = right/bottom side, matching PAD_FROM_VALUES.
-function padFromLabels() {
-    return ["Both", "First", "Second"];
-}
-
 function openColorPicker(node) {
     const widget = getWidget(node, "color");
     if (!widget) return;
@@ -507,12 +535,19 @@ function openColorPicker(node) {
     input.style.left = "-9999px";
     document.body.appendChild(input);
 
+    // Dismissing the native picker does not fire "change" in every browser, so
+    // the element is also cleaned up on blur — which is why it is focused
+    // explicitly first. Removing it twice is harmless.
+    const cleanup = () => input.remove();
+
     input.addEventListener("input", () => {
         widget.value = input.value;
         widget.callback?.(input.value);
         node.setDirtyCanvas(true, true);
     });
-    input.addEventListener("change", () => input.remove());
+    input.addEventListener("change", cleanup);
+    input.addEventListener("blur", cleanup);
+    input.focus();
     input.click();
 }
 
@@ -537,14 +572,14 @@ function makePadFromColorWidget(node) {
             this.y = y;
             this.width = widgetWidth || drawNode.size[0];
             const h = TOGGLE_H;
-            const labels = padFromLabels(drawNode);
+            const labels = PAD_FROM_LABELS;
             const values = PAD_FROM_VALUES;
             const active = getWidget(drawNode, "pad_from")?.value ?? "both";
             const colorWidget = getWidget(drawNode, "color");
             const accent = accentColor(drawNode);
             // pad_from only biases the aspect-ratio split; in pixel mode it does
             // nothing, so it is drawn dimmed and ignores clicks (see mouse()).
-            const ratioActive = (getWidget(drawNode, "aspect_ratio")?.value ?? "none") !== "none";
+            const ratioActive = (getWidget(drawNode, "aspect_ratio")?.value ?? NO_RATIO) !== NO_RATIO;
 
             ctx.save();
             ctx.font = "10px Arial";
@@ -611,7 +646,7 @@ function makePadFromColorWidget(node) {
             const h = TOGGLE_H;
             const values = PAD_FROM_VALUES;
 
-            const ratioActive = (getWidget(mouseNode, "aspect_ratio")?.value ?? "none") !== "none";
+            const ratioActive = (getWidget(mouseNode, "aspect_ratio")?.value ?? NO_RATIO) !== NO_RATIO;
 
             for (const originY of [this.y, 0]) {
                 if (pos[1] < originY || pos[1] > originY + h) continue;
@@ -750,8 +785,6 @@ function makePreviewWidget(node) {
 // so a positional restore drops "pixels"/"16:9"/"#rrggbb" into the integer
 // fields and leaves pad_from unset — which the backend rejects at queue time.
 const LEGACY_MODES = ["pixels", "aspect ratio"];
-const NO_RATIO_VALUE = "none";
-const PAD_FROM_VALUES = ["both", "first", "second"];
 
 function isLegacyValues(values) {
     return Array.isArray(values) && values.length >= 8 && LEGACY_MODES.includes(values[0]);
@@ -763,15 +796,15 @@ function isLegacyValues(values) {
 function matchRatio(name, portrait) {
     const wanted = shortLabel(String(name ?? ""));
     const direct = ALL_RATIOS.find((r) => shortLabel(r) === wanted);
-    if (!portrait) return direct ?? NO_RATIO_VALUE;
+    if (!portrait) return direct ?? NO_RATIO;
 
     const flipped = wanted.split(":").reverse().join(":");
-    return ALL_RATIOS.find((r) => shortLabel(r) === flipped) ?? direct ?? NO_RATIO_VALUE;
+    return ALL_RATIOS.find((r) => shortLabel(r) === flipped) ?? direct ?? NO_RATIO;
 }
 
 function migrateRatio(name, portrait) {
     const match = matchRatio(name, portrait);
-    if (match === NO_RATIO_VALUE) {
+    if (match === NO_RATIO) {
         // e.g. an old 16:10 save: the ratio table no longer offers it, so the
         // node loads with no ratio rather than a silently different one.
         console.warn(`[MBNodes] Pad Image: ratio "${name}" is no longer offered; set to none.`);
@@ -785,7 +818,7 @@ function migrateLegacyValues(node, values) {
 
     const next = {
         left: 0, right: 0, top: 0, bottom: 0,
-        aspect_ratio: NO_RATIO_VALUE,
+        aspect_ratio: NO_RATIO,
         pad_from: "both",
         color: typeof color === "string" ? color : "#000000",
     };
@@ -815,11 +848,11 @@ function sanitize(node) {
         const widget = getWidget(node, name);
         if (!widget) continue;
         const value = Math.round(Number(widget.value));
-        widget.value = Number.isFinite(value) ? clamp(value, 0, 8192) : 0;
+        widget.value = Number.isFinite(value) ? clamp(value, 0, MAX_PAD) : 0;
     }
 
     const ratio = getWidget(node, "aspect_ratio");
-    if (ALL_RATIOS.length && ratio && ratio.value !== NO_RATIO_VALUE && !ALL_RATIOS.includes(ratio.value)) {
+    if (ALL_RATIOS.length && ratio && ratio.value !== NO_RATIO && !ALL_RATIOS.includes(ratio.value)) {
         ratio.value = matchRatio(ratio.value, false);
     }
 
@@ -836,12 +869,14 @@ function hideDefaults(node) {
     }
 }
 
-// The four custom rows paint at fixed widths, so the node needs a floor on both
-// axes: too narrow and the ratio boxes run under the gear, too short and the
-// bottom row is drawn past the edge of the node.
+// The four custom rows paint at fixed widths, so the node needs a width floor:
+// any narrower and the ratio boxes run under the gear. Above the floor the node
+// is free to be dragged wider, which is the only way to read all seven ratio
+// labels in full. Height stays computed, since every row is a fixed height.
 function relayout(node) {
-    node.resizable = false; // fixed-size node; no drag handle
-    const width = Math.max(ratioRowMinWidth(), padFromRowMinWidth());
+    node.resizable = true;
+    const minWidth = Math.max(ratioRowMinWidth(), padFromRowMinWidth());
+    const width = Math.max(minWidth, node.size?.[0] ?? 0);
     const height = node.computeSize()[1];
     node.setSize([width, height]);
     node.setDirtyCanvas(true, true);
@@ -898,15 +933,16 @@ app.registerExtension({
 
     async loadedGraphNode(node) {
         if (node.comfyClass !== "MBPadImage") return;
+        // The second migration pass: onConfigure ran before the ratio table had
+        // arrived, so the old ratio name can only be matched now. Awaiting READY
+        // is the actual wait, so no timer is needed.
         await READY;
-        setTimeout(() => {
-            if (node.__mbLegacyValues) {
-                migrateLegacyValues(node, node.__mbLegacyValues);
-                node.__mbLegacyValues = null;
-            }
-            sanitize(node);
-            hideDefaults(node);
-            relayout(node);
-        }, 60);
+        if (node.__mbLegacyValues) {
+            migrateLegacyValues(node, node.__mbLegacyValues);
+            node.__mbLegacyValues = null;
+        }
+        sanitize(node);
+        hideDefaults(node);
+        relayout(node);
     },
 });

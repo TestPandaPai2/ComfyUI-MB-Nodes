@@ -1,3 +1,5 @@
+import logging
+
 import torch
 
 from comfy_api.latest import io, ui
@@ -40,10 +42,11 @@ def _rgb(color):
 
 def _split(extra, pad_from):
     """How much of `extra` goes to the first side vs. the second."""
+    extra = min(max(0, extra), MAX_PAD * 2)
     if pad_from == "first":
-        return extra, 0
+        return min(extra, MAX_PAD), 0
     if pad_from == "second":
-        return 0, extra
+        return 0, min(extra, MAX_PAD)
     first = extra // 2
     return first, extra - first
 
@@ -118,14 +121,26 @@ class MBPadImage(io.ComfyNode):
         height, width = image.shape[1], image.shape[2]
 
         if aspect_ratio != NO_RATIO:
-            ratio = RATIO_BY_NAME.get(aspect_ratio, 1.0)
-            top, bottom, left, right = _ratio_padding(width, height, ratio, pad_from)
+            ratio = RATIO_BY_NAME.get(aspect_ratio)
+            if ratio is None:
+                # An unknown name (an old save, a hand-edited workflow) must not
+                # quietly pad to some other shape, so it pads not at all.
+                logging.warning(
+                    "Pad Image (MB): unknown aspect_ratio %r; padding skipped.", aspect_ratio
+                )
+                top = bottom = left = right = 0
+            else:
+                top, bottom, left, right = _ratio_padding(width, height, ratio, pad_from)
 
         source = image_info or {}
+        # The incoming mask may not match this image, so it is fitted first in
+        # both branches; the pad branch then grows the fitted mask.
+        mask = _info.fit_mask(source.get("mask"), image)
+
         if not (top or bottom or left or right):
             result = image
             info = _info.make(
-                image, source.get("mask"), source.get("filename", ""),
+                image, mask, source.get("filename", ""),
                 filenames=source.get("filenames"),
             )
         else:
@@ -136,18 +151,18 @@ class MBPadImage(io.ComfyNode):
             elif channels == 1:
                 fill = [sum(fill) / 3.0]
 
-            padded = torch.empty(
-                (image.shape[0], height + top + bottom, width + left + right, channels),
-                dtype=image.dtype,
-                device=image.device,
-            )
-            padded[:] = torch.tensor(fill[:channels], dtype=image.dtype, device=image.device)
+            # Allocated straight at the fill colour: broadcasting the per-channel
+            # tensor over an empty buffer would touch every pixel twice.
+            padded = torch.tensor(
+                fill[:channels], dtype=image.dtype, device=image.device
+            ).expand(
+                image.shape[0], height + top + bottom, width + left + right, channels
+            ).clone()
             padded[:, top:top + height, left:left + width, :] = image
 
             # The mask describes the original pixels, so it is padded to match
             # with 0 (unmasked) around the edge rather than stretched over the
             # border.
-            mask = _info.fit_mask(source.get("mask"), image)
             if mask is not None:
                 grown = torch.zeros(
                     (mask.shape[0], height + top + bottom, width + left + right),
