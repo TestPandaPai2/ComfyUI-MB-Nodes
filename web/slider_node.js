@@ -1,5 +1,6 @@
 import { app } from "../../scripts/app.js";
-import { getWidget } from "./common.js";
+import { getWidget, setWidgetVisible, resizeToContent } from "./common.js";
+import { openDialog } from "./dialog.js";
 
 const LIVE_DEBOUNCE = 250; // ms of quiet after a drag before the prompt re-queues
 
@@ -54,6 +55,83 @@ function applyRange(node) {
     node.setDirtyCanvas(true, true);
 }
 
+function numberField(value) {
+    const input = document.createElement("input");
+    input.className = "mb-dialog-number";
+    input.style.width = "72px";
+    input.type = "number";
+    input.value = value;
+    return input;
+}
+
+function settingsRow(label, input) {
+    const row = document.createElement("div");
+    row.className = "mb-dialog-field";
+    const span = document.createElement("span");
+    span.textContent = label;
+    span.style.width = "36px";
+    row.append(span, input);
+    return row;
+}
+
+// Range/step live in the min_value/max_value/step widgets so they still
+// serialise with the workflow; the dialog is just a friendlier editor for them.
+function openSettings(node) {
+    const minW = getWidget(node, "min_value");
+    const maxW = getWidget(node, "max_value");
+    const stepW = getWidget(node, "step");
+    if (!minW || !maxW || !stepW) return;
+
+    const minInput = numberField(minW.value);
+    const maxInput = numberField(maxW.value);
+    const stepInput = numberField(stepW.value);
+
+    openDialog({
+        title: "Slider (MB) — MB Settings",
+        applyLabel: "Done",
+        render(body) {
+            body.append(
+                settingsRow("Min", minInput),
+                settingsRow("Max", maxInput),
+                settingsRow("Step", stepInput),
+            );
+        },
+        onApply() {
+            const low = Number(minInput.value);
+            const high = Number(maxInput.value);
+            const step = Number(stepInput.value);
+            if (!Number.isFinite(low) || !Number.isFinite(high) || low >= high) {
+                minInput.classList.toggle("mb-invalid", true);
+                maxInput.classList.toggle("mb-invalid", low < high);
+                return false;
+            }
+            minInput.classList.remove("mb-invalid");
+            maxInput.classList.remove("mb-invalid");
+            if (!Number.isFinite(step) || step <= 0) {
+                stepInput.classList.add("mb-invalid");
+                return false;
+            }
+            stepInput.classList.remove("mb-invalid");
+
+            minW.value = low;
+            minW.callback?.(low);
+            maxW.value = high;
+            maxW.callback?.(high);
+            stepW.value = step;
+            stepW.callback?.(step);
+            applyRange(node);
+        },
+    });
+}
+
+function addSettingsMenu(node) {
+    const prevMenuOptions = node.getExtraMenuOptions;
+    node.getExtraMenuOptions = function (canvas, options) {
+        prevMenuOptions?.apply(this, arguments);
+        options.unshift({ content: "MB Settings", callback: () => openSettings(this) });
+    };
+}
+
 function liveEnabled(node) {
     return getWidget(node, "live")?.value === true;
 }
@@ -72,6 +150,10 @@ function scheduleQueue(node) {
 function wireNode(node) {
     const value = getWidget(node, "value");
     if (!value) return;
+
+    addSettingsMenu(node);
+    for (const name of ["min_value", "max_value", "step"]) setWidgetVisible(node, name, false);
+    resizeToContent(node);
 
     for (const name of ["min_value", "max_value", "step"]) {
         const w = getWidget(node, name);
@@ -118,6 +200,10 @@ app.registerExtension({
 
     async loadedGraphNode(node) {
         if (node.comfyClass !== "MBSlider") return;
-        setTimeout(() => applyRange(node), 40);
+        setTimeout(() => {
+            for (const name of ["min_value", "max_value", "step"]) setWidgetVisible(node, name, false);
+            applyRange(node);
+            resizeToContent(node);
+        }, 40);
     },
 });

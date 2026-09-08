@@ -34,6 +34,7 @@ from .nodes.route66_node import NODES as _route66
 from .nodes.sampler_node import NODES as _sampler
 from .nodes.save_image_node import NODES as _save_image
 from .nodes.save_mp4_node import NODES as _save_mp4
+from .nodes.save_video_node import NODES as _save_video
 from .nodes.show_text_node import NODES as _show_text
 from .nodes.slider_node import NODES as _slider
 from .nodes.system_prompt_node import NODES as _system_prompt
@@ -55,6 +56,7 @@ NODES: list[type[io.ComfyNode]] = [
     *_model_combo,
     *_save_image,
     *_save_mp4,
+    *_save_video,
     *_prompt_pad,
     *_system_prompt,
     *_get_lines,
