@@ -35,6 +35,9 @@ from .nodes.sampler_node import NODES as _sampler
 from .nodes.save_image_node import NODES as _save_image
 from .nodes.save_mp4_node import NODES as _save_mp4
 from .nodes.save_video_node import NODES as _save_video
+from .nodes.saree_randomizer_node import NODES as _saree_randomizer
+from .nodes.high_heels_randomizer_node import NODES as _high_heels_randomizer
+from .nodes.bodycon_randomizer_node import NODES as _bodycon_randomizer
 from .nodes.show_text_node import NODES as _show_text
 from .nodes.slider_node import NODES as _slider
 from .nodes.system_prompt_node import NODES as _system_prompt
@@ -76,6 +79,9 @@ NODES: list[type[io.ComfyNode]] = [
     *_control_panel,
     *_wildcard_select,
     *_civitai_info,
+    *_saree_randomizer,
+    *_high_heels_randomizer,
+    *_bodycon_randomizer,
 ]
 
 

@@ -91,6 +91,15 @@ Picks one item out of a `.txt` in ComfyUI's `wildcards` folder and wraps it in a
 ### Civitai Info (MB)
 Reads Civitai metadata for a model file. `folder` picks the model directory (checkpoints, diffusion_models, loras, text_encoders, vae) and `model` narrows to that folder's files. Sources are tried in order: the `.civitai.info` sidecar, a manager-written `.metadata.json`, the safetensors header's own `__metadata__`, and finally civitai.com by SHA256 when `online_lookup` is on (`allow_hashing` additionally lets it hash the file when no hash is known yet). Outputs model/version names, base model, creator, trained words, tags, plain-text description, model and download URLs, preview image URLs, AIR, SHA256, ids, an nsfw flag and the raw JSON. Nothing found means empty strings and `found` false, never an error.
 
+### Saree Randomizer (MB)
+Outputs a saree prompt: style name plus `details` seeded-random fragments from that style's 40. `category` picks the style, or `random_category` picks it from `seed`; `color` prefixes a seeded-random color.
+
+### High Heels Randomizer (MB)
+Same as Saree Randomizer for high heels: 33 styles with 40 detail fragments each, plus `details`, `random_category`, `color` and `seed`.
+
+### Bodycon Randomizer (MB)
+Same as Saree Randomizer for bodycon dresses: 28 styles with 40 detail fragments each, plus `details`, `random_category`, `color` and `seed`.
+
 ## Settings
 
 Open ComfyUI's settings dialog and pick the **MB** panel.
