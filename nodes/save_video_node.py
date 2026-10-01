@@ -6,6 +6,14 @@ from comfy.cli_args import args
 from comfy_api.latest import InputImpl, Types, io
 
 
+FORMATS = ["mp4", "webm", "mkv"]
+CONTAINERS = {
+    "mp4": Types.VideoContainer.MP4,
+    "webm": Types.VideoContainer.WEBM,
+    "mkv": Types.VideoContainer.MKV,
+}
+
+
 def _resolve_folder(output_folder):
     """Blank means the ComfyUI output folder; a relative path hangs off it;
     an absolute path can point anywhere on disk."""
@@ -28,12 +36,18 @@ class MBSaveVideo(io.ComfyNode):
             node_id="MBSaveVideo",
             display_name="Save Video (MB)",
             category="MBNodes",
-            description="Write images and audio to an mp4 with no preview.",
+            description="Write images and audio to a video file with no preview.",
             search_aliases=["save video", "save mp4", "export video"],
             is_output_node=True,
             inputs=[
                 io.Image.Input("images"),
                 io.Audio.Input("audio", optional=True),
+                io.Combo.Input(
+                    "format",
+                    options=FORMATS,
+                    default="mp4",
+                    tooltip="Container format. webm is encoded with AV1; mp4 and mkv are encoded with H264.",
+                ),
                 io.Float.Input(
                     "fps",
                     default=24.0,
@@ -62,7 +76,9 @@ class MBSaveVideo(io.ComfyNode):
         return True
 
     @classmethod
-    def execute(cls, images, fps, filename_prefix, output_folder, audio=None) -> io.NodeOutput:
+    def execute(
+        cls, images, format, fps, filename_prefix, output_folder, audio=None
+    ) -> io.NodeOutput:
         metadata = None
         if not args.disable_metadata:
             metadata = dict(cls.hidden.extra_pnginfo or {})
@@ -74,7 +90,7 @@ class MBSaveVideo(io.ComfyNode):
         full_folder, filename, counter, _subfolder, _prefix = folder_paths.get_save_image_path(
             filename_prefix, base_dir, images.shape[2], images.shape[1]
         )
-        path = os.path.join(full_folder, f"{filename}_{counter:05}_.mp4")
+        path = os.path.join(full_folder, f"{filename}_{counter:05}_.{format}")
 
         video = InputImpl.VideoFromComponents(
             Types.VideoComponents(
@@ -85,8 +101,8 @@ class MBSaveVideo(io.ComfyNode):
         )
         video.save_to(
             path,
-            format=Types.VideoContainer.MP4,
-            codec=Types.VideoCodec.H264,
+            format=CONTAINERS[format],
+            codec=Types.VideoCodec.AUTO,
             metadata=metadata,
         )
 

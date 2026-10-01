@@ -49,6 +49,7 @@ function newRecord() {
         boolDefault: null,
         comboVisible: null,
         seedRandomize: false,
+        value: undefined,
     };
 }
 
@@ -272,7 +273,10 @@ function buildLaneWidget(node, record, input) {
         : "slider";
 
     applyOverrides(node, record, widget, type);
-    widget.callback = chainCallback(widget.callback, () => applyLane(node, record));
+    widget.callback = chainCallback(widget.callback, () => {
+        record.value = widget.value;
+        applyLane(node, record);
+    });
 
     if (record.kind === "seed") addSeedButtons(node, record);
 }
@@ -290,6 +294,7 @@ function teardownLane(node, record) {
     });
     record.widgetType = null;
     record.kind = null;
+    node.__cpFullValues?.delete(record);
 }
 
 function applyLane(node, record) {
@@ -390,6 +395,22 @@ function removeLane(node, record) {
 // --- workflow load / fresh-node bring-up -----------------------------------
 
 function restoreWidgetValues(node) {
+    // Primary path: value lives directly on the record (set on every widget
+    // change, see buildLaneWidget), so restore is keyed by lane, not position
+    // -- correct even if a lane's link target went missing and its widget
+    // never got built.
+    let usedRecordValues = false;
+    for (const record of node.properties.controls) {
+        if (record.value === undefined) continue;
+        const widget = findWidget(node, record);
+        if (widget) widget.value = record.value;
+        usedRecordValues = true;
+    }
+    if (usedRecordValues) return;
+
+    // Legacy fallback: workflows saved before per-record values existed only
+    // carry a flat widgets_values array, index-matched to serializable
+    // widgets. Best-effort only -- misaligns if a lane's link target is gone.
     const values = node.widgets_values;
     if (!Array.isArray(values)) return;
     const serializable = (node.widgets ?? []).filter((w) => w.options?.serialize !== false && w.serialize !== false);
@@ -509,6 +530,8 @@ function buildLaneRow(node, record) {
             record.sliderMin = numOrNull(min.value);
             record.sliderMax = numOrNull(max.value);
             record.sliderStep = numOrNull(step.value);
+            const widget = findWidget(node, record);
+            if (widget) applyOverrides(node, record, widget, "FLOAT");
         });
     } else if (record.kind === "switch") {
         const row = document.createElement("div");
@@ -552,6 +575,14 @@ function buildLaneRow(node, record) {
         extras.push(() => {
             const chosen = checks.filter((c) => c.cb.checked).map((c) => c.value);
             record.comboVisible = chosen.length && chosen.length < full.length ? chosen : null;
+            const liveWidget = findWidget(node, record);
+            if (liveWidget) {
+                liveWidget.options.values = record.comboVisible?.length ? full.filter((v) => record.comboVisible.includes(v)) : full;
+                if (!liveWidget.options.values.includes(liveWidget.value)) {
+                    liveWidget.value = liveWidget.options.values[0];
+                    liveWidget.callback?.(liveWidget.value);
+                }
+            }
         });
     } else if (!record.kind) {
         const hint = document.createElement("div");

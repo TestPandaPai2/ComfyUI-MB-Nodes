@@ -28,14 +28,11 @@ Picks or uploads an image, with a preview and optional megapixel-target resize. 
 ### Load Image Mini (MB)
 Compact Load Image with a custom face: toolbar (upload/paste/settings), arrow + thumbnail file picker, preview, and two size cards (input/output). The full resize engine — max megapixels, longest side, scale by, fit inside, crop to fill, match ratio, plus snap/resample/upscale and a per-node accent — lives in the ⚙ gear. Outputs image and image_info only.
 
-### Load Image with Crop (MB)
-Load Image (MB) plus a crop dialog (drag/resize box, aspect presets, divisible-by). Crop applies before the megapixel resize.
-
-### Load Image & Crop (MB)
-Load Image (MB) with the crop box drawn on the node itself: drag to move, grab a corner or edge to resize, drag on empty image to start a new box, with aspect presets. The crop rect is stored as fractions of the image, and the megapixel combo resizes the crop afterwards (`original` skips it). Outputs image and mask only.
+### Load Image Crop (MB)
+Loads an image and crops it to the area selected on the node's preview: drag to draw the crop area, drag inside it to move, drag its corners to resize, click to clear. With no crop drawn the full image is output. `aspect` locks the box to a preset (free, source, 1:1, 16:9, …). `max_megapixels` > 0 scales the output up or down to that size (aspect preserved; 0 keeps the crop size), then both sides snap to the nearest multiple of `resolution_steps`, resampled with `upscale_method`. Outputs image.
 
 ### Crop Image (MB)
-Same crop dialog as above, but for an `image` input instead of a file picker. Crop is stored as fractions of the image so it survives resolution changes; falls back to a cached preview when nothing upstream has an image yet.
+Crop dialog (drag/resize box, aspect presets, divisible-by) for an `image` input instead of a file picker. Crop is stored as fractions of the image so it survives resolution changes; falls back to a cached preview when nothing upstream has an image yet.
 
 ### Save Image (MB)
 Saves png/jpg/webp to the output folder or anywhere you type. `preview` mode skips the write; a cached copy always survives a restart.

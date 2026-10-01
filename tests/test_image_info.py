@@ -19,7 +19,7 @@ import folder_paths
 from mbnodes.nodes import image_info
 from mbnodes.nodes.crop_image_node import MBImageCrop
 from mbnodes.nodes.image_info import MBImageInfo
-from mbnodes.nodes.load_image_crop_node import MBLoadImageCrop
+from mbnodes.nodes.load_image_crop_area_node import MBLoadImageCropArea
 from mbnodes.nodes.load_image_node import MBLoadImage
 from mbnodes.nodes.save_image_node import MBSaveImage
 
@@ -71,17 +71,13 @@ def test_resize_keeps_the_mask_in_step(rgba_file):
 
 def test_crop_selects_the_right_half_of_the_mask(rgba_file):
     # Right half of the source is opaque, so its mask is all zeros.
-    info = MBLoadImageCrop.execute(
-        rgba_file, False, "1.0", "free", "1", 0.5, 0.0, 0.5, 1.0
-    ).args[4]
-    assert info["mask"].shape == (1, 64, 64)
-    assert float(info["mask"].max()) == 0.0
+    mask = MBLoadImageCropArea.execute(rgba_file, 0.0, 0.5, 0.0, 0.5, 1.0).args[1]
+    assert mask.shape == (1, 64, 64)
+    assert float(mask.max()) == 0.0
 
     # Left half is transparent, so its mask is all ones.
-    info = MBLoadImageCrop.execute(
-        rgba_file, False, "1.0", "free", "1", 0.0, 0.0, 0.5, 1.0
-    ).args[4]
-    assert float(info["mask"].min()) == 1.0
+    mask = MBLoadImageCropArea.execute(rgba_file, 0.0, 0.0, 0.0, 0.5, 1.0).args[1]
+    assert float(mask.min()) == 1.0
 
 
 def test_a_mismatched_mask_is_resized_not_sliced_blindly():

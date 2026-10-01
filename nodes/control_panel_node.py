@@ -30,6 +30,9 @@ class MBControlPanel(io.ComfyNode):
 
     @classmethod
     def execute(cls) -> io.NodeOutput:
+        # Count must match define_schema()'s outputs (MAX_CONTROLS), not the
+        # frontend's current lane count -- this only runs if isVirtualNode
+        # somehow fails to register, so keep it schema-aligned, not lane-aligned.
         return io.NodeOutput(*([None] * MAX_CONTROLS))
 
 

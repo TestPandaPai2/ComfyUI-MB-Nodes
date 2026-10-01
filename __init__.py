@@ -8,20 +8,20 @@ from typing_extensions import override
 
 from comfy_api.latest import ComfyExtension, io
 
+from .nodes.body_mod_prompt_node import NODES as _body_mod_prompt
 from .nodes.branch_runner_node import NODES as _branch_runner
-from .nodes.civitai_info_node import NODES as _civitai_info
 from .nodes.combine_text_node import NODES as _combine_text
 from .nodes.control_panel_node import NODES as _control_panel
 from .nodes.crop_image_node import NODES as _crop_image
 from .nodes.get_lines_node import NODES as _get_lines
 from .nodes.image_info import NODES as _image_info
 from .nodes.krea_styles_node import NODES as _krea_styles
+from .nodes.lighting_enhance_prompt_node import NODES as _lighting_enhance_prompt
 from .nodes.load_folder_node import NODES as _load_folder
-from .nodes.load_image_crop_node import NODES as _load_image_crop
-from .nodes.load_image_inline_crop_node import NODES as _load_image_inline_crop
-from .nodes.load_image_mini_node import NODES as _load_image_mini
+from .nodes.load_image_crop_area_node import NODES as _load_image_crop_area
 from .nodes.load_image_node import NODES as _load_image
 from .nodes.load_video_node import NODES as _load_video
+from .nodes.makeup_mod_prompt_node import NODES as _makeup_mod_prompt
 from .nodes.model_combo_node import NODES as _model_combo
 from .nodes.pad_image_node import NODES as _pad_image
 from .nodes.preview_anything_node import NODES as _preview_anything
@@ -50,9 +50,7 @@ NODES: list[type[io.ComfyNode]] = [
     *_resolution,
     *_slider,
     *_load_image,
-    *_load_image_mini,
-    *_load_image_crop,
-    *_load_image_inline_crop,
+    *_load_image_crop_area,
     *_image_info,
     *_load_video,
     *_load_folder,
@@ -78,10 +76,12 @@ NODES: list[type[io.ComfyNode]] = [
     *_krea_styles,
     *_control_panel,
     *_wildcard_select,
-    *_civitai_info,
     *_saree_randomizer,
     *_high_heels_randomizer,
     *_bodycon_randomizer,
+    *_body_mod_prompt,
+    *_makeup_mod_prompt,
+    *_lighting_enhance_prompt,
 ]
 
 

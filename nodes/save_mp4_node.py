@@ -56,16 +56,16 @@ def _trim(images, audio, fps):
 
 
 class MBSaveMP4(io.ComfyNode):
-    """Encode a batch of images (plus optional audio) to an mp4, saved where you
+    """Encode a batch of images (plus optional audio) to video, saved where you
     point it or previewed only, with the player shown on the node."""
 
     @classmethod
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBSaveMP4",
-            display_name="SaveMP4 (MB)",
+            display_name="Preview/Save Video (MB)",
             category="MBNodes",
-            description="Write images and audio to an mp4, with a preview player on the node.",
+            description="Write images and audio to video, or preview only, with a player on the node.",
             search_aliases=["save mp4", "save video", "export video"],
             is_output_node=True,
             inputs=[
@@ -86,6 +86,18 @@ class MBSaveMP4(io.ComfyNode):
                     label_off="save",
                     tooltip="preview: encode to the temp folder only. save: write to the folder below.",
                 ),
+                io.Combo.Input(
+                    "format",
+                    options=["auto", "mp4", "mkv", "webm"],
+                    default="auto",
+                    tooltip="Container format. auto picks mp4 for h264/auto codec and webm for av1.",
+                ),
+                io.Combo.Input(
+                    "codec",
+                    options=["auto", "h264", "av1"],
+                    default="auto",
+                    tooltip="Video codec. auto lets the container decide.",
+                ),
                 io.String.Input("filename_prefix", default="MBNodes", socketless=True),
                 io.String.Input(
                     "output_folder",
@@ -99,7 +111,7 @@ class MBSaveMP4(io.ComfyNode):
                     tooltip="Drop frames past the end of the audio, so the video stops when the audio does.",
                 ),
             ],
-            outputs=[],
+            outputs=[io.Video.Output()],
             hidden=[io.Hidden.prompt, io.Hidden.extra_pnginfo],
         )
 
@@ -112,7 +124,7 @@ class MBSaveMP4(io.ComfyNode):
 
     @classmethod
     def execute(
-        cls, images, fps, preview_only, filename_prefix, output_folder, trim_to_audio, audio=None
+        cls, images, fps, preview_only, format, codec, filename_prefix, output_folder, trim_to_audio, audio=None
     ) -> io.NodeOutput:
         if trim_to_audio:
             images, audio = _trim(images, audio, fps)
@@ -124,18 +136,6 @@ class MBSaveMP4(io.ComfyNode):
                 metadata["prompt"] = cls.hidden.prompt
             metadata = metadata or None
 
-        if preview_only:
-            base_dir = folder_paths.get_temp_directory()
-            prefix = f"mbmp4_preview_{random.randint(0, 0xFFFFFFFF):08x}"
-        else:
-            base_dir = _resolve_folder(output_folder)
-            prefix = filename_prefix
-
-        full_folder, filename, counter, _subfolder, _prefix = folder_paths.get_save_image_path(
-            prefix, base_dir, images.shape[2], images.shape[1]
-        )
-        path = os.path.join(full_folder, f"{filename}_{counter:05}_.mp4")
-
         video = InputImpl.VideoFromComponents(
             Types.VideoComponents(
                 images=images,
@@ -143,14 +143,32 @@ class MBSaveMP4(io.ComfyNode):
                 frame_rate=Fraction(round(fps * 1000), 1000),
             )
         )
-        video.save_to(
-            path,
-            format=Types.VideoContainer.MP4,
-            codec=Types.VideoCodec.H264,
-            metadata=metadata,
-        )
 
-        return io.NodeOutput(ui=ui.PreviewVideo([_previewable(path)]))
+        if preview_only:
+            base_dir = folder_paths.get_temp_directory()
+            prefix = f"mbmp4_preview_{random.randint(0, 0xFFFFFFFF):08x}"
+            full_folder, filename, counter, _subfolder, _prefix = folder_paths.get_save_image_path(
+                prefix, base_dir, images.shape[2], images.shape[1]
+            )
+            path = os.path.join(full_folder, f"{filename}_{counter:05}_.mp4")
+            video.save_to(path, format=Types.VideoContainer.MP4, codec=Types.VideoCodec.AUTO, preset="ultrafast")
+        else:
+            format_name = format
+            if format_name == "auto":
+                format_name = "webm" if codec == "av1" else "mp4"
+            base_dir = _resolve_folder(output_folder)
+            full_folder, filename, counter, _subfolder, _prefix = folder_paths.get_save_image_path(
+                filename_prefix, base_dir, images.shape[2], images.shape[1]
+            )
+            path = os.path.join(full_folder, f"{filename}_{counter:05}_.{Types.VideoContainer.get_extension(format_name)}")
+            video.save_to(
+                path,
+                format=Types.VideoContainer(format_name),
+                codec=Types.VideoCodec(codec),
+                metadata=metadata,
+            )
+
+        return io.NodeOutput(video, ui=ui.PreviewVideo([_previewable(path)]))
 
 
 NODES = [MBSaveMP4]

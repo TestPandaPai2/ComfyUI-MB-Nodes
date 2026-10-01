@@ -1,6 +1,6 @@
 // Paste the image on the clipboard into a loader's file widget: read it from
 // the clipboard, upload it to the input folder, then select it. Shared by
-// Load Image (MB) and Load Image with Crop (MB).
+// Load Image (MB).
 
 import { api } from "../../scripts/api.js";
 import { getWidget, notify } from "./common.js";

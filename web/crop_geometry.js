@@ -1,5 +1,5 @@
-// Crop box maths and painting, shared by the on-node editor of Crop Image (MB)
-// and the crop dialog of Load Image with Crop (MB). Everything here works in
+// Crop box maths and painting, shared by the on-node editors of Crop Image (MB)
+// and Load Image Crop (MB). Everything here works in
 // fractions of the image and knows nothing about widgets or LiteGraph.
 
 export const MIN_FRACTION = 0.02;

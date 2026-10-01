@@ -11,7 +11,7 @@ function refresh(node) {
 
     let changed = false;
     // Preview encodes to the temp folder, so the save target is meaningless.
-    for (const name of ["filename_prefix", "output_folder"]) {
+    for (const name of ["format", "codec", "filename_prefix", "output_folder"]) {
         changed = setWidgetVisible(node, name, !preview) || changed;
     }
     changed = setWidgetVisible(node, "trim_to_audio", audioConnected(node)) || changed;
