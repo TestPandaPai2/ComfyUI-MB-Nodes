@@ -5,6 +5,10 @@ import random
 
 from comfy_api.latest import io
 
+
+def weighted(text, weight):
+    return text if weight == 1.0 else f"({text}:{weight:.2f})"
+
 MAX_SEED = 0xFFFFFFFFFFFFFFFF
 
 
@@ -1093,18 +1097,19 @@ class MBSareeRandomizer(io.ComfyNode):
                 io.Boolean.Input("color", default=False, tooltip="Put a seeded-random color before the saree name."),
                 io.Int.Input("details", default=3, min=1, max=40, tooltip="How many random detail fragments to add."),
                 io.Int.Input("seed", default=0, min=0, max=MAX_SEED, control_after_generate=True),
+                io.Float.Input("weight", default=1.0, min=0.0, max=2.0, step=0.05, display_mode=io.NumberDisplay.slider, tooltip="Prompt weight. At 1.0 the text is output as-is, otherwise as (text:weight)."),
             ],
             outputs=[io.String.Output("prompt")],
         )
 
     @classmethod
-    def execute(cls, category, random_category, color, details, seed) -> io.NodeOutput:
+    def execute(cls, category, random_category, color, details, seed, weight) -> io.NodeOutput:
         rng = random.Random(seed)
         name = rng.choice(list(SAREES)) if random_category else category
         subject = f"{rng.choice(COLORS)} {name}" if color else name
         fragments = SAREES[name]
         picks = rng.sample(fragments, min(details, len(fragments)))
-        return io.NodeOutput(", ".join([subject, *picks]))
+        return io.NodeOutput(weighted(", ".join([subject, *picks]), weight))
 
 
 NODES = [MBSareeRandomizer]

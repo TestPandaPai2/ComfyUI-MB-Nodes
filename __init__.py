@@ -38,7 +38,10 @@ from .nodes.save_video_node import NODES as _save_video
 from .nodes.saree_randomizer_node import NODES as _saree_randomizer
 from .nodes.high_heels_randomizer_node import NODES as _high_heels_randomizer
 from .nodes.bodycon_randomizer_node import NODES as _bodycon_randomizer
+from .nodes.dress_randomizer_node import NODES as _dress_randomizer
+from .nodes.heel_randomizer_node import NODES as _heel_randomizer
 from .nodes.body_type_node import NODES as _body_type
+from .nodes.pose_selector_node import NODES as _pose_selector
 from .nodes.show_text_node import NODES as _show_text
 from .nodes.slider_node import NODES as _slider
 from .nodes.system_prompt_node import NODES as _system_prompt
@@ -80,10 +83,13 @@ NODES: list[type[io.ComfyNode]] = [
     *_saree_randomizer,
     *_high_heels_randomizer,
     *_bodycon_randomizer,
+    *_dress_randomizer,
+    *_heel_randomizer,
     *_body_mod_prompt,
     *_makeup_mod_prompt,
     *_lighting_enhance_prompt,
     *_body_type,
+    *_pose_selector,
 ]
 
 

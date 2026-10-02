@@ -2,6 +2,10 @@
 
 from comfy_api.latest import io
 
+
+def weighted(text, weight):
+    return text if weight == 1.0 else f"({text}:{weight:.2f})"
+
 BODY_TYPES = {
     "Rectangle": "Body type: rectangle body type, where the shoulders, waist, and hips measure nearly the same width, forming a straight, column-like silhouette. The waist is only slightly defined, the bust is modest to medium, and her body tends to be athletic or lean, with weight distributed evenly rather than concentrated in one area.",
     "Inverted Triangle": "Body type: inverted triangle body type, where the shoulders and bust are noticeably broader than the hips, creating a top-heavy silhouette. Her waist is moderately defined or straight, the hips and buttocks are narrow and flat to slightly rounded, and the legs are often slim and long relative to the upper body.",
@@ -52,6 +56,7 @@ class MBBodyType(io.ComfyNode):
             category="MBNodes",
             inputs=[
                 io.Combo.Input("body_type", options=list(BODY_TYPES), default="Hourglass"),
+                io.Float.Input("weight", default=1.0, min=0.0, max=2.0, step=0.05, display_mode=io.NumberDisplay.slider, tooltip="Prompt weight. At 1.0 the text is output as-is, otherwise as (text:weight)."),
             ],
             outputs=[
                 io.String.Output("prompt"),
@@ -59,8 +64,8 @@ class MBBodyType(io.ComfyNode):
         )
 
     @classmethod
-    def execute(cls, body_type) -> io.NodeOutput:
-        return io.NodeOutput(BODY_TYPES[body_type])
+    def execute(cls, body_type, weight) -> io.NodeOutput:
+        return io.NodeOutput(weighted(BODY_TYPES[body_type], weight))
 
 
 NODES = [MBBodyType]
