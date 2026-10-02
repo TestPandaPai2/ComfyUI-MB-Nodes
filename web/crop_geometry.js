@@ -24,7 +24,8 @@ export const HANDLES = [
 const FILL_OUTSIDE = "rgba(0, 0, 0, 0.55)";
 const LINE_SOFT = "rgba(255, 255, 255, 0.35)";
 const HANDLE_FILL = "#ffffff";
-const TEXT = "#dcdcdc";
+const TEXT = "#ececee";
+const LABEL_BG = "#2a2a2e";
 
 export const clamp01 = (v) => Math.min(1, Math.max(0, v));
 
@@ -273,10 +274,12 @@ export function drawCrop(ctx, frame, image, rect, label) {
         ctx.textAlign = "left";
         ctx.textBaseline = "top";
         const textW = ctx.measureText(label).width;
-        ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
-        ctx.fillRect(frame.x + 4, frame.y + 4, textW + 8, 16);
+        ctx.fillStyle = LABEL_BG;
+        ctx.beginPath();
+        ctx.roundRect(frame.x + 4, frame.y + 4, textW + 10, 16, 5);
+        ctx.fill();
         ctx.fillStyle = TEXT;
-        ctx.fillText(label, frame.x + 8, frame.y + 6);
+        ctx.fillText(label, frame.x + 9, frame.y + 6);
     }
 
     ctx.restore();

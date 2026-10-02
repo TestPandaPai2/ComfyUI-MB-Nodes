@@ -16,9 +16,10 @@ const RECT_WIDGETS = ["crop_x", "crop_y", "crop_width", "crop_height"];
 const CROP_HEIGHT = 300;   // canvas area reserved on the node body
 const MARGIN = 12;         // matches the inset LiteGraph uses for its widgets
 const EMPTY_BG = "#18181a";
-const EMPTY_TEXT = "#6a6a6a";
-const FOOT_TEXT = "#8f8f8f";
-const LABEL_TEXT = "#dcdcdc";
+const EMPTY_TEXT = "#77777e";
+const FOOT_TEXT = "#8e8e95";
+const LABEL_TEXT = "#ececee";
+const LABEL_BG = "#2a2a2e";
 const CLICK_SLOP = 0.004;  // pointer travel (fraction of image) still counted as a click
 
 const ANNOTATED = /^(.*?)\s*\[(\w+)\]\s*$/;
@@ -116,10 +117,12 @@ function drawLabel(ctx, text, x, y) {
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
     const textW = ctx.measureText(text).width;
-    ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
-    ctx.fillRect(x, y, textW + 8, 16);
+    ctx.fillStyle = LABEL_BG;
+    ctx.beginPath();
+    ctx.roundRect(x, y, textW + 10, 16, 5);
+    ctx.fill();
     ctx.fillStyle = LABEL_TEXT;
-    ctx.fillText(text, x + 4, y + 2);
+    ctx.fillText(text, x + 5, y + 2);
 }
 
 // --------------------------------------------------------------- the widget
@@ -143,7 +146,7 @@ function addCropWidget(node) {
         ctx.save();
         ctx.fillStyle = EMPTY_BG;
         ctx.beginPath();
-        ctx.roundRect(boxX, boxY, boxW, boxH, 8);
+        ctx.roundRect(boxX, boxY, boxW, boxH, 10);
         ctx.fill();
         ctx.clip();
 
