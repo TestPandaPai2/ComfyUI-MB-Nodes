@@ -9,6 +9,12 @@ export function notify(severity, summary, detail) {
     else console.log(`[MBNodes] ${summary}: ${detail ?? ""}`);
 }
 
+// The pack-wide accent, published by theme.js as a CSS variable so DOM styles
+// and canvas drawing follow the same setting.
+export function accentColor() {
+    return getComputedStyle(document.documentElement).getPropertyValue("--mb-accent").trim() || "#d4537e";
+}
+
 export function getWidget(node, name) {
     return node.widgets?.find((w) => w.name === name);
 }
@@ -32,11 +38,11 @@ export function setWidgetVisible(node, name, visible) {
     return true;
 }
 
-const BUTTON_RADIUS = 10;
+const BUTTON_RADIUS = 7;
 const BUTTON_MARGIN = 15; // matches the inset LiteGraph uses for its own widgets
-const BUTTON_FILL = "#353535";
-const BUTTON_BORDER = "#1a1a1a";
-const BUTTON_TEXT = "#dcdcdc";
+const BUTTON_FILL = "#2a2a2e";
+const BUTTON_BORDER = BUTTON_FILL;
+const BUTTON_TEXT = "#ececee";
 
 // Buttons are drawn square by the canvas renderer, so ours paint themselves as a
 // rounded rect instead. Hit testing is done by LiteGraph from the widget bounds

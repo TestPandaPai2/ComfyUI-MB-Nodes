@@ -53,7 +53,7 @@ Same idea for LLM system prompts, with its own library folder, an "Add folder...
 Grows one output per line of incoming text (up to 32), auto-detected or pinned via right-click settings.
 
 ### Pad Image (MB)
-Adds a solid-colour border, either exact pixels per side or padded to an aspect ratio. `all_sides` is a shortcut for uniform padding.
+Adds a solid-colour border. The `Pad Image` button opens a dialog showing the upstream image: drag any edge or corner outward to pad, with optional aspect-ratio lock and colour picker.
 
 ### Rotate Image (MB)
 Rotates an image 90, 180 or 270 degrees. The three toggles behave like radio buttons, and `clockwise` flips the direction (ignored by 180).
@@ -97,12 +97,15 @@ Same as Saree Randomizer for high heels: 33 styles with 40 detail fragments each
 ### Bodycon Randomizer (MB)
 Same as Saree Randomizer for bodycon dresses: 28 styles with 40 detail fragments each, plus `details`, `random_category`, `color` and `seed`.
 
+### Body Type (MB)
+Dropdown of 37 body types (Rectangle, Hourglass, Spoon, ...). Outputs the full body type description.
+
 ## Settings
 
 Open ComfyUI's settings dialog and pick the **MB** panel.
 
 ### Theme → Accent colour
-Recolours every MB node's title bar — **Green** (default), **Pink**, **Purple**, **Teal**, **Gold**, **Blue**, **Red**, **Orange**, **Indigo**, **Slate**, **Orchid**.
+Minimal flat look for every MB node (dark body, accent title dot, sockets, toggles and sliders). Accent: **Pink** (default), **Green**, **Purple**, **Teal**, **Gold**, **Blue**, **Red**, **Orange**, **Indigo**, **Slate**, **Orchid**.
 
 ### Links → Link render mode
 Custom routing for every link on the canvas, on top of ComfyUI's own three styles:

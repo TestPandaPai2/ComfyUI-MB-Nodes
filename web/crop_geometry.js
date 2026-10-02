@@ -1,3 +1,5 @@
+import { accentColor } from "./common.js";
+
 // Crop box maths and painting, shared by the on-node editors of Crop Image (MB)
 // and Load Image Crop (MB). Everything here works in
 // fractions of the image and knows nothing about widgets or LiteGraph.
@@ -20,7 +22,6 @@ export const HANDLES = [
 ];
 
 const FILL_OUTSIDE = "rgba(0, 0, 0, 0.55)";
-const LINE = "#e01010";
 const LINE_SOFT = "rgba(255, 255, 255, 0.35)";
 const HANDLE_FILL = "#ffffff";
 const TEXT = "#dcdcdc";
@@ -258,7 +259,7 @@ export function drawCrop(ctx, frame, image, rect, label) {
         ctx.stroke();
     }
 
-    ctx.strokeStyle = LINE;
+    ctx.strokeStyle = accentColor();
     ctx.lineWidth = 2;
     ctx.strokeRect(rx, ry, rw, rh);
 

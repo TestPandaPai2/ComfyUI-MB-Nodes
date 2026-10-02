@@ -29,7 +29,7 @@ const CSS = `
     cursor: pointer;
 }
 .mb-folder-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.mb-folder-tile.mb-on { border-color: #e01010; }
+.mb-folder-tile.mb-on { border-color: var(--mb-accent, #d4537e); }
 .mb-folder-tile:not(.mb-on) img { opacity: 0.35; }
 .mb-folder-tile .mb-folder-name {
     position: absolute;

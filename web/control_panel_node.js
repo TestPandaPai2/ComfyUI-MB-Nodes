@@ -1,7 +1,7 @@
 import { app } from "../../scripts/app.js";
 import { ComfyWidgets } from "../../scripts/widgets.js";
 import { getWidgetConfig } from "../../extensions/core/widgetInputs.js";
-import { notify, addButton, resizeToContent } from "./common.js";
+import { notify, addButton, resizeToContent, accentColor } from "./common.js";
 import { openDialog, radioRow } from "./dialog.js";
 
 // Control Panel -- up to MAX_CONTROLS lanes, each one a miniature version of
@@ -23,8 +23,8 @@ const INITIAL_LANES = 2;
 const ANY = "*";
 
 const COLOR_STORAGE_KEY = "MBNodes.ControlPanel.defaultColor";
-const DEFAULT_ACCENT = "#1fae65";
-const BODY_COLOR = "#0d0d0d";
+const DEFAULT_ACCENT = "#212124";
+const BODY_COLOR = "#212124";
 
 // --- small local helpers ---------------------------------------------------
 
@@ -160,13 +160,13 @@ function addSeedButtons(node, record) {
 
             this._rects.forEach(([x, ry, rw, rh], i) => {
                 ctx.save();
-                ctx.fillStyle = active[i] ? "#1fae65" : "#353535";
-                ctx.strokeStyle = active[i] ? "#1fae65" : "#1a1a1a";
+                ctx.fillStyle = active[i] ? accentColor() : "#2a2a2e";
+                ctx.strokeStyle = ctx.fillStyle;
                 ctx.beginPath();
                 ctx.roundRect(x, ry, rw, rh, 8);
                 ctx.fill();
                 ctx.stroke();
-                ctx.fillStyle = "#dcdcdc";
+                ctx.fillStyle = "#ececee";
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
                 ctx.font = "11px Arial";
@@ -475,7 +475,7 @@ function textField(placeholder, value) {
     i.placeholder = placeholder;
     i.value = value ?? "";
     i.style.cssText =
-        "flex:1; min-width:0; padding:4px 8px; background:#0d0d0d; color:#dcdcdc; border:1px solid #3a3a3a; border-radius:6px; font-size:12px;";
+        "flex:1; min-width:0; padding:4px 8px; background:#2a2a2e; color:#ececee; border:1px solid transparent; border-radius:7px; outline:none; font-size:12px;";
     return i;
 }
 
@@ -498,7 +498,7 @@ function buildLaneRow(node, record) {
     nameInput.value = record.name ?? "";
 
     const kindTag = document.createElement("span");
-    kindTag.style.cssText = "font-size:11px; color:#8f8f8f; white-space:nowrap;";
+    kindTag.style.cssText = "font-size:11px; color:#77777e; white-space:nowrap;";
     kindTag.textContent = record.kind ?? "blank";
 
     const remove = document.createElement("button");

@@ -1,5 +1,3 @@
-import logging
-
 import torch
 
 from comfy_api.latest import io, ui
@@ -7,12 +5,7 @@ from comfy_api.latest import io, ui
 # Aliased: "image_info" is also this node's optional input, which would
 # shadow the module inside execute().
 from . import image_info as _info
-from .resolution_node import RATIOS
 
-RATIO_NAMES = [name for name, _ in RATIOS]
-RATIO_BY_NAME = dict(RATIOS)
-NO_RATIO = "none"
-PAD_FROM = ["both", "first", "second"]
 MAX_PAD = 8192
 
 
@@ -40,34 +33,9 @@ def _rgb(color):
     return [0.0, 0.0, 0.0]
 
 
-def _split(extra, pad_from):
-    """How much of `extra` goes to the first side vs. the second."""
-    extra = min(max(0, extra), MAX_PAD * 2)
-    if pad_from == "first":
-        return min(extra, MAX_PAD), 0
-    if pad_from == "second":
-        return 0, min(extra, MAX_PAD)
-    first = extra // 2
-    return first, extra - first
-
-
-def _ratio_padding(width, height, ratio, pad_from):
-    """Padding on whichever axis reaches `ratio`; never crops. `pad_from`
-    biases the split of that axis: first (left/top), second (right/bottom),
-    or both (even)."""
-    if width / height < ratio:
-        extra = max(0, round(height * ratio) - width)
-        left, right = _split(extra, pad_from)
-        return 0, 0, left, right
-
-    extra = max(0, round(width / ratio) - height)
-    top, bottom = _split(extra, pad_from)
-    return top, bottom, 0, 0
-
-
 class MBPadImage(io.ComfyNode):
-    """Pad an image with a solid colour, either by a pixel amount per side or up
-    to an aspect ratio."""
+    """Pad an image with a solid colour. The four sides and the colour are set
+    by drawing in the Pad Image dialog (web/pad_image_node.js)."""
 
     @classmethod
     def define_schema(cls) -> io.Schema:
@@ -75,7 +43,7 @@ class MBPadImage(io.ComfyNode):
             node_id="MBPadImage",
             display_name="Pad Image (MB)",
             category="MBNodes",
-            description="Pad an image by pixels per side or out to an aspect ratio, in any colour.",
+            description="Pad an image with a solid colour; draw the padded area in the dialog.",
             search_aliases=["pad image", "border", "letterbox", "extend canvas"],
             inputs=[
                 io.Image.Input("image"),
@@ -83,23 +51,6 @@ class MBPadImage(io.ComfyNode):
                 io.Int.Input("right", default=0, min=0, max=MAX_PAD, socketless=True),
                 io.Int.Input("top", default=0, min=0, max=MAX_PAD, socketless=True),
                 io.Int.Input("bottom", default=0, min=0, max=MAX_PAD, socketless=True),
-                io.Combo.Input(
-                    "aspect_ratio",
-                    options=[NO_RATIO] + RATIO_NAMES,
-                    default=NO_RATIO,
-                    socketless=True,
-                    tooltip="none: pad by the four pixel fields. Any other value: pad evenly until "
-                            "the image reaches that ratio, ignoring the pixel fields. The image is "
-                            "never cropped.",
-                ),
-                io.Combo.Input(
-                    "pad_from",
-                    options=PAD_FROM,
-                    default="both",
-                    socketless=True,
-                    tooltip="aspect ratio mode only. Which side of the padded axis gets the extra "
-                            "space: both (even), first (left/top) or second (right/bottom).",
-                ),
                 io.Color.Input("color", default="#000000", tooltip="Colour of the padding."),
                 _info.ImageInfo.Input(
                     "image_info",
@@ -115,22 +66,10 @@ class MBPadImage(io.ComfyNode):
 
     @classmethod
     def execute(
-        cls, image, left, right, top, bottom, aspect_ratio, pad_from, color,
+        cls, image, left, right, top, bottom, color,
         image_info=None,
     ) -> io.NodeOutput:
         height, width = image.shape[1], image.shape[2]
-
-        if aspect_ratio != NO_RATIO:
-            ratio = RATIO_BY_NAME.get(aspect_ratio)
-            if ratio is None:
-                # An unknown name (an old save, a hand-edited workflow) must not
-                # quietly pad to some other shape, so it pads not at all.
-                logging.warning(
-                    "Pad Image (MB): unknown aspect_ratio %r; padding skipped.", aspect_ratio
-                )
-                top = bottom = left = right = 0
-            else:
-                top, bottom, left, right = _ratio_padding(width, height, ratio, pad_from)
 
         source = image_info or {}
         # The incoming mask may not match this image, so it is fitted first in

@@ -5,9 +5,10 @@ const STYLE_ID = "mb-dialog-style";
 
 const CSS = `
 .mb-dialog-overlay {
+    --mb-a: var(--mb-accent, #d4537e);
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.55);
+    background: rgba(0, 0, 0, 0.6);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -15,96 +16,89 @@ const CSS = `
     font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 .mb-dialog {
-    width: 320px;
+    width: 340px;
     max-width: calc(100vw - 32px);
-    background: #141414;
-    border: 1px solid #2a2a2a;
-    border-radius: 12px;
+    background: #212124;
+    border-radius: 14px;
     overflow: hidden;
-    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
-    color: #dcdcdc;
-    font-size: 13px;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.5);
+    color: #ececee;
+    font-size: 12.5px;
 }
-.mb-dialog-title {
-    background: #e01010;
-    color: #ffffff;
-    font-weight: 600;
-    padding: 10px 14px;
+.mb-dialog-header { display: flex; align-items: center; gap: 8px; padding: 14px 16px 4px; }
+.mb-dialog-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--mb-a); flex: none; }
+.mb-dialog-title { font-weight: 500; font-size: 13.5px; flex: 1; min-width: 0; }
+.mb-dialog-close {
+    border: none;
+    background: none;
+    color: #77777e;
+    font-size: 18px;
+    line-height: 1;
+    padding: 0 2px;
+    cursor: pointer;
 }
-.mb-dialog-body { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.mb-dialog-close:hover { color: #ececee; }
+.mb-dialog-body { padding: 10px 16px 14px; display: flex; flex-direction: column; gap: 10px; }
 .mb-dialog-row {
     display: flex;
     align-items: center;
-    gap: 9px;
-    padding: 8px 10px;
-    border: 1px solid #2a2a2a;
+    gap: 10px;
+    padding: 7px 10px;
     border-radius: 8px;
-    background: #1b1b1b;
+    background: #2a2a2e;
     cursor: pointer;
 }
-.mb-dialog-row:hover { border-color: #3a3a3a; }
-.mb-dialog-row.mb-selected { border-color: #e01010; background: #241416; }
-.mb-dialog-row input[type="radio"] { accent-color: #e01010; margin: 0; }
-.mb-dialog-hint { color: #8f8f8f; font-size: 11px; margin: 2px 0 0 29px; }
-.mb-dialog-number {
-    width: 72px;
-    margin-left: auto;
-    padding: 4px 8px;
-    background: #0d0d0d;
-    color: #dcdcdc;
-    border: 1px solid #3a3a3a;
-    border-radius: 6px;
-    font-size: 13px;
+.mb-dialog-row:hover { background: #303034; }
+.mb-dialog-row.mb-selected { background: color-mix(in srgb, var(--mb-a) 22%, #212124); }
+.mb-dialog-row input[type="radio"] { accent-color: var(--mb-a); margin: 0; }
+.mb-dialog-hint { color: #77777e; font-size: 11px; margin: 3px 0 0 30px; }
+.mb-dialog-number,
+.mb-dialog-select,
+.mb-dialog-item input {
+    padding: 4px 10px;
+    background: #2a2a2e;
+    color: #ececee;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    font-size: 12.5px;
+    outline: none;
 }
+.mb-dialog-number:focus,
+.mb-dialog-select:focus,
+.mb-dialog-item input:focus { border-color: var(--mb-a); }
+.mb-dialog-number { width: 72px; margin-left: auto; }
+.mb-dialog-row .mb-dialog-number { background: #212124; }
 .mb-dialog-number:disabled { opacity: 0.4; }
-.mb-dialog-list { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; }
+.mb-dialog-list { display: flex; flex-direction: column; gap: 4px; max-height: 260px; overflow-y: auto; }
 .mb-dialog-item {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 5px 8px;
-    border: 1px solid #2a2a2a;
+    padding: 4px 6px;
     border-radius: 8px;
-    background: #1b1b1b;
+    background: #2a2a2e;
 }
-.mb-dialog-item input {
-    flex: 1;
-    min-width: 0;
-    padding: 4px 8px;
-    background: #0d0d0d;
-    color: #dcdcdc;
-    border: 1px solid #3a3a3a;
-    border-radius: 6px;
-    font-size: 13px;
-}
-.mb-dialog-item input.mb-invalid { border-color: #e01010; }
+.mb-dialog-item input { flex: 1; min-width: 0; background: #212124; }
+.mb-dialog-item input.mb-invalid { border-color: #e5484d; }
 .mb-dialog-remove {
     flex: none;
     width: 22px;
     height: 22px;
     line-height: 1;
     border-radius: 6px;
-    border: 1px solid #3a3a3a;
-    background: #262626;
-    color: #b0b0b0;
+    border: none;
+    background: transparent;
+    color: #77777e;
     font-size: 14px;
     cursor: pointer;
 }
-.mb-dialog-remove:hover { background: #3a1a1c; border-color: #e01010; color: #ffffff; }
-.mb-dialog-field { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #b0b0b0; }
-.mb-dialog-select {
-    padding: 4px 8px;
-    background: #0d0d0d;
-    color: #dcdcdc;
-    border: 1px solid #3a3a3a;
-    border-radius: 6px;
-    font-size: 13px;
-}
+.mb-dialog-remove:hover { background: #3a3a3f; color: #ececee; }
+.mb-dialog-field { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #8e8e95; }
 .mb-dialog-canvas {
     display: block;
     width: 100%;
-    border-radius: 8px;
-    background: #0d0d0d;
+    border-radius: 10px;
+    background: #18181a;
     touch-action: none;
     cursor: crosshair;
 }
@@ -112,20 +106,21 @@ const CSS = `
     display: flex;
     justify-content: flex-end;
     gap: 8px;
-    padding: 0 14px 14px;
+    padding: 10px 16px;
+    background: #1d1d20;
 }
 .mb-dialog-button {
     padding: 6px 14px;
-    border-radius: 8px;
-    border: 1px solid #3a3a3a;
-    background: #262626;
-    color: #dcdcdc;
-    font-size: 13px;
+    border-radius: 7px;
+    border: none;
+    background: #2a2a2e;
+    color: #ececee;
+    font-size: 12.5px;
     cursor: pointer;
 }
-.mb-dialog-button:hover { background: #303030; }
-.mb-dialog-button.mb-primary { background: #e01010; border-color: #e01010; color: #ffffff; }
-.mb-dialog-button.mb-primary:hover { background: #f01c1c; }
+.mb-dialog-button:hover { background: #333338; }
+.mb-dialog-button.mb-primary { background: var(--mb-a); color: #ffffff; }
+.mb-dialog-button.mb-primary:hover { filter: brightness(1.1); }
 `;
 
 function ensureStyle() {
@@ -151,7 +146,7 @@ export function openDialog({ title, render, onApply, onClose, applyLabel = "Appl
     const dialog = document.createElement("div");
     dialog.className = "mb-dialog";
     if (width) dialog.style.width = `${width}px`;
-    dialog.innerHTML = `<div class="mb-dialog-title"></div><div class="mb-dialog-body"></div>`;
+    dialog.innerHTML = `<div class="mb-dialog-header"><span class="mb-dialog-dot"></span><span class="mb-dialog-title"></span><button class="mb-dialog-close" aria-label="Close">×</button></div><div class="mb-dialog-body"></div>`;
     dialog.querySelector(".mb-dialog-title").textContent = title;
 
     const body = dialog.querySelector(".mb-dialog-body");
@@ -195,6 +190,7 @@ export function openDialog({ title, render, onApply, onClose, applyLabel = "Appl
     }
 
     cancel.addEventListener("click", close);
+    dialog.querySelector(".mb-dialog-close").addEventListener("click", close);
     apply.addEventListener("click", submit);
     overlay.addEventListener("mousedown", (event) => {
         if (event.target === overlay) close();

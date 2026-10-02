@@ -25,7 +25,7 @@ const DIVISOR_OPTIONS = ["1", "8", "16", "32", "64"];
 const DIALOG_WIDTH = 1000;
 const CANVAS_W = 940;
 const CANVAS_H = 600;
-const EMPTY_BG = "#0d0d0d";
+const EMPTY_BG = "#18181a";
 
 // ---------------------------------------------------------------- crop rect
 
@@ -104,7 +104,9 @@ function nodeImageSrc(node) {
     if (widget) {
         const match = ANNOTATED.exec(widget.value);
         const [name, type] = match ? [match[1], match[2]] : [widget.value, "input"];
-        return viewURL(name, "", type);
+        // "/view" keeps only the basename, so a loader subfolder goes in its own param.
+        const cut = name.lastIndexOf("/");
+        return viewURL(name.slice(cut + 1), cut < 0 ? "" : name.slice(0, cut), type);
     }
 
     return null;
@@ -112,7 +114,7 @@ function nodeImageSrc(node) {
 
 // Reroutes, upscalers and the like hold no image of their own, so the search
 // keeps walking back through IMAGE links until it finds a node that does.
-function upstreamPreview(node, depth = 0, seen = new Set()) {
+export function upstreamPreview(node, depth = 0, seen = new Set()) {
     if (!node || depth > 8 || seen.has(node.id)) return null;
     seen.add(node.id);
 
@@ -124,7 +126,9 @@ function upstreamPreview(node, depth = 0, seen = new Set()) {
     for (const input of node.inputs ?? []) {
         if (input.link == null) continue;
         if (depth === 0 && input.name !== "image") continue; // only our own dot
-        const link = app.graph?.links?.[input.link];
+        // Newer frontends keep links in a Map rather than a plain object.
+        const links = app.graph?.links;
+        const link = links?.get?.(input.link) ?? links?.[input.link];
         if (!link) continue;
         if (link.type && link.type !== "IMAGE" && link.type !== "*") continue;
 

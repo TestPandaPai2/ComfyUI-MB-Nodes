@@ -15,7 +15,7 @@ const RECT_WIDGETS = ["crop_x", "crop_y", "crop_width", "crop_height"];
 
 const CROP_HEIGHT = 300;   // canvas area reserved on the node body
 const MARGIN = 12;         // matches the inset LiteGraph uses for its widgets
-const EMPTY_BG = "#0d0d0d";
+const EMPTY_BG = "#18181a";
 const EMPTY_TEXT = "#6a6a6a";
 const FOOT_TEXT = "#8f8f8f";
 const LABEL_TEXT = "#dcdcdc";
