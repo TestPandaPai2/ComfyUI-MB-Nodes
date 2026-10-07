@@ -1,5 +1,7 @@
 """Makeup Mod Prompt picker: one combo of makeup styles, outputs that style's edit prompt."""
 
+import random
+
 from comfy_api.latest import io
 
 MAKEUP_TYPES = {
@@ -57,6 +59,8 @@ class MBMakeupModPrompt(io.ComfyNode):
             search_aliases=["makeup", "makeup style", "makeup modification"],
             inputs=[
                 io.Combo.Input("types", options=list(MAKEUP_TYPES), default="Soft glam"),
+                io.Boolean.Input("randomize", default=False, tooltip="Pick from the seed instead of the dropdown."),
+                io.Int.Input("seed", default=0, min=0, max=0xFFFFFFFFFFFFFFFF, control_after_generate=True),
             ],
             outputs=[
                 io.String.Output("prompt"),
@@ -64,7 +68,9 @@ class MBMakeupModPrompt(io.ComfyNode):
         )
 
     @classmethod
-    def execute(cls, types) -> io.NodeOutput:
+    def execute(cls, types, randomize, seed) -> io.NodeOutput:
+        if randomize:
+            types = random.Random(seed).choice(list(MAKEUP_TYPES))
         return io.NodeOutput(MAKEUP_TYPES[types])
 
 

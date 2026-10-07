@@ -1,5 +1,7 @@
 """Body type picker: short-name dropdown, outputs the full body type description."""
 
+import random
+
 from comfy_api.latest import io
 
 
@@ -57,6 +59,8 @@ class MBBodyType(io.ComfyNode):
             inputs=[
                 io.Combo.Input("body_type", options=list(BODY_TYPES), default="Hourglass"),
                 io.Float.Input("weight", default=1.0, min=0.0, max=2.0, step=0.05, display_mode=io.NumberDisplay.slider, tooltip="Prompt weight. At 1.0 the text is output as-is, otherwise as (text:weight)."),
+                io.Boolean.Input("randomize", default=False, tooltip="Pick from the seed instead of the dropdown."),
+                io.Int.Input("seed", default=0, min=0, max=0xFFFFFFFFFFFFFFFF, control_after_generate=True),
             ],
             outputs=[
                 io.String.Output("prompt"),
@@ -64,7 +68,9 @@ class MBBodyType(io.ComfyNode):
         )
 
     @classmethod
-    def execute(cls, body_type, weight) -> io.NodeOutput:
+    def execute(cls, body_type, weight, randomize, seed) -> io.NodeOutput:
+        if randomize:
+            body_type = random.Random(seed).choice(list(BODY_TYPES))
         return io.NodeOutput(weighted(BODY_TYPES[body_type], weight))
 
 

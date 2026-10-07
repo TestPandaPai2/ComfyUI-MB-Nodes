@@ -1,5 +1,7 @@
 """Lighting Enhance Prompt picker: one combo of lighting styles, outputs that style's edit prompt."""
 
+import random
+
 from comfy_api.latest import io
 
 LIGHTING_TYPES = {
@@ -67,6 +69,8 @@ class MBLightingEnhancePrompt(io.ComfyNode):
             search_aliases=["lighting", "light", "lighting style", "relight"],
             inputs=[
                 io.Combo.Input("types", options=list(LIGHTING_TYPES), default="Soft natural window light"),
+                io.Boolean.Input("randomize", default=False, tooltip="Pick from the seed instead of the dropdown."),
+                io.Int.Input("seed", default=0, min=0, max=0xFFFFFFFFFFFFFFFF, control_after_generate=True),
             ],
             outputs=[
                 io.String.Output("prompt"),
@@ -74,7 +78,9 @@ class MBLightingEnhancePrompt(io.ComfyNode):
         )
 
     @classmethod
-    def execute(cls, types) -> io.NodeOutput:
+    def execute(cls, types, randomize, seed) -> io.NodeOutput:
+        if randomize:
+            types = random.Random(seed).choice(list(LIGHTING_TYPES))
         return io.NodeOutput(LIGHTING_TYPES[types])
 
 
