@@ -27,6 +27,7 @@ from .nodes.pad_image_node import NODES as _pad_image
 from .nodes.preview_anything_node import NODES as _preview_anything
 from .nodes.preview_audio_node import NODES as _preview_audio
 from .nodes.prompt_pad_node import NODES as _prompt_pad
+from .nodes.prompt_tags_node import NODES as _prompt_tags
 from .nodes.random_line_node import NODES as _random_line
 from .nodes.resolution_node import NODES as _resolution
 from .nodes.rotate_image_node import NODES as _rotate_image
@@ -68,6 +69,7 @@ NODES: list[type[io.ComfyNode]] = [
     *_save_mp4,
     *_save_video,
     *_prompt_pad,
+    *_prompt_tags,
     *_system_prompt,
     *_get_lines,
     *_combine_text,

@@ -404,6 +404,46 @@ Straight Kurti: She wears a straight kurti with a round neck, flared sleeves, an
 Sleeveless Kurti: She wears a sleeveless kurti with a square neckline, side slits, and embroidered borders along the hem.
 Tie Neck Kurti: She wears a tie neck kurti with a keyhole neckline tied with a thin string, long flared sleeves trimmed in lace, and a floral print.
 Lace Trim Kurti: She wears a printed kurti with a round neck, flared long sleeves, and delicate lace trim at the cuffs and hem.
+
+GYMWEAR
+
+Sports Bra & Leggings: She wears a matching sports bra and high-waisted leggings in a soft ribbed fabric, a sleek coordinated set for everyday workouts.
+Tank Top & Shorts: She wears a fitted racerback tank top with loose, lightweight running shorts, breathable and easy to move in.
+T-Shirt & Leggings: She wears a classic short-sleeve athletic t-shirt tucked loosely over full-length black leggings, simple and comfortable.
+Long Sleeve & Leggings: She wears a fitted long-sleeve workout top with thumbholes and matching full-length leggings, ideal for cooler gym sessions.
+Long-Sleeve Crop Top & Leggings: She wears a snug long-sleeve crop top that ends above her waist, paired with high-waisted leggings for a sleek, sculpted look.
+Hoodie & Joggers: She wears a soft pullover hoodie with a drawstring hood and matching tapered joggers with cuffed ankles, cozy for warm-ups.
+Sports Bra & Biker Shorts: She wears a scoop-neck sports bra with high-waisted biker shorts that end mid-thigh, a sporty staple for training.
+Crop Top & Joggers: She wears a fitted sleeveless crop top with relaxed drawstring joggers, mixing sporty and casual.
+Muscle Tee & Shorts: She wears a loose muscle tee with deep armholes over fitted bike shorts, airy and relaxed for lifting.
+Sports Bra & Workout Pants: She wears a supportive sports bra with loose, wide-leg drawstring workout pants for a laid-back look.
+Track Jacket & Leggings: She wears a fitted full-zip track jacket with a high collar over full-length leggings, sleek and streamlined.
+Strappy Bra & Leggings: She wears a strappy sports bra with crisscross straps across the back and high-waisted leggings.
+Loose Tank & Leggings: She wears a flowy, relaxed-fit tank top with a dropped armhole over fitted leggings, light and breezy.
+Sleeveless Hoodie & Joggers: She wears a sleeveless hoodie with a drawstring hood and matching jogger sweatpants, sporty and casual.
+Seamless Set: She wears a seamless knit tank and leggings set in a single color, smooth and body-contouring with no visible seams.
+Mesh Tank & Leggings: She wears a sheer mesh tank layered over a sports bra with full-length leggings, breathable and modern.
+Printed Leggings & Sports Bra: She wears a solid sports bra with boldly patterned leggings in a camo or abstract print.
+Half-Zip Top & Leggings: She wears a fitted long-sleeve half-zip pullover with a stand collar and full-length leggings.
+Sports Bra & Sweat Shorts: She wears a simple sports bra with soft, loose drawstring sweat shorts, comfortable and casual.
+Crop Hoodie & Biker Shorts: She wears a cropped pullover hoodie ending above her waist with fitted biker shorts.
+Racerback Tank & Leggings: She wears a racerback tank top that crosses into a Y at the back, paired with full-length leggings.
+Matching Gym Set: She wears a perfectly coordinated sports bra and leggings in the same rich color, polished and put-together.
+Oversized T-Shirt & Biker Shorts: She wears a baggy oversized t-shirt hanging over short biker shorts, relaxed and effortless.
+Graphic Tee & Biker Shorts: She wears an oversized graphic t-shirt with a bold printed design over fitted biker shorts, paired with high-top sneakers.
+Gym Bodysuit: She wears a one-piece scoop-neck athletic bodysuit with full-length legs, sleek and supportive.
+Gym Jumpsuit: She wears a sleeveless racerback athletic jumpsuit that flows from bodice to ankle in one smooth piece.
+Tennis Skirt Outfit: She wears a fitted sports bra with a pleated athletic tennis skirt and built-in shorts, sporty and feminine.
+Flared Leggings Outfit: She wears a short-sleeve crop top with high-waisted flared leggings that widen at the ankle.
+Sweatpants & Sports Bra: She wears a sports bra with loose, high-waisted sweatpants and an open cardigan draped over her shoulders.
+Hoodie & Leggings: She wears a cropped pullover hoodie with full-length leggings for an easy warm-up look.
+Oversized Jacket Layered Set: She wears a fluffy oversized jacket slipping off her shoulders over a sports bra and fitted leggings.
+Crop Tee & Joggers: She wears a boxy cropped t-shirt with loose cuffed joggers and canvas high-top sneakers.
+Sports Bra & Running Shorts: She wears a sports bra with loose running shorts trimmed with contrast piping.
+All-Black Gym Outfit: She wears a sleek all-black sports bra and leggings set, minimalist and bold.
+All-White Gym Outfit: She wears a clean all-white sports bra and leggings set, crisp and fresh.
+Neutral Taupe Gym Outfit: She wears a muted neutral set with a blush sports bra and taupe-brown leggings, soft and earthy.
+Pastel Gym Outfit: She wears a matching pastel periwinkle sports bra and leggings, light and cheerful.
 """)
 
 
