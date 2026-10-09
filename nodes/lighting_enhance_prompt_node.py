@@ -4,6 +4,8 @@ import random
 
 from comfy_api.latest import io
 
+PREFIX = "Enhance the overall lighting of the image attached to "
+
 LIGHTING_TYPES = {
     "Soft natural window light": "Enhance the overall lighting of the image attached to soft natural window light, with gentle diffused illumination from one side, smooth gradual shadows, and a calm, airy feel.",
     "Golden hour": "Enhance the overall lighting of the image attached to golden hour sunlight, with warm amber tones, a low sun angle, long soft shadows, and a glowing rim light on the edges of the subject.",
@@ -55,6 +57,31 @@ LIGHTING_TYPES = {
     "Studio gradient backdrop glow": "Enhance the overall lighting of the image attached to studio lighting with a soft gradient backdrop glow, with a subtle halo of light behind the subject, even front lighting, and clean subject separation.",
     "Magic hour haze": "Enhance the overall lighting of the image attached to magic hour haze, with soft, low-angle golden light, atmospheric glow, gentle warm shadows, and a cinematic, nostalgic tone.",
     "Natural outdoor shade": "Enhance the overall lighting of the image attached to open shade lighting, with soft, even light reflected from the sky, gentle shadows, flattering skin tones, and a clean natural look.",
+    "Early morning light": "Enhance the overall lighting of the image attached to early morning light, with cool, clean sunlight at a low angle, long gentle shadows, a faint mist, and a fresh, quiet atmosphere.",
+    "Late afternoon sun": "Enhance the overall lighting of the image attached to late afternoon sunlight, with warm, slanting light, soft elongated shadows, rich honey tones, and a relaxed, easy mood.",
+    "North-facing window light": "Enhance the overall lighting of the image attached to soft north-facing window light, with cool, even, indirect daylight, gentle shadow falloff, and true, balanced color.",
+    "Bright sunny day": "Enhance the overall lighting of the image attached to bright sunny day light, with clear blue-sky illumination, crisp but natural shadows, vivid color, and a cheerful outdoor feel.",
+    "Partly cloudy sun": "Enhance the overall lighting of the image attached to partly cloudy sunlight, with soft sun breaking through drifting clouds, gently shifting highlights, and mild, natural contrast.",
+    "Forest canopy light": "Enhance the overall lighting of the image attached to forest canopy light, with soft green-tinted daylight filtering through dense leaves, scattered sunspots, and a cool, earthy calm.",
+    "Beach daylight": "Enhance the overall lighting of the image attached to bright beach daylight, with strong sun reflecting off sand and water, airy fill light, luminous skin, and a breezy summer glow.",
+    "Snow-reflected light": "Enhance the overall lighting of the image attached to snow-reflected daylight, with bright, cool light bouncing up from snow, soft fill under the face, and a clean, crisp winter feel.",
+    "Desert sun": "Enhance the overall lighting of the image attached to desert sunlight, with intense, dry, warm light, sharp shadows, bleached highlights, and a sun-baked, hazy atmosphere.",
+    "Mountain alpenglow": "Enhance the overall lighting of the image attached to mountain alpenglow, with a soft pink-orange glow just after sunset, cool blue shadows, and a serene, high-altitude calm.",
+    "Backlit golden grass": "Enhance the overall lighting of the image attached to backlit golden field light, with low sun shining through tall grass from behind, a glowing halo on the hair, and warm, hazy flare.",
+    "Courtyard bounce light": "Enhance the overall lighting of the image attached to courtyard bounce light, with sunlight reflecting off pale walls, soft warm fill from all sides, and gentle, flattering shadows.",
+    "Porch shade light": "Enhance the overall lighting of the image attached to porch shade light, with soft daylight spilling in under a roof, bright surroundings, open shadows, and a relaxed, homey feel.",
+    "Skylight overhead": "Enhance the overall lighting of the image attached to natural skylight illumination, with soft daylight falling from directly above, gentle top-down shadows, and a calm, airy interior mood.",
+    "Sheer curtain diffused sun": "Enhance the overall lighting of the image attached to sun diffused through sheer curtains, with warm, glowing, softened light, faint fabric texture in the highlights, and a dreamy interior feel.",
+    "Bright cloudy noon": "Enhance the overall lighting of the image attached to bright cloudy noon light, with a high, white overcast sky acting as a giant softbox, even skin tones, and clean, low-contrast color.",
+    "Twilight afterglow": "Enhance the overall lighting of the image attached to twilight afterglow, with the last soft light of the sky after sunset, gentle purple and peach tones, and very soft, fading shadows.",
+    "After-rain light": "Enhance the overall lighting of the image attached to after-rain daylight, with clean, freshly washed light, wet glistening surfaces, soft reflections, and a cool, renewed atmosphere.",
+    "Lakeside reflected light": "Enhance the overall lighting of the image attached to lakeside daylight, with soft sunlight reflecting off calm water, shimmering highlights on the face, and a tranquil, open mood.",
+    "Autumn sunlight": "Enhance the overall lighting of the image attached to autumn sunlight, with warm, low, amber light filtering through orange leaves, soft long shadows, and a cozy, nostalgic tone.",
+    "Clean studio portrait": "Enhance the overall lighting of the image attached to clean studio portrait lighting, with soft, even illumination on the face, smooth gradual shadows, crisp catchlights in the eyes, and a polished, professional finish.",
+    "Studio glamour": "Enhance the overall lighting of the image attached to studio glamour lighting, with bright, flattering illumination on the face, sculpted cheekbones, luminous skin, minimal shadows under the chin, and a high-end beauty look.",
+    "Moody studio": "Enhance the overall lighting of the image attached to moody studio lighting, with a single soft pool of light on the subject, rich falloff into deep shadow, and a dark, intimate atmosphere.",
+    "Commercial studio bright": "Enhance the overall lighting of the image attached to bright commercial studio lighting, with clean, shadowless illumination, true-to-life color, crisp detail, and a fresh, catalog-ready look.",
+    "Studio fashion contrast": "Enhance the overall lighting of the image attached to fashion studio lighting, with crisp directional illumination, defined edges along the body, bold yet controlled shadows, and a striking editorial mood.",
 }
 
 
@@ -71,6 +98,7 @@ class MBLightingEnhancePrompt(io.ComfyNode):
                 io.Combo.Input("types", options=list(LIGHTING_TYPES), default="Soft natural window light"),
                 io.Boolean.Input("randomize", default=False, tooltip="Pick from the seed instead of the dropdown."),
                 io.Int.Input("seed", default=0, min=0, max=0xFFFFFFFFFFFFFFFF, control_after_generate=True),
+                io.Boolean.Input("skip_prefix", default=False, tooltip="Drop the leading \"Enhance the overall lighting of the image attached to\" from the prompt."),
             ],
             outputs=[
                 io.String.Output("prompt"),
@@ -78,10 +106,14 @@ class MBLightingEnhancePrompt(io.ComfyNode):
         )
 
     @classmethod
-    def execute(cls, types, randomize, seed) -> io.NodeOutput:
+    def execute(cls, types, randomize, seed, skip_prefix) -> io.NodeOutput:
         if randomize:
             types = random.Random(seed).choice(list(LIGHTING_TYPES))
-        return io.NodeOutput(LIGHTING_TYPES[types])
+        text = LIGHTING_TYPES[types]
+        if skip_prefix:
+            text = text.removeprefix(PREFIX)
+            text = text[0].upper() + text[1:]
+        return io.NodeOutput(text)
 
 
 NODES = [MBLightingEnhancePrompt]
