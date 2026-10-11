@@ -23,7 +23,7 @@ Live read-only preview of incoming text, passed through as output. Runnable stan
 Aspect ratio + resolution presets, multiples of 64, portrait toggle. Outputs width, height, empty latent, batch size.
 
 ### Slider (MB)
-Just a slider. Its single output takes the type (INT or FLOAT), step and, when the span is under 1,000,000, the range and current value of the input it is connected to. The ⚙ in the title bar sets min, max and step.
+Just a slider. Its single output takes the type (INT or FLOAT), step and, when the span is under 1,000,000, the range and current value of the input it is connected to. Right-click → ⚙ Slider Settings sets min, max and step.
 
 ### Load Image (MB)
 Picks or uploads an image, with a preview and optional megapixel-target resize. **📋 Paste from clipboard** saves whatever you last copied into the input folder and selects it.

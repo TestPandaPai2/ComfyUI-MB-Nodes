@@ -3,7 +3,6 @@ import { getWidget, setWidgetVisible, resizeToContent } from "./common.js";
 import { openDialog } from "./dialog.js";
 
 const HIDDEN = ["min_value", "max_value", "step", "output_type"];
-const GEAR_SIZE = 20; // hit box of the gear drawn in the title bar
 // Big target ranges such as seeds would make a useless slider, so those keep
 // the current range and only take the step.
 const MAX_ADOPTED_SPAN = 1e6;
@@ -151,35 +150,13 @@ function openSettings(node) {
     });
 }
 
-function gearHit(node, pos) {
-    const titleHeight = window.LiteGraph?.NODE_TITLE_HEIGHT ?? 30;
-    return pos[1] < 0 && pos[1] > -titleHeight && pos[0] > node.size[0] - GEAR_SIZE - 6;
-}
-
 function wireNode(node) {
     for (const name of HIDDEN) setWidgetVisible(node, name, false);
 
-    const prevDraw = node.onDrawForeground;
-    node.onDrawForeground = function (ctx) {
-        prevDraw?.apply(this, arguments);
-        if (this.flags?.collapsed) return;
-        const titleHeight = window.LiteGraph?.NODE_TITLE_HEIGHT ?? 30;
-        ctx.save();
-        ctx.fillStyle = "#c9c9d1";
-        ctx.font = "15px Arial";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("⚙", this.size[0] - GEAR_SIZE / 2 - 6, -titleHeight / 2);
-        ctx.restore();
-    };
-
-    const prevMouseDown = node.onMouseDown;
-    node.onMouseDown = function (e, pos) {
-        if (gearHit(this, pos)) {
-            openSettings(this);
-            return true;
-        }
-        return prevMouseDown?.apply(this, arguments);
+    const prevMenuOptions = node.getExtraMenuOptions;
+    node.getExtraMenuOptions = function (canvas, options) {
+        prevMenuOptions?.apply(this, arguments);
+        options.unshift({ content: "⚙ Slider Settings", callback: () => openSettings(this) });
     };
 
     const prevConnections = node.onConnectionsChange;
