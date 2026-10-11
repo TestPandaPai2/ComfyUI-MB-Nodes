@@ -2,14 +2,18 @@ import { app } from "../../scripts/app.js";
 import { getWidget, setWidgetVisible, resizeToContent } from "./common.js";
 import { openDialog } from "./dialog.js";
 
-const LIVE_DEBOUNCE = 250; // ms of quiet after a drag before the prompt re-queues
+const HIDDEN = ["min_value", "max_value", "step", "output_type"];
+const GEAR_SIZE = 20; // hit box of the gear drawn in the title bar
+// Big target ranges such as seeds would make a useless slider, so those keep
+// the current range and only take the step.
+const MAX_ADOPTED_SPAN = 1e6;
 
 function clamp(value, low, high) {
     return Math.max(low, Math.min(high, value));
 }
 
 // The value widget's own min/max/step come from the schema, so they are rewritten
-// whenever the min/max/step widgets change.
+// whenever the range or step changes.
 function applyRange(node) {
     const value = getWidget(node, "value");
     const minW = getWidget(node, "min_value");
@@ -43,16 +47,54 @@ function applyRange(node) {
         precision,
     };
 
-    // A widget value that is undefined (or already broken) would snap to NaN,
-    // and NaN serialises into the workflow as null, which comes back as an
-    // invalid float on the next load. Fall back to the bottom of the range.
+    // An undefined value would snap to NaN, which saves as null and comes back
+    // as an invalid float on the next load. Fall back to the bottom of the range.
     const current = Number(value.value);
     const base = Number.isFinite(current) ? current : low;
-
     const snapped = low + Math.round((base - low) / step) * step;
     value.value = Number(clamp(snapped, low, high).toFixed(precision));
 
     node.setDirtyCanvas(true, true);
+}
+
+// The output is a wildcard until linked; once linked it shows the type it feeds.
+function applyOutputType(node) {
+    const out = node.outputs?.[0];
+    if (!out) return;
+    out.type = out.links?.length ? getWidget(node, "output_type")?.value ?? "FLOAT" : "*";
+    node.setDirtyCanvas(true, true);
+}
+
+function targetInput(node, link) {
+    const target = node.graph?.getNodeById(link.target_id);
+    const input = target?.inputs?.[link.target_slot];
+    if (!input) return null;
+    const widget = input.widget?.name ? getWidget(target, input.widget.name) : null;
+    return { type: input.type, widget };
+}
+
+// A new output link: take the target's type, step and (if sensible) range.
+function adoptTarget(node, link) {
+    const found = targetInput(node, link);
+    const typeW = getWidget(node, "output_type");
+    if (!found || !typeW) return;
+    typeW.value = found.type === "INT" ? "INT" : "FLOAT";
+
+    const opts = found.widget?.options ?? {};
+    let step = Number(opts.step2 ?? opts.round ?? (opts.step != null ? opts.step / 10 : NaN));
+    if (!Number.isFinite(step) || step <= 0) step = typeW.value === "INT" ? 1 : 0.01;
+    if (typeW.value === "INT") step = Math.max(1, Math.round(step));
+    getWidget(node, "step").value = step;
+
+    const low = Number(opts.min);
+    const high = Number(opts.max);
+    if (Number.isFinite(low) && Number.isFinite(high) && low < high && high - low <= MAX_ADOPTED_SPAN) {
+        getWidget(node, "min_value").value = low;
+        getWidget(node, "max_value").value = high;
+        const current = Number(found.widget.value);
+        if (Number.isFinite(current)) getWidget(node, "value").value = current;
+    }
+    applyRange(node);
 }
 
 function numberField(value) {
@@ -74,8 +116,6 @@ function settingsRow(label, input) {
     return row;
 }
 
-// Range/step live in the min_value/max_value/step widgets so they still
-// serialise with the workflow; the dialog is just a friendlier editor for them.
 function openSettings(node) {
     const minW = getWidget(node, "min_value");
     const maxW = getWidget(node, "max_value");
@@ -87,103 +127,75 @@ function openSettings(node) {
     const stepInput = numberField(stepW.value);
 
     openDialog({
-        title: "Slider (MB) — MB Settings",
+        title: "Slider (MB) — Settings",
         applyLabel: "Done",
         render(body) {
-            body.append(
-                settingsRow("Min", minInput),
-                settingsRow("Max", maxInput),
-                settingsRow("Step", stepInput),
-            );
+            body.append(settingsRow("Min", minInput), settingsRow("Max", maxInput), settingsRow("Step", stepInput));
         },
         onApply() {
             const low = Number(minInput.value);
             const high = Number(maxInput.value);
             const step = Number(stepInput.value);
-            if (!Number.isFinite(low) || !Number.isFinite(high) || low >= high) {
-                minInput.classList.toggle("mb-invalid", true);
-                maxInput.classList.toggle("mb-invalid", low < high);
-                return false;
-            }
-            minInput.classList.remove("mb-invalid");
-            maxInput.classList.remove("mb-invalid");
-            if (!Number.isFinite(step) || step <= 0) {
-                stepInput.classList.add("mb-invalid");
-                return false;
-            }
-            stepInput.classList.remove("mb-invalid");
+            const rangeOk = Number.isFinite(low) && Number.isFinite(high) && low < high;
+            const stepOk = Number.isFinite(step) && step > 0;
+            minInput.classList.toggle("mb-invalid", !rangeOk);
+            maxInput.classList.toggle("mb-invalid", !rangeOk);
+            stepInput.classList.toggle("mb-invalid", !stepOk);
+            if (!rangeOk || !stepOk) return false;
 
             minW.value = low;
-            minW.callback?.(low);
             maxW.value = high;
-            maxW.callback?.(high);
             stepW.value = step;
-            stepW.callback?.(step);
             applyRange(node);
         },
     });
 }
 
-function addSettingsMenu(node) {
-    const prevMenuOptions = node.getExtraMenuOptions;
-    node.getExtraMenuOptions = function (canvas, options) {
-        prevMenuOptions?.apply(this, arguments);
-        options.unshift({ content: "MB Settings", callback: () => openSettings(this) });
-    };
-}
-
-function liveEnabled(node) {
-    return getWidget(node, "live")?.value === true;
-}
-
-// One timer per node so dragging a slider fires a single queue at the end.
-function scheduleQueue(node) {
-    clearTimeout(node.__mbLiveTimer);
-    node.__mbLiveTimer = setTimeout(() => {
-        if (!liveEnabled(node) || !node.__mbReady) return;
-        // Skip while something is already running to avoid stacking a queue per drag.
-        if (app.ui?.lastQueueSize) return;
-        app.queuePrompt(0, 1).catch((e) => console.error("[MBNodes] live queue failed", e));
-    }, LIVE_DEBOUNCE);
+function gearHit(node, pos) {
+    const titleHeight = window.LiteGraph?.NODE_TITLE_HEIGHT ?? 30;
+    return pos[1] < 0 && pos[1] > -titleHeight && pos[0] > node.size[0] - GEAR_SIZE - 6;
 }
 
 function wireNode(node) {
-    const value = getWidget(node, "value");
-    if (!value) return;
+    for (const name of HIDDEN) setWidgetVisible(node, name, false);
 
-    addSettingsMenu(node);
-    for (const name of ["min_value", "max_value", "step"]) setWidgetVisible(node, name, false);
-    resizeToContent(node);
+    const prevDraw = node.onDrawForeground;
+    node.onDrawForeground = function (ctx) {
+        prevDraw?.apply(this, arguments);
+        if (this.flags?.collapsed) return;
+        const titleHeight = window.LiteGraph?.NODE_TITLE_HEIGHT ?? 30;
+        ctx.save();
+        ctx.fillStyle = "#c9c9d1";
+        ctx.font = "15px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("⚙", this.size[0] - GEAR_SIZE / 2 - 6, -titleHeight / 2);
+        ctx.restore();
+    };
 
-    for (const name of ["min_value", "max_value", "step"]) {
-        const w = getWidget(node, name);
-        if (!w) continue;
-        const prev = w.callback;
-        w.callback = function (...args) {
-            const r = prev?.apply(this, args);
-            applyRange(node);
-            return r;
-        };
-    }
+    const prevMouseDown = node.onMouseDown;
+    node.onMouseDown = function (e, pos) {
+        if (gearHit(this, pos)) {
+            openSettings(this);
+            return true;
+        }
+        return prevMouseDown?.apply(this, arguments);
+    };
 
-    const prevValueCallback = value.callback;
-    value.callback = function (...args) {
-        const r = prevValueCallback?.apply(this, args);
-        if (liveEnabled(node)) scheduleQueue(node);
+    const prevConnections = node.onConnectionsChange;
+    node.onConnectionsChange = function (kind, slot, connected, link) {
+        const r = prevConnections?.apply(this, arguments);
+        // kind 2 = output side; adopting is skipped while a workflow loads so saved ranges stay.
+        if (kind === 2) {
+            if (connected && link && this.__mbReady) adoptTarget(this, link);
+            applyOutputType(this);
+        }
         return r;
     };
 
-    const prevRemoved = node.onRemoved;
-    node.onRemoved = function () {
-        clearTimeout(this.__mbLiveTimer);
-        return prevRemoved?.apply(this, arguments);
-    };
-
     applyRange(node);
+    resizeToContent(node);
 
-    // Values are written into the widgets while a workflow loads. Live mode only
-    // starts listening once that has settled, so opening a saved graph with live
-    // on does not fire a run by itself.
     node.__mbReady = false;
     setTimeout(() => {
         node.__mbReady = true;
@@ -201,8 +213,9 @@ app.registerExtension({
     async loadedGraphNode(node) {
         if (node.comfyClass !== "MBSlider") return;
         setTimeout(() => {
-            for (const name of ["min_value", "max_value", "step"]) setWidgetVisible(node, name, false);
+            for (const name of HIDDEN) setWidgetVisible(node, name, false);
             applyRange(node);
+            applyOutputType(node);
             resizeToContent(node);
         }, 40);
     },

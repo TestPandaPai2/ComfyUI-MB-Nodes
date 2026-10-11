@@ -4,8 +4,8 @@ from comfy_api.latest import io
 
 
 class MBSlider(io.ComfyNode):
-    """Slider with a user-defined range and step. When `live` is on the frontend
-    re-queues the prompt while the slider is dragged."""
+    """A single slider. Range and step are set from the gear on the node; the
+    frontend matches the output type (INT or FLOAT) to whatever it feeds."""
 
     @classmethod
     def define_schema(cls) -> io.Schema:
@@ -13,74 +13,33 @@ class MBSlider(io.ComfyNode):
             node_id="MBSlider",
             display_name="Slider (MB)",
             category="MBNodes",
-            description="Float/int slider with adjustable range, step and live re-queue.",
+            description="Slider whose output takes the type, range and step of the input it is connected to.",
             inputs=[
-                io.Float.Input(
-                    "value",
-                    default=1.0,
-                    min=1.0,
-                    max=20.0,
-                    step=1.0,
-                    display_mode=io.NumberDisplay.slider,
-                ),
-                io.Float.Input(
-                    "min_value",
-                    display_name="min",
-                    default=1.0,
-                    step=0.01,
-                    tooltip="Lower end of the slider.",
-                ),
-                io.Float.Input(
-                    "max_value",
-                    display_name="max",
-                    default=20.0,
-                    step=0.01,
-                    tooltip="Upper end of the slider.",
-                ),
-                io.Float.Input(
-                    "step",
-                    default=1.0,
-                    min=0.0001,
-                    max=1000.0,
-                    step=0.0001,
-                    tooltip="Increment the value snaps to.",
-                ),
-                io.Boolean.Input(
-                    "live",
-                    default=False,
-                    label_on="live",
-                    label_off="manual",
-                    tooltip="Re-queue the prompt while dragging the slider.",
-                ),
+                io.Float.Input("value", default=1.0, min=1.0, max=20.0, step=1.0, display_mode=io.NumberDisplay.slider),
+                io.Float.Input("min_value", default=1.0, step=0.01),
+                io.Float.Input("max_value", default=20.0, step=0.01),
+                io.Float.Input("step", default=1.0, min=0.0001, max=1000.0, step=0.0001),
+                io.Combo.Input("output_type", options=["FLOAT", "INT"], default="FLOAT"),
             ],
-            outputs=[
-                io.Float.Output("float"),
-                io.Int.Output("int"),
-                io.String.Output("string"),
-            ],
+            outputs=[io.AnyType.Output("value")],
         )
 
     @classmethod
-    def validate_inputs(cls, **kwargs) -> bool | str:
-        low = kwargs.get("min_value")
-        high = kwargs.get("max_value")
-        if low is not None and high is not None and low >= high:
+    def validate_inputs(cls, min_value, max_value, step, **kwargs) -> bool | str:
+        if min_value >= max_value:
             return "min must be smaller than max."
-        if kwargs.get("step", 1.0) <= 0:
+        if step <= 0:
             return "step must be greater than zero."
         return True
 
     @classmethod
-    def execute(cls, value, min_value, max_value, step, live) -> io.NodeOutput:
-        low, high = sorted((min_value, max_value))
-        snapped = low + round((value - low) / step) * step if step > 0 else value
-        result = max(low, min(high, snapped))
-
+    def execute(cls, value, min_value, max_value, step, output_type) -> io.NodeOutput:
+        snapped = min_value + round((value - min_value) / step) * step
+        result = max(min_value, min(max_value, snapped))
+        if output_type == "INT":
+            return io.NodeOutput(int(round(result)))
         # Kill the float noise the snap introduces (0.30000000000000004 -> 0.3).
-        digits = 6 if step <= 0 else min(12, max(0, -int(math.floor(math.log10(step)))) + 2)
-        result = round(result, digits)
-
-        return io.NodeOutput(result, int(round(result)), f"{result:g}")
+        return io.NodeOutput(round(result, min(12, max(0, -int(math.floor(math.log10(step)))) + 2)))
 
 
 NODES = [MBSlider]
