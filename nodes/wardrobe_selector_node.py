@@ -6,11 +6,7 @@ import re
 
 from comfy_api.latest import io
 
-
-def weighted(text, weight):
-    return text if weight == 1.0 else f"({text}:{weight:.2f})"
-
-MAX_SEED = 0xFFFFFFFFFFFFFFFF
+from .common import COLORS, MAX_SEED, weighted
 
 
 def _sections(block):
@@ -446,14 +442,6 @@ Neutral Taupe Gym Outfit: She wears a muted neutral set with a blush sports bra 
 Pastel Gym Outfit: She wears a matching pastel periwinkle sports bra and leggings, light and cheerful.
 """)
 
-
-COLORS = [
-    "black", "white", "ivory", "champagne", "nude", "blush pink", "baby pink", "hot pink",
-    "red", "crimson", "burgundy", "wine", "coral", "peach", "orange", "mustard yellow",
-    "lemon yellow", "sage green", "emerald green", "olive green", "mint green", "teal",
-    "turquoise", "sky blue", "royal blue", "navy blue", "lavender", "lilac", "purple",
-    "plum", "gold", "silver", "beige", "camel", "chocolate brown", "charcoal grey", "heather grey",
-]
 
 
 def _colored(text, color):

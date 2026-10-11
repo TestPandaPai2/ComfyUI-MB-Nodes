@@ -5,19 +5,11 @@ import random
 
 from comfy_api.latest import io
 
-
-def weighted(text, weight):
-    return text if weight == 1.0 else f"({text}:{weight:.2f})"
-
-MAX_SEED = 0xFFFFFFFFFFFFFFFF
-
-
-def _lines(block):
-    return [line.strip() for line in block.strip().splitlines() if line.strip()]
+from .common import COLORS, MAX_SEED, split_lines, weighted
 
 
 SAREES = {
-    "A-Line Draped Saree": _lines("""
+    "A-Line Draped Saree": split_lines("""
         full A-line skirt flaring from the waist
         skirt cinched at the back for a defined waist
         short attached blouse baring the midriff
@@ -59,7 +51,7 @@ SAREES = {
         crisp organza hem trim
         balanced silhouette framing the waistline
     """),
-    "Backless Corset Blouse Saree": _lines("""
+    "Backless Corset Blouse Saree": split_lines("""
         fully open back blouse
         structured corset bodice with boning
         criss-cross laces down the spine
@@ -101,7 +93,7 @@ SAREES = {
         bold evening silhouette
         embroidered border framing the open back
     """),
-    "Butterfly Drape Saree": _lines("""
+    "Butterfly Drape Saree": split_lines("""
         dramatic central pleat forming butterfly wings
         loose side drapes fluttering with movement
         fitted blouse exposing the midriff
@@ -143,7 +135,7 @@ SAREES = {
         drape knotted loosely at the shoulder
         whimsical party-ready styling
     """),
-    "Cropped Blouse Saree": _lines("""
+    "Cropped Blouse Saree": split_lines("""
         short fitted blouse baring the midriff
         pallu draped over one shoulder
         navel-focused drape set low on the hips
@@ -185,7 +177,7 @@ SAREES = {
         casual chic daywear styling
         balance of coverage and bare midriff
     """),
-    "Dhoti Style Saree": _lines("""
+    "Dhoti Style Saree": split_lines("""
         loose wide-leg draped skirt
         dhoti pants pleated at the front
         fitted blouse over the dhoti drape
@@ -227,7 +219,7 @@ SAREES = {
         striking androgynous silhouette
         comfortable flowing movement
     """),
-    "Empire Waist Drape Saree": _lines("""
+    "Empire Waist Drape Saree": split_lines("""
         drape starting just below the bust
         no waist cinching
         loose flowing skirt from the bust
@@ -269,7 +261,7 @@ SAREES = {
         subtle shimmer in the skirt
         balanced drape lengthening the frame
     """),
-    "Fitted Sheath Saree": _lines("""
+    "Fitted Sheath Saree": split_lines("""
         sleek one-piece sheath silhouette
         drape tapering from hip to hem
         minimal blouse
@@ -311,7 +303,7 @@ SAREES = {
         velvet sheath variation
         elongated statuesque silhouette
     """),
-    "Fusion Modern Saree": _lines("""
+    "Fusion Modern Saree": split_lines("""
         traditional motifs with contemporary cuts
         organza and silk blend fabric
         fitted blouse
@@ -353,7 +345,7 @@ SAREES = {
         trendy ethnic street style
         versatile day-to-night look
     """),
-    "High Slit Saree": _lines("""
+    "High Slit Saree": split_lines("""
         deep thigh-high slit on one side
         double slits on both sides of the skirt
         revealing leg with each stride
@@ -395,7 +387,7 @@ SAREES = {
         cape sleeves on the blouse
         graceful stride-friendly drape
     """),
-    "Kanchipuram Modern Saree": _lines("""
+    "Kanchipuram Modern Saree": split_lines("""
         rich zari borders
         gold temple motifs
         lighter shorter design
@@ -437,7 +429,7 @@ SAREES = {
         backless blouse with dori tassels
         bridal festive radiance
     """),
-    "Lace Sheer Saree": _lines("""
+    "Lace Sheer Saree": split_lines("""
         delicate lace overlays
         transparent base fabric
         romantic skin-baring drape
@@ -479,7 +471,7 @@ SAREES = {
         bridal-inspired softness
         dreamy romantic mood
     """),
-    "Mirror Work Saree": _lines("""
+    "Mirror Work Saree": split_lines("""
         hundreds of tiny mirror pieces
         shimmering reflections in movement
         dazzling party-ready look
@@ -521,7 +513,7 @@ SAREES = {
         mirror embellished pleats
         radiant reflective finish
     """),
-    "One Shoulder Saree": _lines("""
+    "One Shoulder Saree": split_lines("""
         one shoulder bare
         opposite shoulder covered
         fitted blouse
@@ -563,7 +555,7 @@ SAREES = {
         statement earring styling on the bare side
         unique sculptural elegance
     """),
-    "Pastel Organza Saree": _lines("""
+    "Pastel Organza Saree": split_lines("""
         soft flowing organza
         pastel hues
         light embroidery
@@ -605,7 +597,7 @@ SAREES = {
         airy garden-party mood
         fresh romantic elegance
     """),
-    "Pre-Draped Saree": _lines("""
+    "Pre-Draped Saree": split_lines("""
         ready-to-wear draped skirt
         hassle-free styling
         stitched pleats
@@ -647,7 +639,7 @@ SAREES = {
         festive ready-to-wear glam
         smooth fitted silhouette
     """),
-    "Quilted Fabric Saree": _lines("""
+    "Quilted Fabric Saree": split_lines("""
         soft padded quilting
         added texture
         volume in the skirt
@@ -689,7 +681,7 @@ SAREES = {
         bold modern texture
         plush luxurious feel
     """),
-    "Reimagined Banarasi Saree": _lines("""
+    "Reimagined Banarasi Saree": split_lines("""
         modernized Banarasi silk
         lighter shorter cuts
         contemporary silhouette
@@ -731,7 +723,7 @@ SAREES = {
         wedding guest styling
         regal understated glamour
     """),
-    "Sequined Glam Saree": _lines("""
+    "Sequined Glam Saree": split_lines("""
         shimmering sequins
         beaded blouse
         sequined pallu
@@ -773,7 +765,7 @@ SAREES = {
         high-shine finish
         red-carpet sparkle
     """),
-    "Tissue Silk Saree": _lines("""
+    "Tissue Silk Saree": split_lines("""
         sheer tissue silk
         delicate zari work
         fitted blouse
@@ -815,7 +807,7 @@ SAREES = {
         soft structured fall
         radiant finish
     """),
-    "Ultra-Sheer Chiffon Saree": _lines("""
+    "Ultra-Sheer Chiffon Saree": split_lines("""
         lightest chiffon
         translucent drape
         minimal pallu coverage
@@ -857,7 +849,7 @@ SAREES = {
         cocktail styling
         soft ethereal glow
     """),
-    "V-Neck Deep Drape Saree": _lines("""
+    "V-Neck Deep Drape Saree": split_lines("""
         deep v-neckline blouse
         plunging neckline
         intricate front drapes
@@ -899,7 +891,7 @@ SAREES = {
         drape layered at the front
         elegant plunge
     """),
-    "Wet Look Sheer Saree": _lines("""
+    "Wet Look Sheer Saree": split_lines("""
         wet-look finish
         sheer chiffon
         sheer georgette
@@ -941,7 +933,7 @@ SAREES = {
         cocktail glam
         bold fashion statement
     """),
-    "X-Pleated Fusion Saree": _lines("""
+    "X-Pleated Fusion Saree": split_lines("""
         exaggerated x-shaped pleats
         fusion elements
         modern embroidery
@@ -983,7 +975,7 @@ SAREES = {
         bold contemporary vibe
         modern art-inspired drape
     """),
-    "Zari Embellished Saree": _lines("""
+    "Zari Embellished Saree": split_lines("""
         intricate gold zari borders
         silver zari borders
         zari motifs on every panel
@@ -1025,7 +1017,7 @@ SAREES = {
         royal opulence
         heritage craftsmanship
     """),
-    "Yoke Blouse Saree": _lines("""
+    "Yoke Blouse Saree": split_lines("""
         yoke-style blouse
         cinched shoulders
         structured fit
@@ -1068,14 +1060,6 @@ SAREES = {
         polished finish
     """),
 }
-
-COLORS = [
-    "crimson red", "maroon", "ruby red", "royal blue", "navy blue", "peacock blue",
-    "teal", "emerald green", "bottle green", "mint green", "mustard yellow",
-    "saffron", "marigold orange", "hot pink", "rani pink", "blush pink", "magenta",
-    "royal purple", "lavender", "wine", "ivory", "pearl white", "black",
-    "gold", "silver", "champagne", "peach", "coral", "turquoise", "rust",
-]
 
 
 class MBSareeRandomizer(io.ComfyNode):

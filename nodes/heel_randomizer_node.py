@@ -6,11 +6,7 @@ import random
 
 from comfy_api.latest import io
 
-from .bodycon_randomizer_node import COLORS, MAX_SEED, weighted
-
-
-def _lines(block):
-    return [line.strip() for line in block.strip().splitlines() if line.strip()]
+from .common import COLORS, MAX_SEED, split_lines, weighted
 
 
 HEELS = {
@@ -121,7 +117,7 @@ HEELS = {
 }
 
 DETAILS = {
-    "Open / Minimal Coverage": _lines("""
+    "Open / Minimal Coverage": split_lines("""
         smooth leather upper
         suede finish
         padded footbed
@@ -135,7 +131,7 @@ DETAILS = {
         mid heel height
         high heel height
     """),
-    "Open Toe with Ankle Strap": _lines("""
+    "Open Toe with Ankle Strap": split_lines("""
         gold buckle at the ankle
         silver buckle at the ankle
         adjustable ankle strap
@@ -149,7 +145,7 @@ DETAILS = {
         sculpted heel
         open toe showing pedicured toes
     """),
-    "Closed Foot Coverage": _lines("""
+    "Closed Foot Coverage": split_lines("""
         smooth leather upper
         patent leather finish
         suede upper
@@ -163,7 +159,7 @@ DETAILS = {
         crystal heel
         snakeskin texture
     """),
-    "Closed with Straps": _lines("""
+    "Closed with Straps": split_lines("""
         gold buckle
         silver buckle
         patent leather finish
@@ -177,7 +173,7 @@ DETAILS = {
         metal heel cap
         quilted upper
     """),
-    "Ankle Coverage": _lines("""
+    "Ankle Coverage": split_lines("""
         side zip
         suede upper
         smooth leather upper
@@ -191,7 +187,7 @@ DETAILS = {
         pull tab at the back
         lug sole
     """),
-    "Leg Wrap Coverage": _lines("""
+    "Leg Wrap Coverage": split_lines("""
         suede laces
         satin ribbon ties
         leather straps
@@ -205,7 +201,7 @@ DETAILS = {
         crystal-studded straps
         straps wrapped high on the calf
     """),
-    "Knee & Thigh Coverage": _lines("""
+    "Knee & Thigh Coverage": split_lines("""
         stretch suede upper
         smooth leather upper
         patent leather finish

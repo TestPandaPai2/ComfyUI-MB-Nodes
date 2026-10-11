@@ -5,7 +5,8 @@ import random
 
 from comfy_api.latest import io
 
-from .bodycon_randomizer_node import MAX_SEED, weighted
+from .common import MAX_SEED, weighted
+
 
 ETHNICITIES = {
     "Han Chinese": "Light beige to light tan skin with warm or neutral undertones. Straight, thick black or dark brown hair. Dark brown, almond-shaped eyes, often with a monolid or low crease. A rounded to oval face with a moderately flat nasal bridge and medium cheekbones.",

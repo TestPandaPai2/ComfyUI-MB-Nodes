@@ -4,9 +4,8 @@ import random
 
 from comfy_api.latest import io
 
+from .common import weighted
 
-def weighted(text, weight):
-    return text if weight == 1.0 else f"({text}:{weight:.2f})"
 
 BODY_TYPES = {
     "Rectangle": "Body type: rectangle body type, where the shoulders, waist, and hips measure nearly the same width, forming a straight, column-like silhouette. The waist is only slightly defined, the bust is modest to medium, and her body tends to be athletic or lean, with weight distributed evenly rather than concentrated in one area.",

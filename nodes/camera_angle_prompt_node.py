@@ -5,7 +5,8 @@ import random
 
 from comfy_api.latest import io
 
-from .bodycon_randomizer_node import MAX_SEED, weighted
+from .common import MAX_SEED, weighted
+
 
 CAMERA_ANGLES = {
     "Drone View": "The image is taken from a drone hovering high above at a steep diagonal, looking down on the subject from a distance and showing them small within the surrounding space and architecture.",

@@ -5,11 +5,8 @@ import random
 
 from comfy_api.latest import io
 
+from .common import MAX_SEED, weighted
 
-def weighted(text, weight):
-    return text if weight == 1.0 else f"({text}:{weight:.2f})"
-
-MAX_SEED = 0xFFFFFFFFFFFFFFFF
 
 POSES = {
     "Standing": {

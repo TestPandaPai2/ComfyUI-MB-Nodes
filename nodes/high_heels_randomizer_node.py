@@ -5,19 +5,11 @@ import random
 
 from comfy_api.latest import io
 
-
-def weighted(text, weight):
-    return text if weight == 1.0 else f"({text}:{weight:.2f})"
-
-MAX_SEED = 0xFFFFFFFFFFFFFFFF
-
-
-def _lines(block):
-    return [line.strip() for line in block.strip().splitlines() if line.strip()]
+from .common import COLORS, MAX_SEED, split_lines, weighted
 
 
 HEELS = {
-    "Very Sexy Toe-Thrust High Heels": _lines("""
+    "Very Sexy Toe-Thrust High Heels": split_lines("""
         steep arch thrusting the toes forward
         open toe framing the front of the foot
         slim 5-inch stiletto
@@ -59,7 +51,7 @@ HEELS = {
         tall stiletto casting a long shadow
         confident runway attitude
     """),
-    "Sexy Ankle-Buckle Strappy Heels": _lines("""
+    "Sexy Ankle-Buckle Strappy Heels": split_lines("""
         thin strap buckled at the ankle
         gold buckle hardware
         silver buckle hardware
@@ -101,7 +93,7 @@ HEELS = {
         clean minimal hardware
         party-ready glamour
     """),
-    "Ultra High Platform Stiletto Heels": _lines("""
+    "Ultra High Platform Stiletto Heels": split_lines("""
         towering 7-inch stiletto
         thick front platform
         2-inch platform sole
@@ -143,7 +135,7 @@ HEELS = {
         glamorous showgirl vibe
         bold fashion statement
     """),
-    "Sequin Sparkle Mini Heels": _lines("""
+    "Sequin Sparkle Mini Heels": split_lines("""
         allover sequin upper
         low kitten heel
         2-inch mini heel
@@ -185,7 +177,7 @@ HEELS = {
         compact dainty silhouette
         fun glamorous vibe
     """),
-    "Clear Vinyl Wet-Look Heels": _lines("""
+    "Clear Vinyl Wet-Look Heels": split_lines("""
         transparent vinyl upper
         wet-look glossy finish
         clear PVC toe strap
@@ -227,7 +219,7 @@ HEELS = {
         sleek polished style
         high-gloss fashion statement
     """),
-    "Lace Sheer Ankle Straps Heels": _lines("""
+    "Lace Sheer Ankle Straps Heels": split_lines("""
         delicate lace upper
         sheer mesh base
         lace ankle strap
@@ -269,7 +261,7 @@ HEELS = {
         dreamy romantic style
         graceful footwear
     """),
-    "Metallic Mirror-Work Platform Heels": _lines("""
+    "Metallic Mirror-Work Platform Heels": split_lines("""
         metallic mirror finish
         mirror-work embellishment
         chunky platform
@@ -311,7 +303,7 @@ HEELS = {
         mirror embellished ankle cuff
         dazzling finish
     """),
-    "Butterfly Wing Strappy Heels": _lines("""
+    "Butterfly Wing Strappy Heels": split_lines("""
         butterfly wing detail at the ankle
         wing-shaped straps
         strappy upper
@@ -353,7 +345,7 @@ HEELS = {
         garden-party style
         romantic whimsy
     """),
-    "X-Strap Gladiator High Heels": _lines("""
+    "X-Strap Gladiator High Heels": split_lines("""
         crisscross X straps
         gladiator styling
         straps up the leg
@@ -395,7 +387,7 @@ HEELS = {
         dramatic structure
         fierce attitude
     """),
-    "One-Shoe Barefoot-Effect Heels": _lines("""
+    "One-Shoe Barefoot-Effect Heels": split_lines("""
         barefoot illusion
         single thin toe strap
         clear heel
@@ -437,7 +429,7 @@ HEELS = {
         pared-back silhouette
         modern minimal vibe
     """),
-    "Zari Embellished Crystal Heels": _lines("""
+    "Zari Embellished Crystal Heels": split_lines("""
         zari embroidery
         gold zari
         silver zari
@@ -479,7 +471,7 @@ HEELS = {
         traditional glam
         opulent style
     """),
-    "Pastel Organza Strappy Heels": _lines("""
+    "Pastel Organza Strappy Heels": split_lines("""
         pastel organza straps
         sheer organza
         blush pink
@@ -521,7 +513,7 @@ HEELS = {
         soft sheen
         fresh style
     """),
-    "Pre-Buckle Draped Heels": _lines("""
+    "Pre-Buckle Draped Heels": split_lines("""
         draped fabric upper
         pre-buckled straps
         ruched satin
@@ -563,7 +555,7 @@ HEELS = {
         refined elegance
         glamorous finish
     """),
-    "Quilted Fabric Strappy Heels": _lines("""
+    "Quilted Fabric Strappy Heels": split_lines("""
         quilted fabric straps
         diamond quilting
         padded straps
@@ -605,7 +597,7 @@ HEELS = {
         tactile finish
         polished style
     """),
-    "Reimagined Leather Strappy Heels": _lines("""
+    "Reimagined Leather Strappy Heels": split_lines("""
         modern leather straps
         soft nappa leather
         patent leather
@@ -647,7 +639,7 @@ HEELS = {
         modern edge
         timeless appeal
     """),
-    "Fusion Vinyl Glitter Heels": _lines("""
+    "Fusion Vinyl Glitter Heels": split_lines("""
         vinyl upper
         glitter details
         clear vinyl
@@ -689,7 +681,7 @@ HEELS = {
         modern fusion
         glam finish
     """),
-    "High Slit Effect Ankle Heels": _lines("""
+    "High Slit Effect Ankle Heels": split_lines("""
         slit-cut vamp
         split upper
         ankle strap
@@ -731,7 +723,7 @@ HEELS = {
         polished finish
         sleek look
     """),
-    "Kanchipuram Zari Strappy Heels": _lines("""
+    "Kanchipuram Zari Strappy Heels": split_lines("""
         Kanchipuram silk straps
         zari borders
         gold zari
@@ -773,7 +765,7 @@ HEELS = {
         vibrant look
         South Indian style
     """),
-    "Lace Sheer Vamp Heels": _lines("""
+    "Lace Sheer Vamp Heels": split_lines("""
         lace vamp
         sheer vamp
         mesh upper
@@ -815,7 +807,7 @@ HEELS = {
         dreamy vibe
         refined finish
     """),
-    "Mirror Work Toe Box Heels": _lines("""
+    "Mirror Work Toe Box Heels": split_lines("""
         mirror-work toe box
         mirror pieces
         embroidered toe
@@ -857,7 +849,7 @@ HEELS = {
         playful sparkle
         dazzling finish
     """),
-    "One-Strap Bare Foot Heels": _lines("""
+    "One-Strap Bare Foot Heels": split_lines("""
         single strap
         barefoot look
         thin toe strap
@@ -899,7 +891,7 @@ HEELS = {
         clean lines
         modern chic
     """),
-    "Pastel Vinyl Strappy Heels": _lines("""
+    "Pastel Vinyl Strappy Heels": split_lines("""
         pastel vinyl straps
         glossy vinyl
         blush pink
@@ -941,7 +933,7 @@ HEELS = {
         cute look
         fresh finish
     """),
-    "Pre-Draped Ankle Straps Heels": _lines("""
+    "Pre-Draped Ankle Straps Heels": split_lines("""
         pre-draped ankle strap
         draped fabric
         ankle wrap
@@ -983,7 +975,7 @@ HEELS = {
         comfortable fit
         luxe finish
     """),
-    "Quilted Vinyl Strappy Heels": _lines("""
+    "Quilted Vinyl Strappy Heels": split_lines("""
         quilted vinyl straps
         glossy quilting
         diamond pattern
@@ -1025,7 +1017,7 @@ HEELS = {
         high-gloss
         eye-catching
     """),
-    "Reimagined Patent Strappy Heels": _lines("""
+    "Reimagined Patent Strappy Heels": split_lines("""
         patent leather straps
         high-gloss patent
         strappy upper
@@ -1067,7 +1059,7 @@ HEELS = {
         timeless appeal
         statement shine
     """),
-    "Sequined Strappy Heels": _lines("""
+    "Sequined Strappy Heels": split_lines("""
         sequined straps
         sparkling upper
         strappy design
@@ -1109,7 +1101,7 @@ HEELS = {
         eye-catching
         glamorous finish
     """),
-    "Tissue Silk Strappy Heels": _lines("""
+    "Tissue Silk Strappy Heels": split_lines("""
         tissue silk straps
         metallic tissue
         gold tissue
@@ -1151,7 +1143,7 @@ HEELS = {
         airy feel
         glowing finish
     """),
-    "Ultra-Sheer Mesh Strappy Heels": _lines("""
+    "Ultra-Sheer Mesh Strappy Heels": split_lines("""
         ultra-sheer mesh straps
         transparent mesh
         fishnet mesh
@@ -1193,7 +1185,7 @@ HEELS = {
         airy feel
         sheer glam
     """),
-    "V-Cut Toe Strappy Heels": _lines("""
+    "V-Cut Toe Strappy Heels": split_lines("""
         V-cut toe strap
         V-shaped vamp
         strappy upper
@@ -1235,7 +1227,7 @@ HEELS = {
         sharp lines
         refined edge
     """),
-    "Wet Look Vinyl Strappy Heels": _lines("""
+    "Wet Look Vinyl Strappy Heels": split_lines("""
         wet-look vinyl straps
         high-gloss finish
         slick shine
@@ -1277,7 +1269,7 @@ HEELS = {
         statement style
         glossy glam
     """),
-    "X-Strappy Fusion Heels": _lines("""
+    "X-Strappy Fusion Heels": split_lines("""
         X-strap design
         crisscross straps
         fusion style
@@ -1319,7 +1311,7 @@ HEELS = {
         creative fusion
         fashion forward
     """),
-    "Zari Crystal Ankle Straps Heels": _lines("""
+    "Zari Crystal Ankle Straps Heels": split_lines("""
         zari ankle straps
         crystal ankle straps
         gold zari
@@ -1361,7 +1353,7 @@ HEELS = {
         royal elegance
         opulent style
     """),
-    "Yoke Ankle Strap Heels": _lines("""
+    "Yoke Ankle Strap Heels": split_lines("""
         yoke ankle strap
         structured ankle cuff
         yoke-shaped vamp
@@ -1404,14 +1396,6 @@ HEELS = {
         balanced silhouette
     """),
 }
-
-COLORS = [
-    "black", "nude", "red", "crimson", "wine", "blush pink", "hot pink", "fuchsia",
-    "white", "ivory", "gold", "silver", "rose gold", "champagne", "bronze",
-    "royal blue", "navy", "emerald green", "mint", "lavender", "purple",
-    "tan", "camel", "chocolate brown", "leopard print", "yellow", "orange",
-    "teal", "turquoise", "coral",
-]
 
 
 class MBHighHeelsRandomizer(io.ComfyNode):

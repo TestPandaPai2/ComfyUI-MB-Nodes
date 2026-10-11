@@ -6,15 +6,11 @@ import random
 
 from comfy_api.latest import io
 
-from .bodycon_randomizer_node import COLORS, MAX_SEED, weighted
-
-
-def _lines(block):
-    return [line.strip() for line in block.strip().splitlines() if line.strip()]
+from .common import COLORS, MAX_SEED, split_lines, weighted
 
 
 DRESSES = {
-    "A-Line Dress": ("She wears an A-line dress with a fitted bodice that gently widens from the waist into a smooth, triangular skirt ending around the knee, flattering and timeless.", _lines("""
+    "A-Line Dress": ("She wears an A-line dress with a fitted bodice that gently widens from the waist into a smooth, triangular skirt ending around the knee, flattering and timeless.", split_lines("""
         cap sleeves
         sleeveless cut
         round neckline
@@ -26,7 +22,7 @@ DRESSES = {
         subtle polka dot print
         hidden pleats in the skirt
     """)),
-    "Bodycon Dress": ("She wears a short, stretchy bodycon dress that hugs her curves closely from neckline to hem, giving her a sleek, bold silhouette.", _lines("""
+    "Bodycon Dress": ("She wears a short, stretchy bodycon dress that hugs her curves closely from neckline to hem, giving her a sleek, bold silhouette.", split_lines("""
         ribbed knit fabric
         scoop neckline
         long fitted sleeves
@@ -38,7 +34,7 @@ DRESSES = {
         thigh-skimming hem
         open back
     """)),
-    "Ball Gown": ("She wears a grand, floor-length ball gown with a tightly fitted bodice and an enormous, full skirt layered with tulle, perfect for a fairytale evening.", _lines("""
+    "Ball Gown": ("She wears a grand, floor-length ball gown with a tightly fitted bodice and an enormous, full skirt layered with tulle, perfect for a fairytale evening.", split_lines("""
         sweetheart neckline
         off-shoulder sleeves
         beaded bodice
@@ -50,7 +46,7 @@ DRESSES = {
         crystal-studded straps
         layered petticoat underneath
     """)),
-    "Wrap Dress": ("She wears a soft wrap dress that crosses over at the front and ties at her waist, creating a natural V-neckline and a cinched, flattering shape.", _lines("""
+    "Wrap Dress": ("She wears a soft wrap dress that crosses over at the front and ties at her waist, creating a natural V-neckline and a cinched, flattering shape.", split_lines("""
         flutter sleeves
         long bishop sleeves
         jersey fabric
@@ -62,7 +58,7 @@ DRESSES = {
         silky crepe fabric
         three-quarter sleeves
     """)),
-    "Maxi Dress": ("She wears a long, breezy maxi dress that sweeps down to her ankles in a light, summery print, ideal for a relaxed vacation stroll.", _lines("""
+    "Maxi Dress": ("She wears a long, breezy maxi dress that sweeps down to her ankles in a light, summery print, ideal for a relaxed vacation stroll.", split_lines("""
         thin spaghetti straps
         smocked bodice
         tiered skirt
@@ -74,7 +70,7 @@ DRESSES = {
         tie-back straps
         lightweight cotton gauze
     """)),
-    "Mini Dress": ("She wears a short, youthful mini dress with a hemline well above the knee and puffed sleeves, giving her a fun, flirty look.", _lines("""
+    "Mini Dress": ("She wears a short, youthful mini dress with a hemline well above the knee and puffed sleeves, giving her a fun, flirty look.", split_lines("""
         square neckline
         gingham check print
         smocked back
@@ -86,7 +82,7 @@ DRESSES = {
         A-line skirt
         corduroy fabric
     """)),
-    "Shirt Dress": ("She wears a shirt dress styled like a lengthened button-up shirt, complete with a collar, front buttons, rolled sleeves, and a belt at her waist.", _lines("""
+    "Shirt Dress": ("She wears a shirt dress styled like a lengthened button-up shirt, complete with a collar, front buttons, rolled sleeves, and a belt at her waist.", split_lines("""
         crisp poplin cotton
         pinstripe pattern
         chest patch pockets
@@ -98,7 +94,7 @@ DRESSES = {
         drawstring waist
         side slits
     """)),
-    "Slip Dress": ("She wears a sleek, silky slip dress with thin straps and a smooth bias cut that skims her body gracefully like a vintage lingerie slip.", _lines("""
+    "Slip Dress": ("She wears a sleek, silky slip dress with thin straps and a smooth bias cut that skims her body gracefully like a vintage lingerie slip.", split_lines("""
         cowl neckline
         lace trim along the neckline
         adjustable straps
@@ -110,7 +106,7 @@ DRESSES = {
         lace hem trim
         cross-back straps
     """)),
-    "Cocktail Dress": ("She wears a polished, knee-length cocktail dress with elegant draping and a ruffled hem, ready for an evening party.", _lines("""
+    "Cocktail Dress": ("She wears a polished, knee-length cocktail dress with elegant draping and a ruffled hem, ready for an evening party.", split_lines("""
         one-shoulder neckline
         sequin embellishment
         satin fabric
@@ -122,7 +118,7 @@ DRESSES = {
         velvet fabric
         structured peplum
     """)),
-    "Tube Dress": ("She wears a strapless tube dress cut straight and close to her body, held up by a snug, structured neckline.", _lines("""
+    "Tube Dress": ("She wears a strapless tube dress cut straight and close to her body, held up by a snug, structured neckline.", split_lines("""
         ribbed knit fabric
         mini length hem
         midi length hem
@@ -134,7 +130,7 @@ DRESSES = {
         seamless finish
         smocked bodice
     """)),
-    "Peplum Dress": ("She wears a fitted peplum dress with a short flared ruffle at the waist that falls playfully over her hips.", _lines("""
+    "Peplum Dress": ("She wears a fitted peplum dress with a short flared ruffle at the waist that falls playfully over her hips.", split_lines("""
         pencil skirt below the peplum
         square neckline
         cap sleeves
@@ -146,7 +142,7 @@ DRESSES = {
         long fitted sleeves
         structured tailoring
     """)),
-    "Tunic Dress": ("She wears a loose, relaxed tunic dress with a straight cut, wide sleeves, and embroidered trim, giving her an easy bohemian feel.", _lines("""
+    "Tunic Dress": ("She wears a loose, relaxed tunic dress with a straight cut, wide sleeves, and embroidered trim, giving her an easy bohemian feel.", split_lines("""
         split neckline
         tasseled neck ties
         mid-thigh hem
@@ -158,7 +154,7 @@ DRESSES = {
         cotton voile fabric
         geometric embroidery
     """)),
-    "Sheath Dress": ("She wears a tailored sheath dress that follows her natural lines without clinging, sleeveless and knee-length, perfect for the office.", _lines("""
+    "Sheath Dress": ("She wears a tailored sheath dress that follows her natural lines without clinging, sleeveless and knee-length, perfect for the office.", split_lines("""
         boat neckline
         back vent in the skirt
         crepe fabric
@@ -170,7 +166,7 @@ DRESSES = {
         V-neckline
         clean, minimalist finish
     """)),
-    "Mermaid Dress": ("She wears a long mermaid dress fitted tightly through her bodice, hips, and thighs before flaring dramatically below the knee into a sweeping hem.", _lines("""
+    "Mermaid Dress": ("She wears a long mermaid dress fitted tightly through her bodice, hips, and thighs before flaring dramatically below the knee into a sweeping hem.", split_lines("""
         strapless sweetheart neckline
         all-over sequins
         lace overlay
@@ -182,7 +178,7 @@ DRESSES = {
         deep V-neckline
         tulle flare at the hem
     """)),
-    "Empire Waist Dress": ("She wears an empire waist dress with a raised waistline just under her bust and a long, softly flowing skirt with a romantic feel.", _lines("""
+    "Empire Waist Dress": ("She wears an empire waist dress with a raised waistline just under her bust and a long, softly flowing skirt with a romantic feel.", split_lines("""
         puff sleeves
         ribbon tie under the bust
         chiffon fabric
@@ -194,7 +190,7 @@ DRESSES = {
         lace trim
         sleeveless cut
     """)),
-    "Off-Shoulder Dress": ("She wears an off-shoulder dress with a ruffled neckline sitting below her shoulders, baring her collarbones elegantly.", _lines("""
+    "Off-Shoulder Dress": ("She wears an off-shoulder dress with a ruffled neckline sitting below her shoulders, baring her collarbones elegantly.", split_lines("""
         elasticated neckline
         bell sleeves
         midi length hem
@@ -206,7 +202,7 @@ DRESSES = {
         side slit
         long flowing skirt
     """)),
-    "Halter Neck Dress": ("She wears a halter neck dress with straps tied around the back of her neck, leaving her shoulders and upper back open.", _lines("""
+    "Halter Neck Dress": ("She wears a halter neck dress with straps tied around the back of her neck, leaving her shoulders and upper back open.", split_lines("""
         maxi length hem
         midi length hem
         pleated skirt
@@ -218,7 +214,7 @@ DRESSES = {
         side slit
         open back
     """)),
-    "One-Shoulder Dress": ("She wears an asymmetrical one-shoulder dress with a single strap and a thigh slit, looking sleek and elegant.", _lines("""
+    "One-Shoulder Dress": ("She wears an asymmetrical one-shoulder dress with a single strap and a thigh slit, looking sleek and elegant.", split_lines("""
         draped bodice
         floor-length skirt
         satin fabric
@@ -230,7 +226,7 @@ DRESSES = {
         fitted silhouette
         brooch at the shoulder
     """)),
-    "Ruffle Dress": ("She wears a romantic ruffle dress decorated with soft, cascading ruffles on the sleeves and skirt.", _lines("""
+    "Ruffle Dress": ("She wears a romantic ruffle dress decorated with soft, cascading ruffles on the sleeves and skirt.", split_lines("""
         tiered skirt
         V-neckline
         chiffon fabric
@@ -242,7 +238,7 @@ DRESSES = {
         off-shoulder neckline
         polka dot print
     """)),
-    "High-Low Dress": ("She wears a high-low dress with a hemline short in the front and dramatically longer in the back, flowing beautifully as she walks.", _lines("""
+    "High-Low Dress": ("She wears a high-low dress with a hemline short in the front and dramatically longer in the back, flowing beautifully as she walks.", split_lines("""
         sweetheart neckline
         fitted bodice
         chiffon skirt
@@ -254,7 +250,7 @@ DRESSES = {
         strapless cut
         ruffled hem
     """)),
-    "Pleated Dress": ("She wears a pleated dress with neat, evenly folded pleats in the skirt that sway and flutter with every step.", _lines("""
+    "Pleated Dress": ("She wears a pleated dress with neat, evenly folded pleats in the skirt that sway and flutter with every step.", split_lines("""
         accordion pleats
         metallic finish
         midi length hem
@@ -266,7 +262,7 @@ DRESSES = {
         mock neck
         knife pleats
     """)),
-    "Blazer Dress": ("She wears a sharp blazer dress styled like a long double-breasted jacket with lapels and buttons, belted at the waist for a powerful look.", _lines("""
+    "Blazer Dress": ("She wears a sharp blazer dress styled like a long double-breasted jacket with lapels and buttons, belted at the waist for a powerful look.", split_lines("""
         gold buttons
         padded shoulders
         mini length hem
@@ -278,7 +274,7 @@ DRESSES = {
         single-breasted front
         houndstooth pattern
     """)),
-    "Corset Dress": ("She wears a corset dress with a structured, boned bodice that cinches her waist tightly, flowing into a flared skirt.", _lines("""
+    "Corset Dress": ("She wears a corset dress with a structured, boned bodice that cinches her waist tightly, flowing into a flared skirt.", split_lines("""
         lace-up back
         sweetheart neckline
         thin straps
@@ -290,7 +286,7 @@ DRESSES = {
         off-shoulder sleeves
         busk front closure
     """)),
-    "Kaftan Dress": ("She wears a loose, flowing kaftan dress with wide, draped sleeves and a bold pattern, effortlessly elegant in warm weather.", _lines("""
+    "Kaftan Dress": ("She wears a loose, flowing kaftan dress with wide, draped sleeves and a bold pattern, effortlessly elegant in warm weather.", split_lines("""
         deep V-neckline
         silk fabric
         maxi length hem
@@ -302,7 +298,7 @@ DRESSES = {
         sheer chiffon fabric
         embroidered neckline
     """)),
-    "Tiered Dress": ("She wears a tiered dress with a skirt built from stacked horizontal layers that add volume and bouncy movement.", _lines("""
+    "Tiered Dress": ("She wears a tiered dress with a skirt built from stacked horizontal layers that add volume and bouncy movement.", split_lines("""
         maxi length hem
         mini length hem
         smocked bodice
@@ -314,7 +310,7 @@ DRESSES = {
         ruffled edges
         V-neckline
     """)),
-    "Babydoll Dress": ("She wears a sweet babydoll dress with a high waistline just under her bust, puff sleeves, and a loose, swingy skirt.", _lines("""
+    "Babydoll Dress": ("She wears a sweet babydoll dress with a high waistline just under her bust, puff sleeves, and a loose, swingy skirt.", split_lines("""
         mini length hem
         Peter Pan collar
         lace trim
@@ -326,7 +322,7 @@ DRESSES = {
         ruffled hem
         satin fabric
     """)),
-    "Denim Dress": ("She wears a casual denim dress with front buttons, pockets, a collar, and a belted waist.", _lines("""
+    "Denim Dress": ("She wears a casual denim dress with front buttons, pockets, a collar, and a belted waist.", split_lines("""
         light wash denim
         dark wash denim
         short sleeves
@@ -338,7 +334,7 @@ DRESSES = {
         silver snap buttons
         A-line skirt
     """)),
-    "Lace Dress": ("She wears a delicate lace dress with intricate patterns, long sheer sleeves, and a scalloped hem.", _lines("""
+    "Lace Dress": ("She wears a delicate lace dress with intricate patterns, long sheer sleeves, and a scalloped hem.", split_lines("""
         high neckline
         V-neckline
         opaque lining underneath
@@ -350,7 +346,7 @@ DRESSES = {
         fitted silhouette
         satin waist ribbon
     """)),
-    "Tulle Dress": ("She wears a dreamy tulle dress with a skirt made from soft layers of netted tulle that float lightly around her.", _lines("""
+    "Tulle Dress": ("She wears a dreamy tulle dress with a skirt made from soft layers of netted tulle that float lightly around her.", split_lines("""
         sweetheart neckline
         fitted satin bodice
         glitter tulle
@@ -362,7 +358,7 @@ DRESSES = {
         corset back
         ruffled tulle sleeves
     """)),
-    "Jumpsuit Dress": ("She wears a jumpsuit dress that combines a fitted top with wide-leg trousers, elegant yet easy to move in.", _lines("""
+    "Jumpsuit Dress": ("She wears a jumpsuit dress that combines a fitted top with wide-leg trousers, elegant yet easy to move in.", split_lines("""
         halter neckline
         V-neckline
         belted waist
@@ -374,7 +370,7 @@ DRESSES = {
         palazzo legs
         open back
     """)),
-    "Spaghetti Strap A-Line Dress": ("She wears a spaghetti strap A-line dress with thin straps, a ruched bodice, side lace-up details, and a softly flaring midi skirt.", _lines("""
+    "Spaghetti Strap A-Line Dress": ("She wears a spaghetti strap A-line dress with thin straps, a ruched bodice, side lace-up details, and a softly flaring midi skirt.", split_lines("""
         sweetheart neckline
         V-neckline
         satin fabric
@@ -386,7 +382,7 @@ DRESSES = {
         polka dot print
         ruffled hem
     """)),
-    "Bodycon Midi Dress": ("She wears a bodycon midi dress that hugs her figure down to mid-calf, featuring a ruched, printed fabric.", _lines("""
+    "Bodycon Midi Dress": ("She wears a bodycon midi dress that hugs her figure down to mid-calf, featuring a ruched, printed fabric.", split_lines("""
         long sleeves
         sleeveless cut
         square neckline
@@ -398,7 +394,7 @@ DRESSES = {
         abstract print
         one-shoulder neckline
     """)),
-    "Tie Strap Midi Dress": ("She wears a tie strap midi dress with bow-tied shoulder straps, a ruched bodice, and a full, flowing skirt.", _lines("""
+    "Tie Strap Midi Dress": ("She wears a tie strap midi dress with bow-tied shoulder straps, a ruched bodice, and a full, flowing skirt.", split_lines("""
         square neckline
         sweetheart neckline
         floral print
@@ -410,7 +406,7 @@ DRESSES = {
         ruffled hem
         satin fabric
     """)),
-    "Ruched Ruffle Dress": ("She wears a fitted ruched ruffle dress with a vertical ruffle running down the front and a soft watercolor print.", _lines("""
+    "Ruched Ruffle Dress": ("She wears a fitted ruched ruffle dress with a vertical ruffle running down the front and a soft watercolor print.", split_lines("""
         mesh fabric
         long sleeves
         sleeveless cut
@@ -422,7 +418,7 @@ DRESSES = {
         side drawstring
         square neckline
     """)),
-    "Wrap Front Bodycon Dress": ("She wears a wrap front bodycon dress with a crossover bodice and draped ruching along her side, flattering her waist.", _lines("""
+    "Wrap Front Bodycon Dress": ("She wears a wrap front bodycon dress with a crossover bodice and draped ruching along her side, flattering her waist.", split_lines("""
         long sleeves
         short sleeves
         mini length hem
@@ -434,7 +430,7 @@ DRESSES = {
         gold buckle at the waist
         asymmetric hem
     """)),
-    "Ruched Bodycon Dress": ("She wears a ruched bodycon dress made from fabric gathered into soft horizontal folds that sculpt her figure.", _lines("""
+    "Ruched Bodycon Dress": ("She wears a ruched bodycon dress made from fabric gathered into soft horizontal folds that sculpt her figure.", split_lines("""
         mesh fabric
         long sleeves
         sleeveless cut
@@ -446,7 +442,7 @@ DRESSES = {
         V-neckline
         off-shoulder neckline
     """)),
-    "Floral Ruched Dress": ("She wears a floral ruched dress, fitted and gathered throughout, with a delicate flower print.", _lines("""
+    "Floral Ruched Dress": ("She wears a floral ruched dress, fitted and gathered throughout, with a delicate flower print.", split_lines("""
         mesh fabric
         long sleeves
         thin straps
@@ -458,7 +454,7 @@ DRESSES = {
         ruffled hem
         off-shoulder neckline
     """)),
-    "Off-Shoulder Ruffle Dress": ("She wears an off-shoulder ruffle dress with a halter tie, ruched sides, and an asymmetrical ruffled hem.", _lines("""
+    "Off-Shoulder Ruffle Dress": ("She wears an off-shoulder ruffle dress with a halter tie, ruched sides, and an asymmetrical ruffled hem.", split_lines("""
         floral print
         polka dot print
         chiffon fabric
@@ -470,7 +466,7 @@ DRESSES = {
         tiered ruffles
         side slit
     """)),
-    "Sweetheart Ruched Dress": ("She wears a sweetheart ruched dress with a heart-shaped neckline, tightly gathered body, and a side slit.", _lines("""
+    "Sweetheart Ruched Dress": ("She wears a sweetheart ruched dress with a heart-shaped neckline, tightly gathered body, and a side slit.", split_lines("""
         thin straps
         strapless cut
         long sleeves
@@ -482,7 +478,7 @@ DRESSES = {
         corset boning
         open back
     """)),
-    "Off-Shoulder Bodycon Dress": ("She wears an off-shoulder bodycon dress with a bare-shouldered neckline and ruched fabric hugging her figure.", _lines("""
+    "Off-Shoulder Bodycon Dress": ("She wears an off-shoulder bodycon dress with a bare-shouldered neckline and ruched fabric hugging her figure.", split_lines("""
         long sleeves
         short sleeves
         mini length hem
@@ -494,7 +490,7 @@ DRESSES = {
         twist front detail
         bandage fabric
     """)),
-    "Puff Sleeve Dress": ("She wears a puff sleeve dress with full, rounded sleeves, a fitted bodice, and a flared skirt.", _lines("""
+    "Puff Sleeve Dress": ("She wears a puff sleeve dress with full, rounded sleeves, a fitted bodice, and a flared skirt.", split_lines("""
         square neckline
         sweetheart neckline
         V-neckline
@@ -506,7 +502,7 @@ DRESSES = {
         satin fabric
         tiered skirt
     """)),
-    "Spaghetti Strap Dress": ("She wears a lightweight spaghetti strap dress with very thin straps, a ruched bodice, and a flared skirt.", _lines("""
+    "Spaghetti Strap Dress": ("She wears a lightweight spaghetti strap dress with very thin straps, a ruched bodice, and a flared skirt.", split_lines("""
         V-neckline
         sweetheart neckline
         mini length hem
@@ -518,7 +514,7 @@ DRESSES = {
         smocked back
         ruffled hem
     """)),
-    "Strapless Bodycon Dress": ("She wears a strapless bodycon dress that clings closely to her body, with ruching across the bust and a short fitted skirt.", _lines("""
+    "Strapless Bodycon Dress": ("She wears a strapless bodycon dress that clings closely to her body, with ruching across the bust and a short fitted skirt.", split_lines("""
         sweetheart neckline
         straight-across neckline
         satin fabric
@@ -530,7 +526,7 @@ DRESSES = {
         midi length hem
         twist front detail
     """)),
-    "Square Neck Dress": ("She wears a square neck dress with a straight, squared-off neckline, wide straps, and a flared skirt.", _lines("""
+    "Square Neck Dress": ("She wears a square neck dress with a straight, squared-off neckline, wide straps, and a flared skirt.", split_lines("""
         puff sleeves
         long sleeves
         mini length hem
@@ -542,7 +538,7 @@ DRESSES = {
         satin fabric
         tiered skirt
     """)),
-    "Fit & Flare Dress": ("She wears a fit and flare dress, snug through the bust and waist before flaring into a full, swingy skirt.", _lines("""
+    "Fit & Flare Dress": ("She wears a fit and flare dress, snug through the bust and waist before flaring into a full, swingy skirt.", split_lines("""
         sweetheart neckline
         V-neckline
         cap sleeves
@@ -554,7 +550,7 @@ DRESSES = {
         pleated skirt
         thin waist belt
     """)),
-    "Spaghetti Strap Bodycon Dress": ("She wears a spaghetti strap bodycon dress, a body-hugging mini with thin straps and ruched side ties.", _lines("""
+    "Spaghetti Strap Bodycon Dress": ("She wears a spaghetti strap bodycon dress, a body-hugging mini with thin straps and ruched side ties.", split_lines("""
         V-neckline
         square neckline
         cowl neckline
@@ -566,7 +562,7 @@ DRESSES = {
         cross-back straps
         midi length hem
     """)),
-    "One Shoulder Bodycon Dress": ("She wears a one shoulder bodycon dress with a single strap and asymmetrical draping down to a wrapped hem.", _lines("""
+    "One Shoulder Bodycon Dress": ("She wears a one shoulder bodycon dress with a single strap and asymmetrical draping down to a wrapped hem.", split_lines("""
         long single sleeve
         sleeveless cut
         cut-out at the waist
@@ -578,7 +574,7 @@ DRESSES = {
         ruffled shoulder
         sequin finish
     """)),
-    "Square Neck Bodycon Dress": ("She wears a square neck bodycon dress with long sleeves and a squared neckline that frames her collarbones.", _lines("""
+    "Square Neck Bodycon Dress": ("She wears a square neck bodycon dress with long sleeves and a squared neckline that frames her collarbones.", split_lines("""
         ribbed knit fabric
         satin fabric
         mini length hem
@@ -590,7 +586,7 @@ DRESSES = {
         open back
         mesh fabric
     """)),
-    "Halter Neck Bodycon Dress": ("She wears a halter neck bodycon dress with straps tied behind her neck and a plunging V-neckline.", _lines("""
+    "Halter Neck Bodycon Dress": ("She wears a halter neck bodycon dress with straps tied behind her neck and a plunging V-neckline.", split_lines("""
         open back
         ribbed knit fabric
         satin fabric
@@ -602,7 +598,7 @@ DRESSES = {
         keyhole front
         sequin finish
     """)),
-    "High Neck Bodycon Dress": ("She wears a sleeveless high neck bodycon dress with a mock-style collar that shows off her arms.", _lines("""
+    "High Neck Bodycon Dress": ("She wears a sleeveless high neck bodycon dress with a mock-style collar that shows off her arms.", split_lines("""
         ribbed knit fabric
         mini length hem
         midi length hem
@@ -614,7 +610,7 @@ DRESSES = {
         mesh panels
         satin fabric
     """)),
-    "Turtleneck Bodycon Dress": ("She wears a long-sleeve turtleneck bodycon dress with a folded collar, cozy yet sleek.", _lines("""
+    "Turtleneck Bodycon Dress": ("She wears a long-sleeve turtleneck bodycon dress with a folded collar, cozy yet sleek.", split_lines("""
         ribbed knit fabric
         cable knit fabric
         mini length hem
@@ -626,7 +622,7 @@ DRESSES = {
         sweater dress feel
         belted waist
     """)),
-    "Wrap Bodycon Dress": ("She wears a long-sleeve wrap bodycon dress with a wrapped V-neck and a side tie at her waist.", _lines("""
+    "Wrap Bodycon Dress": ("She wears a long-sleeve wrap bodycon dress with a wrapped V-neck and a side tie at her waist.", split_lines("""
         jersey fabric
         satin fabric
         mini length hem
@@ -638,7 +634,7 @@ DRESSES = {
         asymmetric hem
         ribbed knit fabric
     """)),
-    "Cut-Out Bodycon Dress": ("She wears a cut-out bodycon dress featuring open panels at the waist, adding a bold, modern edge.", _lines("""
+    "Cut-Out Bodycon Dress": ("She wears a cut-out bodycon dress featuring open panels at the waist, adding a bold, modern edge.", split_lines("""
         long sleeves
         sleeveless cut
         one-shoulder neckline
@@ -650,7 +646,7 @@ DRESSES = {
         side slit
         open back
     """)),
-    "Mesh Panel Bodycon Dress": ("She wears a mesh panel bodycon dress with sheer sleeves and see-through panels across the chest.", _lines("""
+    "Mesh Panel Bodycon Dress": ("She wears a mesh panel bodycon dress with sheer sleeves and see-through panels across the chest.", split_lines("""
         mini length hem
         midi length hem
         sheer side panels
@@ -662,7 +658,7 @@ DRESSES = {
         flocked dot mesh
         corset seams
     """)),
-    "Corset Bodycon Dress": ("She wears a corset bodycon dress, a fitted mini with a structured, visibly boned bodice cinching her waist.", _lines("""
+    "Corset Bodycon Dress": ("She wears a corset bodycon dress, a fitted mini with a structured, visibly boned bodice cinching her waist.", split_lines("""
         sweetheart neckline
         square neckline
         thin straps
@@ -674,7 +670,7 @@ DRESSES = {
         mesh corset panels
         long sleeves
     """)),
-    "Sweetheart Neck Bodycon Dress": ("She wears a sweetheart neck bodycon dress with a heart-shaped neckline and a ruched, fitted body.", _lines("""
+    "Sweetheart Neck Bodycon Dress": ("She wears a sweetheart neck bodycon dress with a heart-shaped neckline and a ruched, fitted body.", split_lines("""
         thin straps
         strapless cut
         long sleeves
@@ -686,7 +682,7 @@ DRESSES = {
         side slit
         corset boning
     """)),
-    "Criss Cross Bodycon Dress": ("She wears a criss cross bodycon dress with straps crossing over at her neck for an eye-catching strappy detail.", _lines("""
+    "Criss Cross Bodycon Dress": ("She wears a criss cross bodycon dress with straps crossing over at her neck for an eye-catching strappy detail.", split_lines("""
         open back
         mini length hem
         midi length hem
@@ -698,7 +694,7 @@ DRESSES = {
         bandage fabric
         V-neckline
     """)),
-    "Cowl Neck Bodycon Dress": ("She wears a cowl neck bodycon dress with a softly draped neckline that falls in graceful folds.", _lines("""
+    "Cowl Neck Bodycon Dress": ("She wears a cowl neck bodycon dress with a softly draped neckline that falls in graceful folds.", split_lines("""
         satin fabric
         jersey fabric
         thin straps
@@ -710,7 +706,7 @@ DRESSES = {
         cowl back
         bias cut
     """)),
-    "Asymmetrical Bodycon Dress": ("She wears an asymmetrical bodycon dress with one long sleeve and an uneven cut-out at the waist.", _lines("""
+    "Asymmetrical Bodycon Dress": ("She wears an asymmetrical bodycon dress with one long sleeve and an uneven cut-out at the waist.", split_lines("""
         asymmetric hem
         mini length hem
         midi length hem
@@ -722,7 +718,7 @@ DRESSES = {
         one-shoulder neckline
         draped panel
     """)),
-    "Keyhole Bodycon Dress": ("She wears a long-sleeve keyhole bodycon dress with a teardrop-shaped opening at the neckline.", _lines("""
+    "Keyhole Bodycon Dress": ("She wears a long-sleeve keyhole bodycon dress with a teardrop-shaped opening at the neckline.", split_lines("""
         mock neck
         ribbed knit fabric
         satin fabric
@@ -734,7 +730,7 @@ DRESSES = {
         gold ring at the keyhole
         sleeveless cut
     """)),
-    "Tank Style Bodycon Dress": ("She wears a tank style bodycon dress, a simple fitted ribbed dress with wide straps, casual and sleek.", _lines("""
+    "Tank Style Bodycon Dress": ("She wears a tank style bodycon dress, a simple fitted ribbed dress with wide straps, casual and sleek.", split_lines("""
         scoop neckline
         square neckline
         racerback
@@ -746,7 +742,7 @@ DRESSES = {
         ruched sides
         U-neck back
     """)),
-    "Long Sleeve Bodycon Dress": ("She wears a long sleeve bodycon dress with a round neckline, minimalist and versatile.", _lines("""
+    "Long Sleeve Bodycon Dress": ("She wears a long sleeve bodycon dress with a round neckline, minimalist and versatile.", split_lines("""
         ribbed knit fabric
         jersey fabric
         mini length hem
@@ -758,7 +754,7 @@ DRESSES = {
         thumbhole cuffs
         mock neck
     """)),
-    "Tie-Front Dress": ("She wears a tie-front dress with ribbon ties at the neckline and a ruffled hem.", _lines("""
+    "Tie-Front Dress": ("She wears a tie-front dress with ribbon ties at the neckline and a ruffled hem.", split_lines("""
         puff sleeves
         long sleeves
         sleeveless cut
@@ -770,7 +766,7 @@ DRESSES = {
         tiered skirt
         cut-out under the tie
     """)),
-    "Backless Dress": ("She wears a backless dress that leaves most of her back open, held together by thin straps and a tied bow.", _lines("""
+    "Backless Dress": ("She wears a backless dress that leaves most of her back open, held together by thin straps and a tied bow.", split_lines("""
         cowl front neckline
         halter neckline
         satin fabric
@@ -782,7 +778,7 @@ DRESSES = {
         lace-up back
         bias cut
     """)),
-    "Vintage Dress": ("She wears a vintage dress with a fitted bodice and a full, swingy circle skirt in pastel stripes, straight out of the 1950s.", _lines("""
+    "Vintage Dress": ("She wears a vintage dress with a fitted bodice and a full, swingy circle skirt in pastel stripes, straight out of the 1950s.", split_lines("""
         sweetheart neckline
         Peter Pan collar
         cap sleeves
@@ -794,7 +790,7 @@ DRESSES = {
         button-down front
         tea length hem
     """)),
-    "Party Dress": ("She wears a festive party dress with a fitted bodice and a full tiered skirt trimmed with eyelet lace.", _lines("""
+    "Party Dress": ("She wears a festive party dress with a fitted bodice and a full tiered skirt trimmed with eyelet lace.", split_lines("""
         puff sleeves
         thin straps
         sweetheart neckline
@@ -806,7 +802,7 @@ DRESSES = {
         smocked back
         satin fabric
     """)),
-    "Sundress": ("She wears a light, airy sundress with thin straps, a ruched bust, and a flowing skirt in a cheerful yellow.", _lines("""
+    "Sundress": ("She wears a light, airy sundress with thin straps, a ruched bust, and a flowing skirt in a cheerful yellow.", split_lines("""
         square neckline
         sweetheart neckline
         mini length hem
@@ -818,7 +814,7 @@ DRESSES = {
         tie straps
         tiered skirt
     """)),
-    "Slit Dress": ("She wears a slit dress with a high slit running up one side of the skirt, adding movement and elegance.", _lines("""
+    "Slit Dress": ("She wears a slit dress with a high slit running up one side of the skirt, adding movement and elegance.", split_lines("""
         one-shoulder neckline
         V-neckline
         halter neckline

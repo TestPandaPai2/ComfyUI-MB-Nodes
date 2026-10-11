@@ -10,6 +10,9 @@ Plain multiline text box with dynamic prompts (`{a|b|c}` wildcards) on by defaul
 ### Combine Text (MB)
 Joins any number of text inputs with a chosen delimiter. Input slots auto-grow up to 32.
 
+### Prompt Combiner (MB)
+Joins prompt parts (auto-growing slots) in order between a prefix and suffix. `tidy` cleans each part into a sentence; weighted parts are left alone. Live preview: any change upstream or a new connection re-runs just the combiner and its inputs.
+
 ### Random Line Select (MB)
 Splits text into lines, outputs one picked by a seed widget (wraps to the line count).
 

@@ -1,4 +1,4 @@
-// Renders the live text preview for MBShowText. ui.PreviewText on the Python
+// Renders the live text preview for MBShowText and MBPromptCombiner. ui.PreviewText on the Python
 // side only ships the value up to the frontend (message.text) -- nothing in
 // core turns that into a visible widget on its own, so this adds one.
 
@@ -10,7 +10,7 @@ app.registerExtension({
     name: "MBNodes.ShowText",
 
     async beforeRegisterNodeDef(nodeType, nodeData) {
-        if (nodeData.name !== "MBShowText") return;
+        if (!["MBShowText", "MBPromptCombiner"].includes(nodeData.name)) return;
 
         const onExecuted = nodeType.prototype.onExecuted;
         nodeType.prototype.onExecuted = function (message) {
@@ -26,7 +26,7 @@ app.registerExtension({
             }
             widget.value = value;
 
-            resizeToContent(this);
+            if (nodeData.name === "MBShowText") resizeToContent(this);
         };
     },
 });

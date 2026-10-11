@@ -4,6 +4,7 @@ every workflow; saving and managing them are frontend actions over the routes
 below, expansion happens when the graph runs."""
 
 import json
+import logging
 import os
 import re
 
@@ -20,8 +21,14 @@ MAX_DEPTH = 16
 def load_tags():
     if not os.path.isfile(TAGS_FILE):
         return {}
-    with open(TAGS_FILE, "r", encoding="utf-8") as f:
-        data = json.load(f)
+    try:
+        with open(TAGS_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except json.JSONDecodeError:
+        logging.warning(f"[MBNodes] {TAGS_FILE} is not valid JSON; ignoring saved tags.")
+        return {}
+    if not isinstance(data, dict):
+        return {}
     return {k: v for k, v in data.items() if isinstance(v, str) and TAG_NAME.match(k)}
 
 

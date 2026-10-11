@@ -5,19 +5,11 @@ import random
 
 from comfy_api.latest import io
 
-
-def weighted(text, weight):
-    return text if weight == 1.0 else f"({text}:{weight:.2f})"
-
-MAX_SEED = 0xFFFFFFFFFFFFFFFF
-
-
-def _lines(block):
-    return [line.strip() for line in block.strip().splitlines() if line.strip()]
+from .common import COLORS, MAX_SEED, split_lines, weighted
 
 
 DRESSES = {
-    "Ultra Sheer Mesh Bodycon Dress": _lines("""
+    "Ultra Sheer Mesh Bodycon Dress": split_lines("""
         ultra-sheer stretch mesh hugging every curve
         translucent fabric over a nude slip
         long mesh sleeves
@@ -59,7 +51,7 @@ DRESSES = {
         mesh ruffle at the shoulder
         daring evening statement
     """),
-    "Kanchipuram Zari Embellished Bodycon Dress": _lines("""
+    "Kanchipuram Zari Embellished Bodycon Dress": split_lines("""
         Kanchipuram silk shaped into a fitted bodycon
         rich gold zari borders at the hem
         zari border outlining the neckline
@@ -101,7 +93,7 @@ DRESSES = {
         sculpted curve-hugging fit
         radiant festive glow
     """),
-    "Sequined Glamour Bodycon Dress": _lines("""
+    "Sequined Glamour Bodycon Dress": split_lines("""
         allover sequins
         fitted sequin sheath
         gold sequins
@@ -143,7 +135,7 @@ DRESSES = {
         sweetheart neckline
         dazzling showstopper finish
     """),
-    "Wet Look Vinyl Bodycon Dress": _lines("""
+    "Wet Look Vinyl Bodycon Dress": split_lines("""
         high-gloss vinyl
         wet-look sheen
         liquid shine
@@ -185,7 +177,7 @@ DRESSES = {
         night out style
         sleek finish
     """),
-    "High Slit Bodycon Dress": _lines("""
+    "High Slit Bodycon Dress": split_lines("""
         thigh-high slit
         side slit
         front slit
@@ -227,7 +219,7 @@ DRESSES = {
         monochrome look
         graceful movement
     """),
-    "Lace Sheer Bodycon Dress": _lines("""
+    "Lace Sheer Bodycon Dress": split_lines("""
         sheer lace
         stretch lace
         nude lining
@@ -269,7 +261,7 @@ DRESSES = {
         soft feminine allure
         dreamy look
     """),
-    "Mirror Work Bodycon Dress": _lines("""
+    "Mirror Work Bodycon Dress": split_lines("""
         mirror-work embellishment
         tiny mirror pieces
         abhla embroidery
@@ -311,7 +303,7 @@ DRESSES = {
         handcrafted feel
         dazzling finish
     """),
-    "One-Shoulder Bodycon Dress": _lines("""
+    "One-Shoulder Bodycon Dress": split_lines("""
         one bare shoulder
         asymmetric neckline
         single long sleeve
@@ -353,7 +345,7 @@ DRESSES = {
         modern glam
         evening wear
     """),
-    "V-Neck Deep Plunge Bodycon Dress": _lines("""
+    "V-Neck Deep Plunge Bodycon Dress": split_lines("""
         deep plunging v neckline
         neckline to the waist
         mesh insert in the plunge
@@ -395,7 +387,7 @@ DRESSES = {
         confident style
         elegant plunge
     """),
-    "Butterfly Drape Bodycon Dress": _lines("""
+    "Butterfly Drape Bodycon Dress": split_lines("""
         butterfly drape panels
         draped sleeves like wings
         flutter sleeves
@@ -437,7 +429,7 @@ DRESSES = {
         sculpted fit
         statement drape
     """),
-    "Cropped Hem Bodycon Dress": _lines("""
+    "Cropped Hem Bodycon Dress": split_lines("""
         cropped mini hem
         micro-mini length
         above-the-knee hem
@@ -479,7 +471,7 @@ DRESSES = {
         festival style
         fun silhouette
     """),
-    "Empire Waist Bodycon Dress": _lines("""
+    "Empire Waist Bodycon Dress": split_lines("""
         high empire waistline
         seam under the bust
         fitted skirt below
@@ -521,7 +513,7 @@ DRESSES = {
         grecian touch
         refined style
     """),
-    "X-Pleated Bodycon Dress": _lines("""
+    "X-Pleated Bodycon Dress": split_lines("""
         x-shaped pleats
         crisscross pleating
         pleats meeting at the waist
@@ -563,7 +555,7 @@ DRESSES = {
         crisp finish
         fashion-forward vibe
     """),
-    "Zari Embellished Bodycon Dress": _lines("""
+    "Zari Embellished Bodycon Dress": split_lines("""
         gold zari embroidery
         silver zari embroidery
         zari motifs across the body
@@ -605,7 +597,7 @@ DRESSES = {
         body-hugging fit
         opulent finish
     """),
-    "Yoke Neckline Bodycon Dress": _lines("""
+    "Yoke Neckline Bodycon Dress": split_lines("""
         yoke neckline
         sheer yoke
         lace yoke
@@ -647,7 +639,7 @@ DRESSES = {
         refined silhouette
         clean lines
     """),
-    "Pastel Organza Bodycon Dress": _lines("""
+    "Pastel Organza Bodycon Dress": split_lines("""
         pastel organza overlay
         fitted stretch base
         blush pink
@@ -689,7 +681,7 @@ DRESSES = {
         body-hugging fit
         fresh elegance
     """),
-    "Pre-Draped Bodycon Dress": _lines("""
+    "Pre-Draped Bodycon Dress": split_lines("""
         pre-draped panels
         stitched drape
         draped front
@@ -731,7 +723,7 @@ DRESSES = {
         sophisticated vibe
         refined glam
     """),
-    "Quilted Fabric Bodycon Dress": _lines("""
+    "Quilted Fabric Bodycon Dress": split_lines("""
         quilted fabric
         diamond quilting
         channel quilting
@@ -773,7 +765,7 @@ DRESSES = {
         statement look
         plush finish
     """),
-    "Reimagined Banarasi Bodycon Dress": _lines("""
+    "Reimagined Banarasi Bodycon Dress": split_lines("""
         Banarasi silk
         brocade weave
         kadhua motifs
@@ -815,7 +807,7 @@ DRESSES = {
         heritage refreshed
         luxe finish
     """),
-    "Fusion Modern Bodycon Dress": _lines("""
+    "Fusion Modern Bodycon Dress": split_lines("""
         traditional motifs on a modern cut
         mixed fabrics
         digital print
@@ -857,7 +849,7 @@ DRESSES = {
         body-hugging fit
         bold modern vibe
     """),
-    "High Neck Structured Bodycon Dress": _lines("""
+    "High Neck Structured Bodycon Dress": split_lines("""
         high neck
         mock neck
         turtleneck
@@ -899,7 +891,7 @@ DRESSES = {
         body-hugging fit
         minimal elegance
     """),
-    "Sheer Mesh One-Piece Bodycon Dress": _lines("""
+    "Sheer Mesh One-Piece Bodycon Dress": split_lines("""
         one-piece sheer mesh
         seamless construction
         stretch mesh
@@ -941,7 +933,7 @@ DRESSES = {
         sleek silhouette
         daring style
     """),
-    "Tissue Silk Bodycon Dress": _lines("""
+    "Tissue Silk Bodycon Dress": split_lines("""
         tissue silk
         metallic tissue
         gold tissue
@@ -983,7 +975,7 @@ DRESSES = {
         elegant style
         lightweight luxury
     """),
-    "Vinyl Wet-Look Bodycon Dress": _lines("""
+    "Vinyl Wet-Look Bodycon Dress": split_lines("""
         vinyl fabric
         wet-look shine
         high-gloss finish
@@ -1025,7 +1017,7 @@ DRESSES = {
         night out look
         statement shine
     """),
-    "Metallic Mirror-Work Bodycon Dress": _lines("""
+    "Metallic Mirror-Work Bodycon Dress": split_lines("""
         metallic fabric
         mirror-work embellishment
         mirror mosaic
@@ -1067,7 +1059,7 @@ DRESSES = {
         mirror-ball sparkle
         radiant glow
     """),
-    "Lace Overlaid Bodycon Dress": _lines("""
+    "Lace Overlaid Bodycon Dress": split_lines("""
         lace overlay
         contrast lining
         nude lining
@@ -1109,7 +1101,7 @@ DRESSES = {
         feminine style
         refined finish
     """),
-    "X-Strap Detail Bodycon Dress": _lines("""
+    "X-Strap Detail Bodycon Dress": split_lines("""
         crisscross X straps
         X-strap back
         X-strap front
@@ -1151,7 +1143,7 @@ DRESSES = {
         statement back
         fierce vibe
     """),
-    "Yoke Strap Bodycon Dress": _lines("""
+    "Yoke Strap Bodycon Dress": split_lines("""
         yoke strap
         yoke neckline
         halter yoke
@@ -1194,13 +1186,6 @@ DRESSES = {
         balanced look
     """),
 }
-
-COLORS = [
-    "black", "white", "ivory", "red", "crimson", "wine", "burgundy", "blush pink",
-    "hot pink", "fuchsia", "nude", "champagne", "gold", "silver", "rose gold",
-    "royal blue", "navy", "cobalt", "emerald green", "sage", "mint", "lavender",
-    "purple", "plum", "chocolate brown", "camel", "mustard", "orange", "teal", "coral",
-]
 
 
 class MBBodyconRandomizer(io.ComfyNode):

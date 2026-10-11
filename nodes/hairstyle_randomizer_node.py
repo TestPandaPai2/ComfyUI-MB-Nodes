@@ -6,7 +6,8 @@ import random
 
 from comfy_api.latest import io
 
-from .bodycon_randomizer_node import MAX_SEED, weighted
+from .common import MAX_SEED, weighted
+
 
 HAIRSTYLES = {
     "Short": {
