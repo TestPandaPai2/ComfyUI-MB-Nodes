@@ -61,16 +61,14 @@ class MBBodyType(io.ComfyNode):
                 io.Boolean.Input("randomize", default=False, tooltip="Pick from the seed instead of the dropdown."),
                 io.Int.Input("seed", default=0, min=0, max=0xFFFFFFFFFFFFFFFF, control_after_generate=True),
             ],
-            outputs=[
-                io.String.Output("prompt"),
-            ],
+            outputs=[io.String.Output("prompt"), io.String.Output("category")],
         )
 
     @classmethod
     def execute(cls, body_type, weight, randomize, seed) -> io.NodeOutput:
         if randomize:
             body_type = random.Random(seed).choice(list(BODY_TYPES))
-        return io.NodeOutput(weighted(BODY_TYPES[body_type], weight))
+        return io.NodeOutput(weighted(BODY_TYPES[body_type], weight), body_type)
 
 
 NODES = [MBBodyType]

@@ -98,14 +98,14 @@ class MBExpressionSelector(io.ComfyNode):
                 io.Int.Input("seed", default=0, min=0, max=MAX_SEED, control_after_generate=True),
                 io.Float.Input("weight", default=1.0, min=0.0, max=2.0, step=0.05, display_mode=io.NumberDisplay.slider, tooltip="Prompt weight. At 1.0 the text is output as-is, otherwise as (text:weight)."),
             ],
-            outputs=[io.String.Output("prompt")],
+            outputs=[io.String.Output("prompt"), io.String.Output("category"), io.String.Output("style")],
         )
 
     @classmethod
     def execute(cls, category, randomize, seed, weight) -> io.NodeOutput:
         expressions = EXPRESSIONS[category["category"]]
         name = random.Random(seed).choice(list(expressions)) if randomize else category["expression"]
-        return io.NodeOutput(weighted(expressions[name], weight))
+        return io.NodeOutput(weighted(expressions[name], weight), category["category"], name)
 
 
 NODES = [MBExpressionSelector]

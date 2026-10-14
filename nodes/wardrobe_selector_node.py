@@ -1,5 +1,6 @@
 """Woman's wardrobe picker: a category, a style within it (each fixed or
-seeded-random) and that style's full outfit description."""
+seeded-random) and that style's full outfit description, plus topwear and
+bottomwear outputs where the outfit splits into them."""
 
 import random
 import re
@@ -440,8 +441,98 @@ All-Black Gym Outfit: She wears a sleek all-black sports bra and leggings set, m
 All-White Gym Outfit: She wears a clean all-white sports bra and leggings set, crisp and fresh.
 Neutral Taupe Gym Outfit: She wears a muted neutral set with a blush sports bra and taupe-brown leggings, soft and earthy.
 Pastel Gym Outfit: She wears a matching pastel periwinkle sports bra and leggings, light and cheerful.
+
+PANTS
+
+Wide-Leg Trousers: She wears high-waisted wide-leg trousers with front pleats, falling loosely to the floor in a fluid drape.
+Cigarette Pants: She wears slim cigarette pants with a high waist and a cropped, tapered leg that ends just above her ankles.
+Palazzo Pants: She wears flowing palazzo pants with an elastic waist and extra-wide legs that sway with every step.
+Cargo Pants: She wears relaxed cargo pants with a drawstring waist, large flap pockets on the thighs, and cuffed ankles.
+Leather Pants: She wears sleek high-waisted leather pants that hug her hips and legs with a subtle glossy sheen.
+Tailored Flare Pants: She wears tailored flare pants fitted through the hips and thighs before flaring out from the knee to the floor.
+Linen Drawstring Pants: She wears airy linen drawstring pants with a relaxed straight leg and soft natural creases.
+Paperbag Waist Pants: She wears paperbag waist pants with a gathered high waistband tied with a matching belt and tapered legs.
+
+SHORTS
+
+Denim Cutoff Shorts: She wears high-waisted denim cutoff shorts with frayed raw hems and a slightly distressed wash.
+Tailored Shorts: She wears tailored high-waisted shorts with front pleats, belt loops, and a crisp mid-thigh hem.
+Biker Shorts: She wears fitted biker shorts in a stretchy matte fabric that end at mid-thigh.
+Paperbag Shorts: She wears paperbag shorts with a gathered, belted high waist and loose, flowy legs.
+Linen Shorts: She wears breezy linen shorts with an elastic drawstring waist and a relaxed, wide fit.
+Leather Shorts: She wears high-waisted faux leather shorts with a short hem and a smooth, glossy finish.
+Micro Shorts: She wears tiny micro shorts with a low-rise waist and a very short hem that bares most of her thighs.
+
+JEANS
+
+Skinny Jeans: She wears high-waisted skinny jeans in a dark indigo wash that hug her legs all the way to the ankle.
+Mom Jeans: She wears light-wash mom jeans with a high waist, a relaxed tapered leg, and rolled cuffs.
+Wide-Leg Jeans: She wears wide-leg jeans with a high rise and full-length hems that skim the floor.
+Bootcut Jeans: She wears mid-rise bootcut jeans fitted through the thigh with a gentle flare below the knee.
+Ripped Boyfriend Jeans: She wears loose boyfriend jeans with ripped knees, a faded wash, and cuffed hems.
+Flare Jeans: She wears high-waisted flare jeans that fit closely through the hips before flaring dramatically from the knee.
+Straight-Leg Jeans: She wears classic straight-leg jeans in a mid-blue wash with a high waist and clean hems.
+Low-Rise Jeans: She wears low-rise jeans sitting on her hips with a relaxed straight leg, a nod to early-2000s style.
 """)
 
+
+# Where each category is worn. "set" categories are two-piece outfits whose
+# pieces are listed in GYM_SETS; one-piece "full" outfits only fill prompt.
+SLOTS = {
+    "Gowns": "full", "Hoodies": "top", "Skirts": "bottom", "Bras": "top",
+    "Bodycon Dresses": "full", "Crop Tops": "top", "Virgin Killer": "top",
+    "Backless Dresses": "full", "Tops": "top", "Blouses": "top",
+    "Summer Dresses": "full", "Jumpsuits": "full", "Jerseys": "top", "Kurtis": "top",
+    "Gymwear": "set", "Pants": "bottom", "Shorts": "bottom", "Jeans": "bottom",
+}
+TOP_CATEGORIES = [name for name, slot in SLOTS.items() if slot == "top"]
+BOTTOM_CATEGORIES = [name for name, slot in SLOTS.items() if slot == "bottom"]
+
+GYM_SETS = {
+    "Sports Bra & Leggings": ("She wears a sports bra in a soft ribbed fabric.", "She wears matching high-waisted ribbed leggings."),
+    "Tank Top & Shorts": ("She wears a fitted racerback tank top.", "She wears loose, lightweight running shorts."),
+    "T-Shirt & Leggings": ("She wears a classic short-sleeve athletic t-shirt.", "She wears full-length black leggings."),
+    "Long Sleeve & Leggings": ("She wears a fitted long-sleeve workout top with thumbholes.", "She wears matching full-length leggings."),
+    "Long-Sleeve Crop Top & Leggings": ("She wears a snug long-sleeve crop top that ends above her waist.", "She wears high-waisted leggings."),
+    "Hoodie & Joggers": ("She wears a soft pullover hoodie with a drawstring hood.", "She wears tapered joggers with cuffed ankles."),
+    "Sports Bra & Biker Shorts": ("She wears a scoop-neck sports bra.", "She wears high-waisted biker shorts that end mid-thigh."),
+    "Crop Top & Joggers": ("She wears a fitted sleeveless crop top.", "She wears relaxed drawstring joggers."),
+    "Muscle Tee & Shorts": ("She wears a loose muscle tee with deep armholes.", "She wears fitted bike shorts."),
+    "Sports Bra & Workout Pants": ("She wears a supportive sports bra.", "She wears loose, wide-leg drawstring workout pants."),
+    "Track Jacket & Leggings": ("She wears a fitted full-zip track jacket with a high collar.", "She wears full-length leggings."),
+    "Strappy Bra & Leggings": ("She wears a strappy sports bra with crisscross straps across the back.", "She wears high-waisted leggings."),
+    "Loose Tank & Leggings": ("She wears a flowy, relaxed-fit tank top with a dropped armhole.", "She wears fitted leggings."),
+    "Sleeveless Hoodie & Joggers": ("She wears a sleeveless hoodie with a drawstring hood.", "She wears jogger sweatpants."),
+    "Seamless Set": ("She wears a seamless knit tank.", "She wears seamless knit leggings."),
+    "Mesh Tank & Leggings": ("She wears a sheer mesh tank layered over a sports bra.", "She wears full-length leggings."),
+    "Printed Leggings & Sports Bra": ("She wears a solid sports bra.", "She wears boldly patterned leggings in a camo or abstract print."),
+    "Half-Zip Top & Leggings": ("She wears a fitted long-sleeve half-zip pullover with a stand collar.", "She wears full-length leggings."),
+    "Sports Bra & Sweat Shorts": ("She wears a simple sports bra.", "She wears soft, loose drawstring sweat shorts."),
+    "Crop Hoodie & Biker Shorts": ("She wears a cropped pullover hoodie ending above her waist.", "She wears fitted biker shorts."),
+    "Racerback Tank & Leggings": ("She wears a racerback tank top that crosses into a Y at the back.", "She wears full-length leggings."),
+    "Matching Gym Set": ("She wears a sports bra.", "She wears leggings in the same color."),
+    "Oversized T-Shirt & Biker Shorts": ("She wears a baggy oversized t-shirt.", "She wears short biker shorts."),
+    "Graphic Tee & Biker Shorts": ("She wears an oversized graphic t-shirt with a bold printed design.", "She wears fitted biker shorts."),
+    "Tennis Skirt Outfit": ("She wears a fitted sports bra.", "She wears a pleated athletic tennis skirt with built-in shorts."),
+    "Flared Leggings Outfit": ("She wears a short-sleeve crop top.", "She wears high-waisted flared leggings that widen at the ankle."),
+    "Sweatpants & Sports Bra": ("She wears a sports bra under an open cardigan draped over her shoulders.", "She wears loose, high-waisted sweatpants."),
+    "Hoodie & Leggings": ("She wears a cropped pullover hoodie.", "She wears full-length leggings."),
+    "Oversized Jacket Layered Set": ("She wears a fluffy oversized jacket slipping off her shoulders over a sports bra.", "She wears fitted leggings."),
+    "Crop Tee & Joggers": ("She wears a boxy cropped t-shirt.", "She wears loose cuffed joggers."),
+    "Sports Bra & Running Shorts": ("She wears a sports bra.", "She wears loose running shorts trimmed with contrast piping."),
+    "All-Black Gym Outfit": ("She wears a sleek black sports bra.", "She wears black leggings."),
+    "All-White Gym Outfit": ("She wears a clean white sports bra.", "She wears white leggings."),
+    "Neutral Taupe Gym Outfit": ("She wears a blush sports bra.", "She wears taupe-brown leggings."),
+    "Pastel Gym Outfit": ("She wears a pastel periwinkle sports bra.", "She wears matching periwinkle leggings."),
+}
+
+
+def _pieces(category, style):
+    slot = SLOTS[category]
+    if slot == "set":
+        return GYM_SETS.get(style, ("", ""))
+    text = WARDROBE[category][style]
+    return (text if slot == "top" else "", text if slot == "bottom" else "")
 
 
 def _colored(text, color):
@@ -475,20 +566,40 @@ class MBWardrobeSelector(io.ComfyNode):
                 io.Boolean.Input("random_category", default=False, tooltip="Pick the category from the seed. Also randomizes the style."),
                 io.Boolean.Input("random_style", default=False, tooltip="Pick the style within the category from the seed."),
                 io.Boolean.Input("random_color", default=False, tooltip="Put a seeded-random color before the outfit."),
+                io.Boolean.Input("mix_outfit", default=False, tooltip="Ignore the category and pair a seeded-random top with a seeded-random bottom."),
                 io.Int.Input("seed", default=0, min=0, max=MAX_SEED, control_after_generate=True),
                 io.Float.Input("weight", default=1.0, min=0.0, max=2.0, step=0.05, display_mode=io.NumberDisplay.slider, tooltip="Prompt weight. At 1.0 the text is output as-is, otherwise as (text:weight)."),
             ],
-            outputs=[io.String.Output("prompt")],
+            outputs=[
+                io.String.Output("prompt"),
+                io.String.Output("category"),
+                io.String.Output("style"),
+                io.String.Output("topwear", tooltip="Top half of the outfit. Empty for one-piece outfits and bottoms."),
+                io.String.Output("bottomwear", tooltip="Bottom half of the outfit. Empty for one-piece outfits and tops."),
+            ],
         )
 
     @classmethod
-    def execute(cls, category, random_category, random_style, random_color, seed, weight) -> io.NodeOutput:
+    def execute(cls, category, random_category, random_style, random_color, mix_outfit, seed, weight) -> io.NodeOutput:
         rng = random.Random(seed)
+        if mix_outfit:
+            top_name = rng.choice(TOP_CATEGORIES)
+            top_style = rng.choice(list(WARDROBE[top_name]))
+            bottom_name = rng.choice(BOTTOM_CATEGORIES)
+            bottom_style = rng.choice(list(WARDROBE[bottom_name]))
+            top, bottom = WARDROBE[top_name][top_style], WARDROBE[bottom_name][bottom_style]
+            if random_color:
+                top, bottom = _colored(top, rng.choice(COLORS)), _colored(bottom, rng.choice(COLORS))
+            return io.NodeOutput(weighted(f"{top} {bottom}", weight), f"{top_name} / {bottom_name}", f"{top_style} / {bottom_style}", weighted(top, weight), weighted(bottom, weight))
+
         name = rng.choice(list(WARDROBE)) if random_category else category["category"]
         items = WARDROBE[name]
         style = rng.choice(list(items)) if random_category or random_style else category["style"]
-        text = _colored(items[style], rng.choice(COLORS)) if random_color else items[style]
-        return io.NodeOutput(weighted(text, weight))
+        text, (top, bottom) = items[style], _pieces(name, style)
+        if random_color:
+            color = rng.choice(COLORS)
+            text, top, bottom = (_colored(t, color) if t else "" for t in (text, top, bottom))
+        return io.NodeOutput(weighted(text, weight), name, style, weighted(top, weight), weighted(bottom, weight))
 
 
 NODES = [MBWardrobeSelector]

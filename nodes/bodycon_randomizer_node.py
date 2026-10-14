@@ -1209,7 +1209,7 @@ class MBBodyconRandomizer(io.ComfyNode):
                 io.Int.Input("seed", default=0, min=0, max=MAX_SEED, control_after_generate=True),
                 io.Float.Input("weight", default=1.0, min=0.0, max=2.0, step=0.05, display_mode=io.NumberDisplay.slider, tooltip="Prompt weight. At 1.0 the text is output as-is, otherwise as (text:weight)."),
             ],
-            outputs=[io.String.Output("prompt")],
+            outputs=[io.String.Output("prompt"), io.String.Output("category")],
         )
 
     @classmethod
@@ -1219,7 +1219,7 @@ class MBBodyconRandomizer(io.ComfyNode):
         subject = f"{rng.choice(COLORS)} {name}" if color else name
         fragments = DRESSES[name]
         picks = rng.sample(fragments, min(details, len(fragments)))
-        return io.NodeOutput(weighted(", ".join([subject, *picks]), weight))
+        return io.NodeOutput(weighted(", ".join([subject, *picks]), weight), name)
 
 
 NODES = [MBBodyconRandomizer]

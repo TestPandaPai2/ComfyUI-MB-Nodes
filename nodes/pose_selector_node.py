@@ -312,16 +312,14 @@ class MBPoseSelector(io.ComfyNode):
                 io.Int.Input("seed", default=0, min=0, max=MAX_SEED, control_after_generate=True),
                 io.Float.Input("weight", default=1.0, min=0.0, max=2.0, step=0.05, display_mode=io.NumberDisplay.slider, tooltip="Prompt weight. At 1.0 the text is output as-is, otherwise as (text:weight)."),
             ],
-            outputs=[
-                io.String.Output("prompt"),
-            ],
+            outputs=[io.String.Output("prompt"), io.String.Output("category"), io.String.Output("style")],
         )
 
     @classmethod
     def execute(cls, category, randomize_pose, seed, weight) -> io.NodeOutput:
         poses = POSES[category["category"]]
         pose = random.Random(seed).choice(list(poses)) if randomize_pose else category["pose"]
-        return io.NodeOutput(weighted(poses[pose], weight))
+        return io.NodeOutput(weighted(poses[pose], weight), category["category"], pose)
 
 
 NODES = [MBPoseSelector]

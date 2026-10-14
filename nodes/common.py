@@ -4,7 +4,7 @@ MAX_SEED = 0xFFFFFFFFFFFFFFFF
 
 
 def weighted(text, weight):
-    return text if weight == 1.0 else f"({text}:{weight:.2f})"
+    return text if weight == 1.0 or not text else f"({text}:{weight:.2f})"
 
 
 def split_lines(block):

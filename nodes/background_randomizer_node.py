@@ -190,14 +190,14 @@ class MBBackgroundRandomizer(io.ComfyNode):
                 io.Int.Input("seed", default=0, min=0, max=MAX_SEED, control_after_generate=True),
                 io.Float.Input("weight", default=1.0, min=0.0, max=2.0, step=0.05, display_mode=io.NumberDisplay.slider, tooltip="Prompt weight. At 1.0 the text is output as-is, otherwise as (text:weight)."),
             ],
-            outputs=[io.String.Output("prompt")],
+            outputs=[io.String.Output("prompt"), io.String.Output("category"), io.String.Output("style")],
         )
 
     @classmethod
     def execute(cls, category, random_background, seed, weight) -> io.NodeOutput:
         backgrounds = BACKGROUNDS[category["category"]]
         name = random.Random(seed).choice(list(backgrounds)) if random_background else category["background"]
-        return io.NodeOutput(weighted(backgrounds[name], weight))
+        return io.NodeOutput(weighted(backgrounds[name], weight), category["category"], name)
 
 
 NODES = [MBBackgroundRandomizer]

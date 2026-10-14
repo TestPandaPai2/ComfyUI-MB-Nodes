@@ -2,6 +2,7 @@
 sample of that style's detail fragments, and an optional seeded color."""
 
 import random
+import re
 
 from comfy_api.latest import io
 
@@ -1062,6 +1063,23 @@ SAREES = {
 }
 
 
+# Detail fragments sorted by the part of the outfit they describe. Anything
+# naming the pallu, skirt or pleats is drape even when it mentions a shoulder
+# or the back; fabric and finish lines with no blouse words fall to drape too.
+DRAPE_WORDS = re.compile(r"pallu|skirt|pleat|drape|\bhem|pavadai|lehenga|dhoti|\bpants?\b")
+BLOUSE_WORDS = re.compile(r"blouse|bodice|choli|neckline|sleeve|corset|collar|bustier|crop top|midriff|strap|bralette|cape")
+
+
+def _is_blouse(fragment):
+    return not DRAPE_WORDS.search(fragment) and bool(BLOUSE_WORDS.search(fragment))
+
+
+SAREE_PARTS = {
+    name: ([f for f in fragments if _is_blouse(f)], [f for f in fragments if not _is_blouse(f)])
+    for name, fragments in SAREES.items()
+}
+
+
 class MBSareeRandomizer(io.ComfyNode):
     """One seed drives every pick: the style (when randomized), the color and
     which of the style's detail fragments land in the prompt."""
@@ -1083,7 +1101,12 @@ class MBSareeRandomizer(io.ComfyNode):
                 io.Int.Input("seed", default=0, min=0, max=MAX_SEED, control_after_generate=True),
                 io.Float.Input("weight", default=1.0, min=0.0, max=2.0, step=0.05, display_mode=io.NumberDisplay.slider, tooltip="Prompt weight. At 1.0 the text is output as-is, otherwise as (text:weight)."),
             ],
-            outputs=[io.String.Output("prompt")],
+            outputs=[
+                io.String.Output("prompt"),
+                io.String.Output("category"),
+                io.String.Output("blouse", tooltip="Blouse-only details for the picked style."),
+                io.String.Output("drape", tooltip="Saree drape, pallu and fabric details without the blouse."),
+            ],
         )
 
     @classmethod
@@ -1093,7 +1116,17 @@ class MBSareeRandomizer(io.ComfyNode):
         subject = f"{rng.choice(COLORS)} {name}" if color else name
         fragments = SAREES[name]
         picks = rng.sample(fragments, min(details, len(fragments)))
-        return io.NodeOutput(weighted(", ".join([subject, *picks]), weight))
+        # Drawn after the prompt picks so the prompt for a seed stays the same.
+        blouse_frags, drape_frags = SAREE_PARTS[name]
+        blouse = rng.sample(blouse_frags, min(details, len(blouse_frags)))
+        drape = rng.sample(drape_frags, min(details, len(drape_frags)))
+        blouse_subject = f"{subject.removesuffix(name).strip()} saree blouse".strip()
+        return io.NodeOutput(
+            weighted(", ".join([subject, *picks]), weight),
+            name,
+            weighted(", ".join([blouse_subject, *blouse]), weight),
+            weighted(", ".join([subject, *drape]), weight),
+        )
 
 
 NODES = [MBSareeRandomizer]

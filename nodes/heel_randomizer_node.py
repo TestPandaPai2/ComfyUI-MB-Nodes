@@ -242,7 +242,7 @@ class MBHeelRandomizer(io.ComfyNode):
                 io.Int.Input("seed", default=0, min=0, max=MAX_SEED, control_after_generate=True),
                 io.Float.Input("weight", default=1.0, min=0.0, max=2.0, step=0.05, display_mode=io.NumberDisplay.slider, tooltip="Prompt weight. At 1.0 the text is output as-is, otherwise as (text:weight)."),
             ],
-            outputs=[io.String.Output("prompt")],
+            outputs=[io.String.Output("prompt"), io.String.Output("category"), io.String.Output("style")],
         )
 
     @classmethod
@@ -250,7 +250,8 @@ class MBHeelRandomizer(io.ComfyNode):
         rng = random.Random(seed)
         group = category["category"]
         heels = HEELS[group]
-        text = heels[rng.choice(list(heels)) if random_heel else category["heel"]]
+        heel = rng.choice(list(heels)) if random_heel else category["heel"]
+        text = heels[heel]
         if skip_prefix:
             text = text.removeprefix("She wears ")
             text = text[0].upper() + text[1:]
@@ -260,7 +261,7 @@ class MBHeelRandomizer(io.ComfyNode):
         picks = rng.sample(fragments, min(details, len(fragments)))
         if picks:
             text += f" They feature {', '.join(picks)}."
-        return io.NodeOutput(weighted(text, weight))
+        return io.NodeOutput(weighted(text, weight), group, heel)
 
 
 NODES = [MBHeelRandomizer]

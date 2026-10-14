@@ -67,13 +67,13 @@ class MBEthnicitySelector(io.ComfyNode):
                 io.Int.Input("seed", default=0, min=0, max=MAX_SEED, control_after_generate=True),
                 io.Float.Input("weight", default=1.0, min=0.0, max=2.0, step=0.05, display_mode=io.NumberDisplay.slider, tooltip="Prompt weight. At 1.0 the text is output as-is, otherwise as (text:weight)."),
             ],
-            outputs=[io.String.Output("prompt")],
+            outputs=[io.String.Output("prompt"), io.String.Output("category")],
         )
 
     @classmethod
     def execute(cls, ethnicity, randomize, seed, weight) -> io.NodeOutput:
         name = random.Random(seed).choice(list(ETHNICITIES)) if randomize else ethnicity
-        return io.NodeOutput(weighted(f"{name}: {ETHNICITIES[name]}", weight))
+        return io.NodeOutput(weighted(f"{name}: {ETHNICITIES[name]}", weight), name)
 
 
 NODES = [MBEthnicitySelector]
