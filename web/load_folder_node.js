@@ -13,8 +13,8 @@ const CSS = `
     gap: 6px;
     padding: 6px;
     overflow-y: auto;
-    background: #0d0d0d;
-    border: 1px solid #2a2a2a;
+    background: var(--comfy-input-bg);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     box-sizing: border-box;
     font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -22,10 +22,10 @@ const CSS = `
 .mb-folder-tile {
     position: relative;
     aspect-ratio: 1 / 1;
-    border: 2px solid #2a2a2a;
+    border: 2px solid var(--border-color);
     border-radius: 6px;
     overflow: hidden;
-    background: #161616;
+    background: var(--comfy-menu-secondary-bg);
     cursor: pointer;
 }
 .mb-folder-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -38,38 +38,38 @@ const CSS = `
     bottom: 0;
     padding: 2px 4px;
     font-size: 9px;
-    color: #e8e8e8;
+    color: var(--input-text);
     background: rgba(0, 0, 0, 0.65);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 .mb-folder-grid.mb-locked .mb-folder-tile { cursor: default; }
-.mb-folder-empty { color: #8f8f8f; font-size: 11px; padding: 10px; grid-column: 1 / -1; }
+.mb-folder-empty { color: var(--descrip-text); font-size: 11px; padding: 10px; grid-column: 1 / -1; }
 .mb-folder-browse { display: flex; flex-direction: column; gap: 8px; }
 .mb-folder-path {
     padding: 6px 8px;
-    background: #0d0d0d;
-    border: 1px solid #3a3a3a;
+    background: var(--comfy-input-bg);
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     font-size: 11px;
-    color: #c8c8c8;
+    color: var(--input-text);
     word-break: break-all;
 }
 .mb-folder-list {
     height: 240px;
     overflow-y: auto;
-    border: 1px solid #2a2a2a;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
-    background: #0d0d0d;
+    background: var(--comfy-input-bg);
 }
 .mb-folder-item {
     padding: 6px 10px;
     cursor: pointer;
     font-size: 12px;
-    border-bottom: 1px solid #1c1c1c;
+    border-bottom: 1px solid var(--border-color);
 }
-.mb-folder-item:hover { background: #1f1f1f; }
+.mb-folder-item:hover { background: var(--comfy-menu-bg); }
 `;
 
 function ensureStyle() {

@@ -19,7 +19,6 @@ const EMPTY_BG = "#18181a";
 const EMPTY_TEXT = "#77777e";
 const FOOT_TEXT = "#8e8e95";
 const LABEL_TEXT = "#ececee";
-const LABEL_BG = "#2a2a2e";
 const CLICK_SLOP = 0.004;  // pointer travel (fraction of image) still counted as a click
 
 const ANNOTATED = /^(.*?)\s*\[(\w+)\]\s*$/;
@@ -117,7 +116,7 @@ function drawLabel(ctx, text, x, y) {
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
     const textW = ctx.measureText(text).width;
-    ctx.fillStyle = LABEL_BG;
+    ctx.fillStyle = LiteGraph.WIDGET_BGCOLOR;
     ctx.beginPath();
     ctx.roundRect(x, y, textW + 10, 16, 5);
     ctx.fill();

@@ -123,14 +123,14 @@ function makeGridWidget(node) {
                 const [x, cy, w, h] = cellRect(this.width, index, y);
                 const selected = Math.abs(value - active) < 1e-6;
 
-                ctx.fillStyle = selected ? "#3f7cc6" : "#353535";
-                ctx.strokeStyle = selected ? "#8ab4e8" : "#1a1a1a";
+                ctx.fillStyle = selected ? "#3f7cc6" : LiteGraph.WIDGET_BGCOLOR;
+                ctx.strokeStyle = selected ? "#8ab4e8" : LiteGraph.WIDGET_OUTLINE_COLOR;
                 ctx.beginPath();
                 ctx.roundRect(x, cy, w, h, 5);
                 ctx.fill();
                 ctx.stroke();
 
-                ctx.fillStyle = selected ? "#ffffff" : "#c8c8c8";
+                ctx.fillStyle = selected ? "#ffffff" : LiteGraph.WIDGET_TEXT_COLOR;
                 ctx.fillText(label(value), x + w / 2, cy + h / 2);
             });
 

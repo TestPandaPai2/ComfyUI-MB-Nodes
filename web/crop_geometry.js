@@ -25,7 +25,6 @@ const FILL_OUTSIDE = "rgba(0, 0, 0, 0.55)";
 const LINE_SOFT = "rgba(255, 255, 255, 0.35)";
 const HANDLE_FILL = "#ffffff";
 const TEXT = "#ececee";
-const LABEL_BG = "#2a2a2e";
 
 export const clamp01 = (v) => Math.min(1, Math.max(0, v));
 
@@ -274,7 +273,7 @@ export function drawCrop(ctx, frame, image, rect, label) {
         ctx.textAlign = "left";
         ctx.textBaseline = "top";
         const textW = ctx.measureText(label).width;
-        ctx.fillStyle = LABEL_BG;
+        ctx.fillStyle = LiteGraph.WIDGET_BGCOLOR;
         ctx.beginPath();
         ctx.roundRect(frame.x + 4, frame.y + 4, textW + 10, 16, 5);
         ctx.fill();

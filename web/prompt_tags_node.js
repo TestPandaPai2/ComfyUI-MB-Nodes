@@ -83,16 +83,16 @@ const POPUP_CSS = `
     max-width: 320px;
     max-height: 220px;
     overflow-y: auto;
-    background: #212124;
+    background: var(--comfy-menu-bg);
     border-radius: 8px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
     padding: 4px;
     font: 12.5px system-ui, -apple-system, "Segoe UI", sans-serif;
-    color: #ececee;
+    color: var(--input-text);
 }
 .mb-tag-popup div { padding: 4px 8px; border-radius: 6px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mb-tag-popup div span { color: #77777e; margin-left: 8px; }
-.mb-tag-popup div.mb-active { background: color-mix(in srgb, var(--mb-accent, #d4537e) 30%, #212124); }
+.mb-tag-popup div span { color: var(--descrip-text); margin-left: 8px; }
+.mb-tag-popup div.mb-active { background: color-mix(in srgb, var(--mb-accent, #d4537e) 30%, var(--comfy-menu-bg)); }
 `;
 
 function ensurePopupStyle() {
@@ -223,39 +223,39 @@ function attachAutocomplete(node, textarea) {
 
 const MANAGER_CSS = `
 .mb-tm { display: grid; grid-template-columns: 230px minmax(0, 1fr); height: 520px; margin: -10px -16px -14px; }
-.mb-tm-side { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: #1c1c1f; border-right: 1px solid #2a2a2e; min-height: 0; }
+.mb-tm-side { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--comfy-menu-secondary-bg); border-right: 1px solid var(--comfy-input-bg); min-height: 0; }
 .mb-tm-search { position: relative; }
-.mb-tm-search::before { content: "⌕"; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #6e6e75; font-size: 15px; }
+.mb-tm-search::before { content: "⌕"; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--descrip-text); font-size: 15px; }
 .mb-tm-search input { padding-left: 28px; }
 .mb-tm-list { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
 .mb-tm-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; cursor: pointer; white-space: nowrap; overflow: hidden; flex: none; }
-.mb-tm-row:hover { background: #2a2a2e; }
-.mb-tm-row.mb-selected { background: color-mix(in srgb, var(--mb-a) 24%, #1c1c1f); }
+.mb-tm-row:hover { background: var(--comfy-input-bg); }
+.mb-tm-row.mb-selected { background: color-mix(in srgb, var(--mb-a) 24%, var(--comfy-menu-secondary-bg)); }
 .mb-tm-row b { font-weight: 500; }
-.mb-tm-row span { color: #6e6e75; overflow: hidden; text-overflow: ellipsis; }
+.mb-tm-row span { color: var(--descrip-text); overflow: hidden; text-overflow: ellipsis; }
 .mb-tm-row i { width: 6px; height: 6px; border-radius: 50%; background: var(--mb-a); margin-left: auto; flex: none; }
 .mb-tm-edit { display: flex; flex-direction: column; gap: 12px; padding: 16px 18px; overflow-y: auto; min-width: 0; }
-.mb-tm-label { display: flex; justify-content: space-between; font-size: 11px; color: #8e8e95; margin-bottom: 5px; }
+.mb-tm-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--descrip-text); margin-bottom: 5px; }
 .mb-tm input, .mb-tm textarea {
-    width: 100%; box-sizing: border-box; padding: 8px 12px; background: #2a2a2e; color: #ececee;
+    width: 100%; box-sizing: border-box; padding: 8px 12px; background: var(--comfy-input-bg); color: var(--input-text);
     border: 1px solid transparent; border-radius: 8px; font: inherit; outline: none;
 }
 .mb-tm textarea { resize: vertical; min-height: 130px; line-height: 1.5; }
 .mb-tm input:focus, .mb-tm textarea:focus { border-color: var(--mb-a); }
-.mb-tm-name { display: flex; align-items: center; background: #2a2a2e; border: 1px solid transparent; border-radius: 8px; }
+.mb-tm-name { display: flex; align-items: center; background: var(--comfy-input-bg); border: 1px solid transparent; border-radius: 8px; }
 .mb-tm-name:focus-within { border-color: var(--mb-a); }
 .mb-tm-name.mb-invalid { border-color: #e5484d; }
 .mb-tm-name span { padding-left: 12px; color: var(--mb-a); font-weight: 500; }
 .mb-tm-name input, .mb-tm-name input:focus { background: transparent; border-color: transparent; padding-left: 3px; }
-.mb-tm-preview { background: #18181a; border-radius: 8px; padding: 10px 12px; color: #b4b2a9; font-size: 12.5px; line-height: 1.6; min-height: 20px; max-height: 120px; overflow-y: auto; white-space: pre-wrap; }
-.mb-tm-refs { font-size: 12px; color: #6e6e75; line-height: 1.9; }
-.mb-tm-chip { display: inline-block; background: color-mix(in srgb, var(--mb-a) 22%, #18181a); color: #f4c0d1; border-radius: 5px; padding: 0 6px; margin-right: 4px; cursor: pointer; }
+.mb-tm-preview { background: var(--comfy-menu-secondary-bg); border-radius: 8px; padding: 10px 12px; color: var(--descrip-text); font-size: 12.5px; line-height: 1.6; min-height: 20px; max-height: 120px; overflow-y: auto; white-space: pre-wrap; }
+.mb-tm-refs { font-size: 12px; color: var(--descrip-text); line-height: 1.9; }
+.mb-tm-chip { display: inline-block; background: color-mix(in srgb, var(--mb-a) 22%, var(--comfy-menu-secondary-bg)); color: var(--input-text); border-radius: 5px; padding: 0 6px; margin-right: 4px; cursor: pointer; }
 .mb-tm-chip:hover { filter: brightness(1.2); }
 .mb-tm-actions { display: flex; gap: 8px; margin-top: auto; }
 .mb-tm-danger { color: #e5484d !important; margin-left: auto; }
-.mb-tm-empty { color: #6e6e75; font-size: 12px; padding: 8px 10px; }
-.mb-tm-count { font-size: 11px; color: #8e8e95; background: #2a2a2e; border-radius: 10px; padding: 2px 8px; }
-.mb-tm-status { flex: 1; align-self: center; font-size: 12px; color: #8e8e95; }
+.mb-tm-empty { color: var(--descrip-text); font-size: 12px; padding: 8px 10px; }
+.mb-tm-count { font-size: 11px; color: var(--descrip-text); background: var(--comfy-input-bg); border-radius: 10px; padding: 2px 8px; }
+.mb-tm-status { flex: 1; align-self: center; font-size: 12px; color: var(--descrip-text); }
 `;
 
 function ensureManagerStyle() {
@@ -540,11 +540,11 @@ function buttonRow(buttons) {
             ctx.textBaseline = "middle";
             ctx.font = "12px Arial";
             rects(this.width).forEach(([x, w], i) => {
-                ctx.fillStyle = "#2a2a2e";
+                ctx.fillStyle = LiteGraph.WIDGET_BGCOLOR;
                 ctx.beginPath();
                 ctx.roundRect(x, y, w, ROW_H, 7);
                 ctx.fill();
-                ctx.fillStyle = "#ececee";
+                ctx.fillStyle = LiteGraph.WIDGET_TEXT_COLOR;
                 ctx.fillText(buttons[i][0], x + w / 2, y + ROW_H / 2);
             });
             ctx.restore();

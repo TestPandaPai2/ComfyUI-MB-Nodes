@@ -23,8 +23,7 @@ const INITIAL_LANES = 2;
 const ANY = "*";
 
 const COLOR_STORAGE_KEY = "MBNodes.ControlPanel.defaultColor";
-const DEFAULT_ACCENT = "#212124";
-const BODY_COLOR = "#212124";
+const DEFAULT_ACCENT = "#353535";
 
 // --- small local helpers ---------------------------------------------------
 
@@ -108,9 +107,9 @@ function randomSeed(options = {}) {
 
 function loadDefaultColor() {
     try {
-        return localStorage.getItem(COLOR_STORAGE_KEY) || DEFAULT_ACCENT;
+        return localStorage.getItem(COLOR_STORAGE_KEY);
     } catch {
-        return DEFAULT_ACCENT;
+        return null;
     }
 }
 
@@ -123,8 +122,7 @@ function saveDefaultColor(hex) {
 }
 
 function applyColor(node, hex) {
-    node.color = hex;
-    node.bgcolor = BODY_COLOR;
+    if (hex) node.color = hex;
 }
 
 // --- seed lane's extra randomize/reroll row --------------------------------
@@ -160,13 +158,13 @@ function addSeedButtons(node, record) {
 
             this._rects.forEach(([x, ry, rw, rh], i) => {
                 ctx.save();
-                ctx.fillStyle = active[i] ? accentColor() : "#2a2a2e";
+                ctx.fillStyle = active[i] ? accentColor() : LiteGraph.WIDGET_BGCOLOR;
                 ctx.strokeStyle = ctx.fillStyle;
                 ctx.beginPath();
                 ctx.roundRect(x, ry, rw, rh, 8);
                 ctx.fill();
                 ctx.stroke();
-                ctx.fillStyle = "#ececee";
+                ctx.fillStyle = LiteGraph.WIDGET_TEXT_COLOR;
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
                 ctx.font = "11px Arial";
@@ -475,7 +473,7 @@ function textField(placeholder, value) {
     i.placeholder = placeholder;
     i.value = value ?? "";
     i.style.cssText =
-        "flex:1; min-width:0; padding:4px 8px; background:#2a2a2e; color:#ececee; border:1px solid transparent; border-radius:7px; outline:none; font-size:12px;";
+        "flex:1; min-width:0; padding:4px 8px; background:var(--comfy-input-bg); color:var(--input-text); border:1px solid transparent; border-radius:7px; outline:none; font-size:12px;";
     return i;
 }
 
@@ -498,7 +496,7 @@ function buildLaneRow(node, record) {
     nameInput.value = record.name ?? "";
 
     const kindTag = document.createElement("span");
-    kindTag.style.cssText = "font-size:11px; color:#77777e; white-space:nowrap;";
+    kindTag.style.cssText = "font-size:11px; color:var(--descrip-text); white-space:nowrap;";
     kindTag.textContent = record.kind ?? "blank";
 
     const remove = document.createElement("button");

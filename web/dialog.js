@@ -18,11 +18,11 @@ const CSS = `
 .mb-dialog {
     width: 340px;
     max-width: calc(100vw - 32px);
-    background: #212124;
+    background: var(--comfy-menu-bg);
     border-radius: 14px;
     overflow: hidden;
     box-shadow: 0 18px 48px rgba(0, 0, 0, 0.5);
-    color: #ececee;
+    color: var(--input-text);
     font-size: 12.5px;
 }
 .mb-dialog-header { display: flex; align-items: center; gap: 8px; padding: 14px 16px 4px; }
@@ -31,13 +31,13 @@ const CSS = `
 .mb-dialog-close {
     border: none;
     background: none;
-    color: #77777e;
+    color: var(--descrip-text);
     font-size: 18px;
     line-height: 1;
     padding: 0 2px;
     cursor: pointer;
 }
-.mb-dialog-close:hover { color: #ececee; }
+.mb-dialog-close:hover { color: var(--input-text); }
 .mb-dialog-body { padding: 10px 16px 14px; display: flex; flex-direction: column; gap: 10px; }
 .mb-dialog-row {
     display: flex;
@@ -45,19 +45,19 @@ const CSS = `
     gap: 10px;
     padding: 7px 10px;
     border-radius: 8px;
-    background: #2a2a2e;
+    background: var(--comfy-input-bg);
     cursor: pointer;
 }
-.mb-dialog-row:hover { background: #303034; }
-.mb-dialog-row.mb-selected { background: color-mix(in srgb, var(--mb-a) 22%, #212124); }
+.mb-dialog-row:hover { background: var(--border-color); }
+.mb-dialog-row.mb-selected { background: color-mix(in srgb, var(--mb-a) 22%, var(--comfy-menu-bg)); }
 .mb-dialog-row input[type="radio"] { accent-color: var(--mb-a); margin: 0; }
-.mb-dialog-hint { color: #77777e; font-size: 11px; margin: 3px 0 0 30px; }
+.mb-dialog-hint { color: var(--descrip-text); font-size: 11px; margin: 3px 0 0 30px; }
 .mb-dialog-number,
 .mb-dialog-select,
 .mb-dialog-item input {
     padding: 4px 10px;
-    background: #2a2a2e;
-    color: #ececee;
+    background: var(--comfy-input-bg);
+    color: var(--input-text);
     border: 1px solid transparent;
     border-radius: 7px;
     font-size: 12.5px;
@@ -67,7 +67,7 @@ const CSS = `
 .mb-dialog-select:focus,
 .mb-dialog-item input:focus { border-color: var(--mb-a); }
 .mb-dialog-number { width: 72px; margin-left: auto; }
-.mb-dialog-row .mb-dialog-number { background: #212124; }
+.mb-dialog-row .mb-dialog-number { background: var(--comfy-menu-bg); }
 .mb-dialog-number:disabled { opacity: 0.4; }
 .mb-dialog-list { display: flex; flex-direction: column; gap: 4px; max-height: 260px; overflow-y: auto; }
 .mb-dialog-item {
@@ -76,9 +76,9 @@ const CSS = `
     gap: 8px;
     padding: 4px 6px;
     border-radius: 8px;
-    background: #2a2a2e;
+    background: var(--comfy-input-bg);
 }
-.mb-dialog-item input { flex: 1; min-width: 0; background: #212124; }
+.mb-dialog-item input { flex: 1; min-width: 0; background: var(--comfy-menu-bg); }
 .mb-dialog-item input.mb-invalid { border-color: #e5484d; }
 .mb-dialog-remove {
     flex: none;
@@ -88,17 +88,17 @@ const CSS = `
     border-radius: 6px;
     border: none;
     background: transparent;
-    color: #77777e;
+    color: var(--descrip-text);
     font-size: 14px;
     cursor: pointer;
 }
-.mb-dialog-remove:hover { background: #3a3a3f; color: #ececee; }
-.mb-dialog-field { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #8e8e95; }
+.mb-dialog-remove:hover { background: var(--border-color); color: var(--input-text); }
+.mb-dialog-field { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--descrip-text); }
 .mb-dialog-canvas {
     display: block;
     width: 100%;
     border-radius: 10px;
-    background: #18181a;
+    background: var(--comfy-menu-secondary-bg);
     touch-action: none;
     cursor: crosshair;
 }
@@ -107,18 +107,18 @@ const CSS = `
     justify-content: flex-end;
     gap: 8px;
     padding: 10px 16px;
-    background: #1d1d20;
+    background: var(--comfy-menu-secondary-bg);
 }
 .mb-dialog-button {
     padding: 6px 14px;
     border-radius: 7px;
     border: none;
-    background: #2a2a2e;
-    color: #ececee;
+    background: var(--comfy-input-bg);
+    color: var(--input-text);
     font-size: 12.5px;
     cursor: pointer;
 }
-.mb-dialog-button:hover { background: #333338; }
+.mb-dialog-button:hover { background: var(--border-color); }
 .mb-dialog-button.mb-primary { background: var(--mb-a); color: #ffffff; }
 .mb-dialog-button.mb-primary:hover { filter: brightness(1.1); }
 `;
