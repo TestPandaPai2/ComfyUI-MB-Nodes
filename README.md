@@ -40,6 +40,9 @@ Crop dialog (drag/resize box, aspect presets, divisible-by) for an `image` input
 ### Save Image (MB)
 Saves png/jpg/webp to the output folder or anywhere you type. `preview` mode skips the write; a cached copy always survives a restart.
 
+### Compress Image (MB)
+Compresses and converts images to jpg, webp or png in the output folder. Set a quality, a target size in KB (quality drops until the file fits), a max dimension to downscale, or lossless webp. An optional mask becomes alpha for png/webp; jpg is flattened on white. Shows the preview and each file's size.
+
 ### SaveMP4 (MB)
 Encodes an image batch to h264 mp4 with optional muxed audio; `trim_to_audio` and `preview_only` included.
 

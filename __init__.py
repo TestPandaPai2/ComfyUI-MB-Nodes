@@ -11,6 +11,7 @@ from comfy_api.latest import ComfyExtension, io
 from .nodes.body_mod_prompt_node import NODES as _body_mod_prompt
 from .nodes.branch_runner_node import NODES as _branch_runner
 from .nodes.combine_text_node import NODES as _combine_text
+from .nodes.compress_image_node import NODES as _compress_image
 from .nodes.control_panel_node import NODES as _control_panel
 from .nodes.crop_image_node import NODES as _crop_image
 from .nodes.get_lines_node import NODES as _get_lines
@@ -69,6 +70,7 @@ NODES: list[type[io.ComfyNode]] = [
     *_load_folder,
     *_model_combo,
     *_save_image,
+    *_compress_image,
     *_save_mp4,
     *_save_video,
     *_prompt_pad,
