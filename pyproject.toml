@@ -4,6 +4,7 @@ description = "A small pack of quality-of-life ComfyUI nodes: text, resolution, 
 version = "0.2"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
+dependencies = ["vtracer", "resvg-py"]
 
 [project.urls]
 Repository = "https://github.com/TestPandaPai2/ComfyUI-MB-Nodes"

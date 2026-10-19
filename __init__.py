@@ -15,6 +15,7 @@ from .nodes.compress_image_node import NODES as _compress_image
 from .nodes.control_panel_node import NODES as _control_panel
 from .nodes.crop_image_node import NODES as _crop_image
 from .nodes.get_lines_node import NODES as _get_lines
+from .nodes.image_to_svg_node import NODES as _image_to_svg
 from .nodes.image_info import NODES as _image_info
 from .nodes.krea_styles_node import NODES as _krea_styles
 from .nodes.lighting_enhance_prompt_node import NODES as _lighting_enhance_prompt
@@ -71,6 +72,7 @@ NODES: list[type[io.ComfyNode]] = [
     *_model_combo,
     *_save_image,
     *_compress_image,
+    *_image_to_svg,
     *_save_mp4,
     *_save_video,
     *_prompt_pad,

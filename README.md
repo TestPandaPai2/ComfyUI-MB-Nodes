@@ -43,6 +43,9 @@ Saves png/jpg/webp to the output folder or anywhere you type. `preview` mode ski
 ### Compress Image (MB)
 Compresses and converts images to jpg, webp or png in the output folder. Set a quality, a target size in KB (quality drops until the file fits), a max dimension to downscale, or lossless webp. An optional mask becomes alpha for png/webp; jpg is flattened on white. Shows the preview and each file's size.
 
+### Image To SVG (MB)
+Vectorizes images into color SVG with vtracer. Presets: Accurate (photo), Poster, Logo / flat, Black & white, or Custom for every tracer setting. Outputs one SVG string per image plus the SVG rendered back as an image to compare against the source, and shows the SVG in the node. `save` (on by default) writes each SVG to the output folder under `filename_prefix`. Needs `vtracer` and `resvg-py`.
+
 ### SaveMP4 (MB)
 Encodes an image batch to h264 mp4 with optional muxed audio; `trim_to_audio` and `preview_only` included.
 

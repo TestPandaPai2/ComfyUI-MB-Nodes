@@ -1,0 +1,2 @@
+vtracer
+resvg-py
