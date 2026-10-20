@@ -22,6 +22,17 @@ const CLAUDE = "Claude";
 const DASHED = "Dashed";
 const GHOST = "Ghost Wire";
 const TENSION = "Tension";
+const SPOTLIGHT = "Spotlight";
+const FADE_MID = "Fade Mid";
+const HAIRLINE = "Hairline";
+const TELEPORT = "Teleport";
+const BUNDLE = "Bundle";
+
+const SPOTLIGHT_DIM = 0.15; // alpha of links away from the selected / hovered node
+const FADE_MID_ALPHA = 0.08; // Fade Mid's alpha at the middle of the link
+const HAIRLINE_COLOR = "rgba(150,150,150,0.75)";
+const TAG_ROOM = 16; // space after a Teleport stub for its tag
+const BUNDLE_SHARE = 0.6; // fraction of the way to the nearest target the shared trunk runs
 
 const CLAUDE_COLOR = "#D97757"; // Claude's signature terracotta
 const DASH_PATTERN = [10, 6]; // dash, gap -- in canvas units, scales with zoom
@@ -46,6 +57,9 @@ const telephone = { sag: 0.18, maxDip: 160 };
 // `reach` pulls taut into a straight line -- and thins out as it does, like a
 // rubber band pulled tight.
 const tension = { bow: 90, reach: 260 };
+
+// Teleport: links longer than this (canvas px) collapse to tagged stubs.
+let teleportDistance = 600;
 const TENSION_MIN_WIDTH = 0.6;
 const TENSION_MAX_WIDTH = 1.4;
 
@@ -79,9 +93,34 @@ function diagonalPoints(ax, ay, bx, by) {
     ];
 }
 
-function pointsFor(ax, ay, bx, by) {
-    return mode === DIAGONAL || mode === PCB ? diagonalPoints(ax, ay, bx, by) : orthoPoints(ax, ay, bx, by);
+function pointsFor(bx, by) {
+    return mode === DIAGONAL || mode === PCB ? diagonalPoints(0, 0, bx, by) : orthoPoints(0, 0, bx, by);
 }
+
+// --- link frame ------------------------------------------------------------
+//
+// Every route is worked out with the output at the origin, leaving along +x,
+// then rotated to the slot's real direction (LiteGraph's LinkDirection:
+// UP 1, DOWN 2, LEFT 3, RIGHT 4). Vertical slots and reroute exits get the
+// same shapes as the usual left-to-right link.
+const DIR_ANGLE = { 1: -Math.PI / 2, 2: Math.PI / 2, 3: Math.PI, 4: 0 };
+
+function frameFor(ax, ay, startDir) {
+    const angle = DIR_ANGLE[startDir] ?? 0;
+    return { ax, ay, angle, cos: Math.cos(angle), sin: Math.sin(angle) };
+}
+
+function toLocal(f, x, y) {
+    const dx = x - f.ax;
+    const dy = y - f.ay;
+    return [dx * f.cos + dy * f.sin, -dx * f.sin + dy * f.cos];
+}
+
+function toWorld(f, x, y) {
+    return [f.ax + x * f.cos - y * f.sin, f.ay + x * f.sin + y * f.cos];
+}
+
+const isCurveMode = () => [BEZIER, CLAUDE, DASHED, TELEPHONE, GHOST, TENSION, SPOTLIGHT, FADE_MID, HAIRLINE, TELEPORT, BUNDLE].includes(mode);
 
 // --- telephone line --------------------------------------------------------
 //
@@ -151,34 +190,40 @@ function tracePolyline(ctx, pts, corner) {
 }
 
 // Flatter than the native spline: the controls stay strictly horizontal, so a
-// link always leaves and enters its slot dead level.
-function bezierOffset(ax, bx) {
-    return Math.min(Math.max(Math.abs(bx - ax) * 0.4, 20), 80);
+// link always leaves and enters its slot dead level. A link running backwards
+// gets longer controls so it loops out of the output and into the input
+// instead of cutting straight back across both nodes.
+function bezierOffset(bx) {
+    return bx >= 0 ? Math.min(Math.max(bx * 0.4, 20), 80) : Math.min(Math.max(-bx * 0.5, 40), 160);
 }
 
-function tracePath(ctx, ax, ay, bx, by, pts) {
-    if (mode === BEZIER || mode === CLAUDE || mode === DASHED) {
-        const d = bezierOffset(ax, bx);
-        ctx.moveTo(ax, ay);
-        ctx.bezierCurveTo(ax + d, ay, bx - d, by, bx, by);
-        return;
-    }
-    if (mode === TELEPHONE || mode === GHOST) {
-        const [mx, my] = telephoneControl(ax, ay, bx, by);
-        ctx.moveTo(ax, ay);
-        ctx.quadraticCurveTo(mx, my, bx, by);
-        return;
-    }
-    if (mode === TENSION) {
-        const [mx, my] = tensionControl(ax, ay, bx, by);
-        ctx.moveTo(ax, ay);
-        ctx.quadraticCurveTo(mx, my, bx, by);
+// The curve modes in the local frame (output at the origin), for a shape
+// `g` = { bx, by, pts, trunk }. Telephone, Ghost and Tension sag as a
+// quadratic; running backwards they have nothing to hang between, so they
+// loop like Bezier Snap instead. Bundle runs a straight shared trunk first and
+// only curves off it towards its own target.
+function curveFor(g) {
+    const { bx, by, trunk } = g;
+    if (bx >= 0 && (mode === TELEPHONE || mode === GHOST)) return { from: 0, quad: telephoneControl(0, 0, bx, by) };
+    if (bx >= 0 && mode === TENSION) return { from: 0, quad: tensionControl(0, 0, bx, by) };
+    const from = trunk && bx > trunk ? trunk : 0;
+    const d = bezierOffset(bx - from);
+    return { from, cubic: [from + d, 0, bx - d, by] };
+}
+
+function tracePath(ctx, g) {
+    if (!g.pts) {
+        const c = curveFor(g);
+        ctx.moveTo(0, 0);
+        if (c.from) ctx.lineTo(c.from, 0);
+        if (c.quad) ctx.quadraticCurveTo(c.quad[0], c.quad[1], g.bx, g.by);
+        else ctx.bezierCurveTo(c.cubic[0], c.cubic[1], c.cubic[2], c.cubic[3], g.bx, g.by);
         return;
     }
     // Circuit shares Manhattan's right-angle routing but keeps its corners
     // square, like the plain rectilinear wires in a schematic diagram.
     const corner = mode === MANHATTAN ? ROUND : mode === MITRED ? CHAMFER : SHARP;
-    tracePolyline(ctx, pts, corner);
+    tracePolyline(ctx, g.pts, corner);
 }
 
 // --- centre point --------------------------------------------------------
@@ -256,45 +301,103 @@ function sampledCurveDist(mx, my, pointAt, steps = 20) {
     return min;
 }
 
-function pathDist(mx, my, ax, ay, bx, by, pts) {
-    if (mode === BEZIER || mode === CLAUDE || mode === DASHED) {
-        const d = bezierOffset(ax, bx);
-        return sampledCurveDist(mx, my, (t) => cubicPoint(t, ax, ay, ax + d, ay, bx - d, by, bx, by));
+function pathDist(mx, my, g) {
+    const { bx, by, pts } = g;
+    if (g.stubs) {
+        // A collapsed Teleport link: only its two stubs and their tags.
+        const reach = GHOST_STUB + TAG_ROOM;
+        return Math.min(distToSegment(mx, my, 0, 0, reach, 0), distToSegment(mx, my, bx, by, bx - reach, by));
     }
-    if (mode === TELEPHONE || mode === GHOST) {
-        const [cx, cy] = telephoneControl(ax, ay, bx, by);
-        return sampledCurveDist(mx, my, (t) => quadPoint(t, ax, ay, cx, cy, bx, by));
-    }
-    if (mode === TENSION) {
-        const [cx, cy] = tensionControl(ax, ay, bx, by);
-        return sampledCurveDist(mx, my, (t) => quadPoint(t, ax, ay, cx, cy, bx, by));
-    }
-    return polylineDist(mx, my, pts);
+    if (pts) return polylineDist(mx, my, pts);
+    const c = curveFor(g);
+    if (c.quad) return sampledCurveDist(mx, my, (t) => quadPoint(t, 0, 0, c.quad[0], c.quad[1], bx, by));
+    const curve = sampledCurveDist(mx, my, (t) => cubicPoint(t, c.from, 0, c.cubic[0], c.cubic[1], c.cubic[2], c.cubic[3], bx, by));
+    return c.from ? Math.min(curve, distToSegment(mx, my, 0, 0, c.from, 0)) : curve;
 }
 
-function isHovered(canvas, ax, ay, bx, by, pts) {
+// Geometry of every link drawn so far, by link id, so the mouse can be tested
+// against them between frames: the background only redraws when the hovered
+// link actually changes, not on every mouse move.
+const hitTests = new Map();
+let hoveredId = null;
+let nodeOverId = null;
+
+function linkExists(canvas, id) {
+    const links = canvas.graph?.links;
+    return !!(links?.get?.(id) ?? links?.[id]);
+}
+
+function findHovered(canvas) {
     const mouse = canvas.graph_mouse;
-    if (!mouse) return false;
-    const scale = Math.max(canvas.ds?.scale ?? 1, 0.05);
-    return pathDist(mouse[0], mouse[1], ax, ay, bx, by, pts) <= HOVER_PX / scale;
+    if (!mouse) return null;
+    const reach = HOVER_PX / Math.max(canvas.ds?.scale ?? 1, 0.05);
+    for (const [id, hit] of hitTests) {
+        if (!linkExists(canvas, id)) {
+            hitTests.delete(id);
+            continue;
+        }
+        const [mx, my] = toLocal(hit.f, mouse[0], mouse[1]);
+        if (pathDist(mx, my, hit.g) <= reach) return id;
+    }
+    return null;
 }
 
-function centreOf(ax, ay, bx, by, pts) {
-    if (mode === BEZIER || mode === CLAUDE || mode === DASHED) {
-        const d = bezierOffset(ax, bx);
-        // A cubic bezier at t = 0.5 reduces to this weighted average.
-        return [(ax + 3 * (ax + d) + 3 * (bx - d) + bx) / 8, (ay + 3 * ay + 3 * by + by) / 8];
+function centreOf(g) {
+    const { bx, by } = g;
+    if (g.pts) return polylineCentre(g.pts);
+    const c = curveFor(g);
+    // A bezier at t = 0.5 reduces to these weighted averages.
+    if (c.quad) return [(2 * c.quad[0] + bx) / 4, (2 * c.quad[1] + by) / 4];
+    return [(c.from + 3 * c.cubic[0] + 3 * c.cubic[2] + bx) / 8, (3 * c.cubic[1] + 3 * c.cubic[3] + by) / 8];
+}
+
+// --- clean modes -----------------------------------------------------------
+
+// Spotlight / Teleport focus: a link is "in focus" while a node at either end
+// is selected or under the mouse.
+function inFocus(canvas, link) {
+    if (!link) return true;
+    const over = canvas.node_over?.id;
+    return over != null && (over === link.origin_id || over === link.target_id)
+        || nodeSelected(canvas, link.origin_id) || nodeSelected(canvas, link.target_id);
+}
+
+// Fade Mid needs the stroke colour at a chosen alpha; link colours are hex.
+function withAlpha(colour, alpha) {
+    const hex = /^#([0-9a-f]{3,8})$/i.exec(colour)?.[1];
+    if (!hex) return colour;
+    const full = hex.length < 6 ? [...hex.slice(0, 3)].map((c) => c + c).join("") : hex.slice(0, 6);
+    const [r, g, b] = [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16));
+    return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// Teleport tags: A..Z, then AA, AB... from the link id, so both ends match
+// and the tag stays the same across redraws.
+function tagFor(id) {
+    let n = Number(id);
+    let tag = "";
+    do {
+        tag = String.fromCharCode(65 + (n % 26)) + tag;
+        n = Math.floor(n / 26) - 1;
+    } while (n >= 0);
+    return tag;
+}
+
+// Bundle: every link off one output shares a straight trunk that runs to just
+// short of the nearest target, so N links leave the slot as one wire.
+function bundleTrunk(canvas, link, f) {
+    const output = canvas.graph?.getNodeById?.(link?.origin_id)?.outputs?.[link.origin_slot];
+    if (!output?.links || output.links.length < 2) return 0;
+    let nearest = Infinity;
+    for (const id of output.links) {
+        const sibling = canvas.graph.links?.get?.(id) ?? canvas.graph.links?.[id];
+        const target = sibling && canvas.graph.getNodeById(sibling.target_id);
+        const pos = target?.getInputPos?.(sibling.target_slot) ?? target?.getConnectionPos?.(true, sibling.target_slot);
+        if (!pos) continue;
+        const [x] = toLocal(f, pos[0], pos[1]);
+        if (x > 0) nearest = Math.min(nearest, x);
     }
-    if (mode === TELEPHONE || mode === GHOST) {
-        const [mx, my] = telephoneControl(ax, ay, bx, by);
-        // A quadratic bezier at t = 0.5 reduces to this weighted average.
-        return [(ax + 2 * mx + bx) / 4, (ay + 2 * my + by) / 4];
-    }
-    if (mode === TENSION) {
-        const [mx, my] = tensionControl(ax, ay, bx, by);
-        return [(ax + 2 * mx + bx) / 4, (ay + 2 * my + by) / 4];
-    }
-    return polylineCentre(pts);
+    return Number.isFinite(nearest) ? Math.max(STUB, nearest * BUNDLE_SHARE) : 0;
 }
 
 // Claude's link-centre marker: a six-spoke asterisk (the shape of Claude's own
@@ -386,16 +489,43 @@ function install() {
     const original = proto.renderLink;
     proto._mbLinkRenderPatched = true;
 
-    // The hover glow needs a fresh redraw every frame the mouse moves --
-    // LiteGraph itself only marks the canvas dirty when the link-centre dot
-    // is entered or left, not while crossing the body of a wire.
+    // LiteGraph only marks the canvas dirty when the link-centre dot is entered
+    // or left, so the hover glow asks for a redraw itself -- but only when the
+    // hovered link changes, tested against the cached geometry.
     if (proto.processMouseMove && !proto._mbLinkHoverPatched) {
         const originalMouseMove = proto.processMouseMove;
         proto._mbLinkHoverPatched = true;
         proto.processMouseMove = function (e) {
             const result = originalMouseMove.apply(this, arguments);
-            if (mode !== DEFAULT) this.dirty_bgcanvas = true;
+            if (mode !== DEFAULT) {
+                const id = findHovered(this);
+                // Spotlight and Teleport also follow the node under the mouse.
+                const over = this.node_over?.id ?? null;
+                if (id !== hoveredId || over !== nodeOverId) {
+                    hoveredId = id;
+                    nodeOverId = over;
+                    this.dirty_bgcanvas = true;
+                }
+            }
             return result;
+        };
+    }
+
+    // LiteGraph opens the link menu from a click on link._pos. Parking it under
+    // the cursor when a glowing wire is clicked makes the whole wire clickable,
+    // not just its centre dot; the next draw puts it back.
+    if (proto.processMouseDown && !proto._mbLinkClickPatched) {
+        const originalMouseDown = proto.processMouseDown;
+        proto._mbLinkClickPatched = true;
+        proto.processMouseDown = function (e) {
+            const hit = mode !== DEFAULT && hoveredId != null ? hitTests.get(hoveredId) : null;
+            const mouse = this.graph_mouse;
+            if (hit && mouse && !this.graph?.getNodeOnPos?.(mouse[0], mouse[1])) {
+                hit.link._pos ??= new Float32Array(2);
+                hit.link._pos[0] = mouse[0];
+                hit.link._pos[1] = mouse[1];
+            }
+            return originalMouseDown.apply(this, arguments);
         };
     }
 
@@ -408,99 +538,154 @@ function install() {
             return original.apply(this, arguments);
         }
 
-        const [ax, ay] = a;
-        const [bx, by] = b;
+        const f = frameFor(a[0], a[1], startDir);
+        const [bx, by] = toLocal(f, b[0], b[1]);
+        const typed = resolveColour(this, link, colour);
         // Claude mode is solid brand colour throughout -- no per-type tinting --
         // so it reads as one consistent identity regardless of what a link carries.
-        const stroke = mode === CLAUDE ? CLAUDE_COLOR : resolveColour(this, link, colour);
-        const width = mode === TENSION
-            ? (this.connections_width || 3) * tensionWidthMul(ax, ay, bx, by)
-            : this.connections_width || 3;
+        // Hairline is one muted grey; its type colour shows only in the end dots.
+        const stroke = mode === CLAUDE ? CLAUDE_COLOR : mode === HAIRLINE ? colour || HAIRLINE_COLOR : typed;
+        const base = mode === HAIRLINE ? 1 : this.connections_width || 3;
+        const width = mode === TENSION ? base * tensionWidthMul(0, 0, bx, by) : base;
+        const hover = !skipBorder && link?.id != null && link.id === hoveredId;
+
+        ctx.save();
+        ctx.translate(f.ax, f.ay);
+        ctx.rotate(f.angle);
 
         // Ghost Wire: the full telephone-sag curve only appears while one of
         // its two nodes is selected. Otherwise just a short nub pokes out of
         // each slot, enough to show a connection exists without cluttering
-        // the graph with every wire at once.
-        if (mode === GHOST && !nodeSelected(this, link?.origin_id) && !nodeSelected(this, link?.target_id)) {
-            ctx.save();
-            ctx.globalAlpha *= opacity * 0.6;
+        // the graph with every wire at once. A link still being dragged has no
+        // nodes yet and is always drawn in full.
+        const ghosted = mode === GHOST && link && !nodeSelected(this, link.origin_id) && !nodeSelected(this, link.target_id);
+        // Teleport: a long link collapses to tagged stubs unless it is hovered
+        // or one of its nodes is selected or under the mouse.
+        const teleported = mode === TELEPORT && link && !hover && !inFocus(this, link)
+            && Math.hypot(bx, by) > teleportDistance;
+
+        if (ghosted || teleported) {
+            ctx.globalAlpha *= opacity * (ghosted ? 0.6 : 1);
             ctx.strokeStyle = stroke;
             ctx.lineWidth = width;
             ctx.lineCap = "round";
             ctx.beginPath();
-            ctx.moveTo(ax, ay);
-            ctx.lineTo(ax + GHOST_STUB, ay);
+            ctx.moveTo(0, 0);
+            ctx.lineTo(GHOST_STUB, 0);
             ctx.moveTo(bx, by);
             ctx.lineTo(bx - GHOST_STUB, by);
             ctx.stroke();
             ctx.restore();
 
-            if (link) {
-                const [cx, cy] = telephoneControl(ax, ay, bx, by);
-                link._pos ??= new Float32Array(2);
-                link._pos[0] = (ax + 2 * cx + bx) / 4;
-                link._pos[1] = (ay + 2 * cy + by) / 4;
-                link._centreAngle = 0;
+            if (teleported && this.ds.scale >= 0.4) {
+                // Drawn unrotated so the tag reads upright on any slot direction.
+                const tag = tagFor(link.id);
+                ctx.save();
+                ctx.globalAlpha *= opacity;
+                ctx.font = "bold 10px sans-serif";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = "rgba(0,0,0,0.7)";
+                ctx.fillStyle = stroke;
+                for (const [x, y] of [toWorld(f, GHOST_STUB + TAG_ROOM / 2, 0), toWorld(f, bx - GHOST_STUB - TAG_ROOM / 2, by)]) {
+                    ctx.strokeText(tag, x, y);
+                    ctx.fillText(tag, x, y);
+                }
+                ctx.restore();
             }
+
+            // A ghosted wire has no click target or hover; a teleported one
+            // is hovered through its stubs, which brings the full wire back.
+            if (teleported) hitTests.set(link.id, { link, f, g: { bx, by, stubs: true } });
+            else hitTests.delete(link.id);
+            link._pos ??= new Float32Array(2);
+            link._pos[0] = NaN;
+            link._pos[1] = NaN;
             return;
         }
 
-        // Bezier, Telephone, Claude and Dashed are drawn as a single curve
-        // command, so they don't need a discrete point list the way the
-        // polyline modes do.
-        const pts = mode === BEZIER || mode === TELEPHONE || mode === CLAUDE || mode === DASHED || mode === TENSION ? null : pointsFor(ax, ay, bx, by);
-
-        const hover = !skipBorder && !!link && isHovered(this, ax, ay, bx, by, pts);
+        const g = {
+            bx, by,
+            pts: isCurveMode() ? null : pointsFor(bx, by),
+            trunk: mode === BUNDLE ? bundleTrunk(this, link, f) : 0,
+        };
+        const focus = mode === SPOTLIGHT && inFocus(this, link);
+        const alpha = opacity * (mode === SPOTLIGHT && !focus && !hover ? SPOTLIGHT_DIM : 1);
+        const fading = mode === FADE_MID && !hover;
 
         ctx.save();
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
-        ctx.globalAlpha *= opacity;
+        ctx.globalAlpha *= alpha;
         // Dash pattern lives inside this save/restore scope so it never leaks
         // into unrelated drawing (node borders, other links) once we're done.
         if (mode === DASHED) ctx.setLineDash(DASH_PATTERN);
 
-        if (this.render_connections_border && this.ds.scale > 0.6 && !skipBorder) {
+        if (this.render_connections_border && this.ds.scale > 0.6 && !skipBorder && mode !== HAIRLINE && !fading) {
             ctx.strokeStyle = "rgba(0,0,0,0.6)";
             ctx.lineWidth = width + 4;
             ctx.beginPath();
-            tracePath(ctx, ax, ay, bx, by, pts);
+            tracePath(ctx, g);
             ctx.stroke();
         }
 
-        ctx.strokeStyle = stroke;
-        ctx.lineWidth = hover ? width + 1 : width;
+        if (fading) {
+            const gradient = ctx.createLinearGradient(0, 0, bx, by);
+            gradient.addColorStop(0, stroke);
+            gradient.addColorStop(0.5, withAlpha(stroke, FADE_MID_ALPHA));
+            gradient.addColorStop(1, stroke);
+            ctx.strokeStyle = gradient;
+        } else {
+            ctx.strokeStyle = stroke;
+        }
+        ctx.lineWidth = hover || focus ? width + 1 : width;
         if (flow) ctx.globalAlpha *= flow;
         ctx.beginPath();
-        tracePath(ctx, ax, ay, bx, by, pts);
+        tracePath(ctx, g);
         ctx.stroke();
         ctx.restore();
 
         if (mode === PCB && this.ds.scale >= 0.6 && !skipBorder) {
-            drawPcbDots(ctx, pts, stroke, width);
+            drawPcbDots(ctx, g.pts, stroke, width);
         }
 
-        if (!link) return;
-
-        const [cx, cy] = centreOf(ax, ay, bx, by, pts);
-        link._pos ??= new Float32Array(2);
-        link._pos[0] = cx;
-        link._pos[1] = cy;
-        link._centreAngle = 0; // every custom route is level at its midpoint
-
-        if (this.ds.scale >= 0.6 && this.linkMarkerShape !== 0 && !skipBorder) {
+        if (mode === HAIRLINE && this.ds.scale >= 0.6) {
             ctx.save();
-            ctx.globalAlpha *= opacity;
-            ctx.fillStyle = stroke;
-            if (mode === CLAUDE) {
-                drawAsterisk(ctx, cx, cy, width * 2.2);
-            } else {
+            ctx.globalAlpha *= alpha;
+            ctx.fillStyle = typed;
+            for (const [x, y] of [[0, 0], [bx, by]]) {
                 ctx.beginPath();
-                ctx.arc(cx, cy, width * 0.9, 0, Math.PI * 2);
+                ctx.arc(x, y, 2.5, 0, Math.PI * 2);
                 ctx.fill();
             }
             ctx.restore();
         }
+
+        // Hairline and Fade Mid stay bare: no dot in the middle of the wire.
+        const [lcx, lcy] = centreOf(g);
+        const marker = mode !== HAIRLINE && !fading;
+        if (marker && link && this.ds.scale >= 0.6 && this.linkMarkerShape !== 0 && !skipBorder) {
+            ctx.globalAlpha *= alpha;
+            ctx.fillStyle = stroke;
+            if (mode === CLAUDE) {
+                drawAsterisk(ctx, lcx, lcy, width * 2.2);
+            } else {
+                ctx.beginPath();
+                ctx.arc(lcx, lcy, width * 0.9, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        ctx.restore();
+
+        if (!link) return;
+
+        const [cx, cy] = toWorld(f, lcx, lcy);
+        link._pos ??= new Float32Array(2);
+        link._pos[0] = cx;
+        link._pos[1] = cy;
+        link._centreAngle = f.angle; // every custom route is level at its midpoint, in its own frame
+        if (link.id != null) hitTests.set(link.id, { link, f, g });
     };
 
     return true;
@@ -516,10 +701,12 @@ app.registerExtension({
             name: "Link render mode",
             tooltip: "Circuit-board routing for links. Default hands back to ComfyUI's own link style.",
             type: "combo",
-            options: [DEFAULT, MANHATTAN, MITRED, DIAGONAL, PCB, BEZIER, CIRCUIT, TELEPHONE, CLAUDE, DASHED, GHOST, TENSION],
+            options: [DEFAULT, MANHATTAN, MITRED, DIAGONAL, PCB, BEZIER, CIRCUIT, TELEPHONE, CLAUDE, DASHED, GHOST, TENSION, SPOTLIGHT, FADE_MID, HAIRLINE, TELEPORT, BUNDLE],
             defaultValue: DEFAULT,
             onChange: (value) => {
                 mode = value ?? DEFAULT;
+                hitTests.clear();
+                hoveredId = null;
                 if (mode !== DEFAULT) install();
                 app.canvas?.setDirty(true, true);
             },
@@ -547,6 +734,7 @@ app.registerExtension({
             defaultValue: telephone.sag,
             onChange: (value) => {
                 telephone.sag = value ?? telephone.sag;
+                app.canvas?.setDirty(true, true);
             },
         },
         {
@@ -559,6 +747,7 @@ app.registerExtension({
             defaultValue: telephone.maxDip,
             onChange: (value) => {
                 telephone.maxDip = value ?? telephone.maxDip;
+                app.canvas?.setDirty(true, true);
             },
         },
         {
@@ -571,6 +760,7 @@ app.registerExtension({
             defaultValue: tension.bow,
             onChange: (value) => {
                 tension.bow = value ?? tension.bow;
+                app.canvas?.setDirty(true, true);
             },
         },
         {
@@ -583,6 +773,20 @@ app.registerExtension({
             defaultValue: tension.reach,
             onChange: (value) => {
                 tension.reach = value ?? tension.reach;
+                app.canvas?.setDirty(true, true);
+            },
+        },
+        {
+            id: "MBNodes.Teleport.Distance",
+            category: ["MB", "Links", "Teleport: distance"],
+            name: "Teleport: distance",
+            tooltip: "Teleport links longer than this, in pixels, collapse to tagged stubs. Hover a stub or select a node to see the full link.",
+            type: "slider",
+            attrs: { min: 100, max: 3000, step: 50 },
+            defaultValue: teleportDistance,
+            onChange: (value) => {
+                teleportDistance = value ?? teleportDistance;
+                app.canvas?.setDirty(true, true);
             },
         },
     ],
@@ -599,5 +803,6 @@ app.registerExtension({
         telephone.maxDip = setting?.get("MBNodes.Telephone.MaxDip") ?? telephone.maxDip;
         tension.bow = setting?.get("MBNodes.Tension.Bow") ?? tension.bow;
         tension.reach = setting?.get("MBNodes.Tension.Reach") ?? tension.reach;
+        teleportDistance = setting?.get("MBNodes.Teleport.Distance") ?? teleportDistance;
     },
 });
