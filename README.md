@@ -38,7 +38,7 @@ Loads an image and crops it to the area selected on the node's preview: drag to 
 Crop dialog (drag/resize box, aspect presets, divisible-by) for an `image` input instead of a file picker. Crop is stored as fractions of the image so it survives resolution changes; falls back to a cached preview when nothing upstream has an image yet.
 
 ### Save Image (MB)
-Saves png/jpg/webp to the output folder or anywhere you type. `preview` mode skips the write; a cached copy always survives a restart.
+Saves png/jpg/webp/avif to the output folder or anywhere you type, and passes the images through. `preview` mode skips the write; a cached copy always survives a restart. `preset` (lossless / visually_lossless / balanced / small) sets the per-format quality; `custom` uses the quality widgets. Changing format or preset re-encodes the last run live, and a badge shows the file size and the saving vs png. Connect `compare_image` for a before/after slider (hover to move it, click to step through a batch).
 
 ### Compress Image (MB)
 Compresses and converts images to jpg, webp or png in the output folder. Set a quality, a target size in KB (quality drops until the file fits), a max dimension to downscale, or lossless webp. An optional mask becomes alpha for png/webp; jpg is flattened on white. Shows the preview and each file's size.

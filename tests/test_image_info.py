@@ -125,7 +125,7 @@ def test_save_writes_alpha_and_reports_every_filename():
     folder = tempfile.mkdtemp()
     info = MBSaveImage.execute(
         images, "save", "png", "MBTest", folder, 90, 4, False, mask
-    ).args[0]
+    ).args[1]
 
     assert len(info["filenames"]) == 2
     assert info["filename"] == info["filenames"][0]
@@ -142,6 +142,6 @@ def test_preview_mode_reports_no_filename():
     MBSaveImage.hidden = _Hidden()
     info = MBSaveImage.execute(
         torch.rand(1, 8, 8, 3), "preview", "png", "MBTest", tempfile.mkdtemp(), 90, 4, False, None
-    ).args[0]
+    ).args[1]
     assert info["filename"] == ""
     assert info["filenames"] == []
