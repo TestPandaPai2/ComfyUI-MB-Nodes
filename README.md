@@ -127,6 +127,10 @@ Every randomizer and selector also outputs the picked names on their own: `categ
 ### Simple Standing Poses (MB)
 Dropdown of 30 simple standing poses, or a seeded-random one with `randomize_pose`. Outputs the full pose description with optional `weight`. `closeup` swaps in a chest-up close-up version of the same pose.
 
+## Replace Nodes
+
+Right-click a node (or a selection) → **Replace Node...** and pick a type from the search list. Each node is swapped in place: links are reconnected by slot name, then index, then first compatible type; widget values with matching names carry over; title, colour and mode are kept. Links with no matching slot are dropped and reported. One Ctrl+Z undoes it.
+
 ## Settings
 
 Open ComfyUI's settings dialog and pick the **MB** panel.
