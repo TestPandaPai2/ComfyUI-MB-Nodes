@@ -392,8 +392,8 @@ Bow Embroidered Jersey: She wears a football jersey with a contrast V-neck colla
 
 KURTIS
 
-Short Kurti: She wears a short kurti with a fitted bodice, a sweetheart neckline, short sleeves, and a flared hem with large painted floral motifs, paired with slim trousers.
-A-Line Kurti: She wears a printed A-line kurti with a square neckline, short sleeves, and side slits, flaring gently from the bust to the knee over jeans.
+Short Kurti: She wears a short kurti with a fitted bodice, a sweetheart neckline, short sleeves, and a flared hem with large painted floral motifs.
+A-Line Kurti: She wears a printed A-line kurti with a square neckline, short sleeves, and side slits, flaring gently from the bust to the knee.
 Flared Kurti: She wears a flared kurti with a V-neck, long bell sleeves, and a large floral print, swinging loosely at the hips.
 Bell Sleeve Kurti: She wears a bell sleeve kurti with a square neckline, long flared sleeves, and an all-over geometric print.
 Strappy Kurti: She wears a strappy kurti with thin straps, a straight neckline, and a fitted silhouette in a fine block print.
@@ -401,6 +401,46 @@ Straight Kurti: She wears a straight kurti with a round neck, flared sleeves, an
 Sleeveless Kurti: She wears a sleeveless kurti with a square neckline, side slits, and embroidered borders along the hem.
 Tie Neck Kurti: She wears a tie neck kurti with a keyhole neckline tied with a thin string, long flared sleeves trimmed in lace, and a floral print.
 Lace Trim Kurti: She wears a printed kurti with a round neck, flared long sleeves, and delicate lace trim at the cuffs and hem.
+Anarkali Kurti: She wears a floor-sweeping Anarkali kurti with a fitted bodice, a high round neck, full sleeves, and dozens of flared panels that swirl outward from an empire waist.
+Angrakha Kurti: She wears an angrakha kurti with an overlapping wrap front tied at the side with tasseled strings, three-quarter sleeves, and a soft block-printed pattern.
+Kaftan Kurti: She wears a loose kaftan kurti with wide batwing sleeves, a deep V-neck edged in gold gota lace, and a flowing, airy cut in sheer georgette.
+Asymmetric Hem Kurti: She wears an asymmetric kurti with a hem that dips long on one side and rises high on the other, a mandarin collar, and sleeveless armholes.
+High-Low Kurti: She wears a high-low kurti that is short at the front and falls long at the back, with a boat neck and elbow-length sleeves in solid mustard cotton.
+Front Slit Kurti: She wears a long kurti with a single dramatic slit running up the center front, a sweetheart neckline, and fitted full sleeves.
+Jacket Style Kurti: She wears a jacket-style kurti with a separate embroidered sleeveless short jacket layered over a plain fitted inner kurti.
+Shirt Collar Kurti: She wears a straight kurti with a crisp shirt collar, a full button placket down the front, roll-up sleeves, and a curved shirttail hem.
+Peplum Kurti: She wears a short peplum kurti with a fitted bodice and a ruffled flare that bursts out just below the waist, with cap sleeves and a square neck.
+Tiered Kurti: She wears a tiered kurti built from three gathered layers of soft cotton, each tier trimmed with a thin contrast lace band, and puffed short sleeves.
+Cold Shoulder Kurti: She wears a cold shoulder kurti with cut-outs baring her shoulders, long flared sleeves below them, and an all-over paisley print.
+Off-Shoulder Kurti: She wears an off-shoulder kurti with an elasticated ruffled neckline resting across her upper arms and a relaxed, flowy body in pastel chiffon.
+Halter Neck Kurti: She wears a halter neck kurti tied behind her neck, leaving her shoulders and upper back bare, with a mirror-work yoke across the chest.
+Pleated Yoke Kurti: She wears a kurti with a fine pintucked pleated yoke across the bust, a round neck, and a straight, loose body in breezy linen.
+Chikankari Kurti: She wears a white Lucknowi chikankari kurti covered in delicate shadow-work floral embroidery, with a round neck and three-quarter sleeves.
+Bandhani Kurti: She wears a bandhani kurti in vivid red and yellow tie-dye dots, with a V-neck, short sleeves, and a straight cut.
+Ikat Kurti: She wears an ikat kurti woven in blurred indigo and white geometric patterns, with a notched round neck and three-quarter sleeves.
+Kalamkari Kurti: She wears a hand-painted kalamkari kurti with earthy rust and black mythological motifs, a mandarin collar, and wooden buttons.
+Ajrakh Kurti: She wears an ajrakh block-printed kurti in deep indigo and madder red geometric stars, with a keyhole neck and full sleeves.
+Phulkari Kurti: She wears a phulkari kurti densely embroidered with bright silk-thread geometric flowers across the yoke and sleeves.
+Mirror Work Kurti: She wears a mirror work kurti with tiny round mirrors stitched in bright thread across the neckline, sleeves, and hem, catching the light.
+Gota Patti Kurti: She wears a gota patti kurti trimmed with shiny gold ribbon appliqué flowers along the neckline, sleeves, and border.
+Zari Embroidered Kurti: She wears a rich silk kurti with metallic zari embroidery forming a dense floral border at the neckline and cuffs.
+Velvet Kurti: She wears a deep emerald velvet kurti with a high neck, full sleeves, and fine gold embroidery scattered across the bodice.
+Organza Overlay Kurti: She wears a kurti with a sheer floral organza overlay floating over a solid satin inner layer, with puff sleeves and a scalloped hem.
+Denim Kurti: She wears a denim kurti in washed blue chambray with a mandarin collar, a half button placket, and contrast white stitching.
+Khadi Kurti: She wears a handspun khadi kurti with a slightly nubby texture, a simple round neck, side pockets, and a relaxed, earthy look.
+Ruffle Sleeve Kurti: She wears a kurti with layered ruffles cascading down the sleeves, a V-neck, and a soft polka-dot print.
+Puff Sleeve Kurti: She wears a fitted kurti with voluminous puff sleeves gathered at the shoulders and cuffs, a square neck, and a small floral print.
+Band Collar Kurti: She wears a kurti with a wide Chinese-style band collar, frog-button fastenings down one side, and a jacquard woven pattern.
+Layered Cape Kurti: She wears a kurti with an attached sheer cape falling from the shoulders over the arms, the cape edged in sequins.
+Wrap Front Kurti: She wears a wrap-front kurti that crosses over the bust and ties at the waist with a fabric belt, with bishop sleeves.
+Belted Kurti: She wears a straight kurti cinched at the waist with a thin embroidered belt, a round neck, and three-quarter sleeves.
+Gathered Waist Kurti: She wears a kurti gathered at the waist with a smocked panel, a fitted bodice above, and a softly flared body falling below it.
+Princess Cut Kurti: She wears a princess-cut kurti with vertical seams shaping the bust and waist, a deep sweetheart neck, and a gently flared knee-length body.
+Kalidar Kurti: She wears a kalidar kurti cut from many triangular panels that fan out into a full, swirling hem, in rich maroon silk.
+Long Jacket Overlay Kurti: She wears a sleeveless inner kurti under a sheer, open-front long jacket with full sleeves and a lace border running down both front edges.
+Pakistani Straight Kurti: She wears a long, straight Pakistani-style kurti reaching below the knee, with an embroidered neckline, a buttoned placket, and a printed lawn fabric.
+Short Tunic Kurti: She wears a short tunic kurti ending at the hip, with a split neck, roll-tab sleeves, and a crisp striped cotton fabric.
+Sequin Party Kurti: She wears a party kurti covered in shimmering sequins over a sheer georgette base, with a deep V-neck and full sheer sleeves.
 
 GYMWEAR
 
@@ -473,6 +513,73 @@ Ripped Boyfriend Jeans: She wears loose boyfriend jeans with ripped knees, a fad
 Flare Jeans: She wears high-waisted flare jeans that fit closely through the hips before flaring dramatically from the knee.
 Straight-Leg Jeans: She wears classic straight-leg jeans in a mid-blue wash with a high waist and clean hems.
 Low-Rise Jeans: She wears low-rise jeans sitting on her hips with a relaxed straight leg, a nod to early-2000s style.
+
+BURQA
+
+Hijab: She wears a classic hijab, a soft square scarf wrapped neatly around her head and neck, framing her face fully while covering her hair, ears, and throat, with the fabric draped in gentle folds over her chest and shoulders.
+Dupatta: She wears a long, lightweight dupatta draped loosely over the top of her head, the flowing fabric falling down both sides of her face and over her shoulders to her waist, leaving her face and front hairline softly visible.
+Shayla: She wears a shayla, a long rectangular scarf wrapped once around her head and face, then tucked or pinned at the shoulders, with the long end draped loosely across her chest and over one shoulder.
+Tuding: She wears a tuding, a snug fitted inner cap covering her hairline beneath a wide scarf that wraps around her head and neck, the fabric gathered in soft layered folds around her face and draping over her shoulders.
+Doa Gaun: She wears a doa gaun, a long loose head covering that falls over her head and shoulders like a cape, with a face panel covering her nose and mouth so only her eyes remain visible through a narrow opening.
+Bandari Burqa: She wears a bandari-style head covering, a fitted scarf framing her face and tied beneath her chin, with a short structured cape of fabric flaring outward over her shoulders and upper arms.
+Niqab: She wears a niqab, a veil covering her face below the eyes and secured behind her head, worn together with a headscarf that covers her hair and neck, leaving only a narrow opening for her eyes.
+Al-Amira: She wears an al-amira, a two-piece hijab made of a close-fitting inner cap and a tube-shaped scarf pulled over it, the outer layer framing her face snugly and falling in a smooth cape over her shoulders and chest.
+Esarp: She wears an esarp, a large silky scarf wrapped smoothly around her head and pinned beneath her chin, framing her face neatly, with the long ends falling straight down over her chest.
+Chador: She wears a chador, a full-length cloak-like garment draped over her head and wrapped around her body from head to toe, held closed at the front by her hands, with her face left uncovered.
+Khimar: She wears a khimar, a long cape-like veil that covers her head, hair, neck, and shoulders, falling loosely in a wide drape down to her waist, with her face fully visible.
+Burqa: She wears a burqa, a full-body covering that drapes from the top of her head to her ankles, with a mesh or panel opening over the eyes so her entire face and body are concealed.
+
+SHALWARS
+
+Straight Shalwar: She wears a classic straight shalwar in soft sage-green cotton lawn, gathered at the waist with a comfortable elastic or drawstring band, the relaxed, even-width legs falling cleanly from hip to ankle without any taper or flare. The plain, untrimmed hem rests just above her embellished flats, and the simple silhouette pairs effortlessly under a printed kurta for a timeless, breathable everyday look.
+Cigarette Shalwar: She wears a slim cigarette shalwar in crisp ivory cotton satin, cut close to the legs and tapering neatly toward the ankle for a sharp, streamlined line. The cropped hem sits just above the ankle bone, finished with a short side slit and a delicate strand of tiny pearl beads along the edge, giving a polished, modern look that peeks out neatly beneath a short embroidered kurti.
+Tulip Shalwar: She wears a tulip shalwar in soft dusty-pink silk, full and gathered at the waist so the fabric falls in soft folds before crossing over at the front of each leg. The overlapping panels curve into a rounded, petal-shaped hem that opens slightly as she walks, edged with a neat row of small pearl buttons, creating a fluid, elegant drape that feels both trendy and graceful.
+Patiala Shalwar: She wears a voluminous Patiala shalwar in creamy white cotton, made from a generous length of fabric folded into deep, heavy pleats that cascade from a wide waistband down to the knees. The pleats gather tightly into snug, fitted cuffs at the ankles, creating a rich, billowing balloon shape full of movement, perfect for a traditional, festive, royal Punjabi look.
+Shalwar with Lace: She wears a straight, slightly cropped shalwar in soft baby-pink cotton, with a relaxed fit through the legs and a clean, simple waistband. A wide band of delicate scalloped crochet lace runs around the hem of each leg, its intricate pattern and wavy edge adding a soft, feminine, dainty detail that catches the eye with every step.
+Gher Shalwar: She wears a wide gher shalwar in light ivory chiffon or georgette, cut with extra panels so the legs flare generously from the hip into a full, skirt-like volume. The broad hem is finished with a gold-and-blush embroidered border, and the airy fabric swishes and sways gracefully as she moves, giving the illusion of a flowing skirt with the ease of trousers.
+Box Pleated Shalwar: She wears a box pleated shalwar in sage-green cotton, with structured box pleats folded at the waistband that release into a relaxed, roomy leg. Above the ankle, the hem is detailed with several neat horizontal pintuck pleats stitched in parallel lines, giving the shalwar a tailored, architectural finish that feels modern, crisp, and classy.
+Dhoti Shalwar: She wears a dhoti shalwar in soft off-white crepe, cut with extra fabric at the front that drapes low and cowls in deep folds between the legs. The draping tapers down into fitted, gathered cuffs at the ankles, creating a relaxed, sculpted silhouette that is comfortable, airy, and chic, especially when worn with a short kurti or a fitted top.
+Churidar Shalwar: She wears a churidar shalwar in stretchy white cotton jersey, fitted closely along her thighs and calves and cut much longer than her legs. The extra length bunches into soft, ruched horizontal gathers from mid-calf down to the ankle, forming the signature bangle-like folds, and the snug fit creates a slim, elegant, traditional look beneath a long kurta.
+Trouser Style Shalwar: She wears a trouser style shalwar in powder-blue cotton twill, tailored with a flat front waistband, a straight leg, and a clean pressed crease for a structured shape. The hem is cut slightly cropped above the ankle with a neat finished edge, giving a smart, sophisticated, Western-inspired look that pairs beautifully with a printed kurta for work or casual outings.
+
+UNDERWEAR
+
+String Panties: She wears string panties with a small lace front panel, thin elastic string sides, and a narrow back strap, offering minimal coverage in a delicate design.
+G-String: She wears a G-string with a small fabric front, thin waistband, and a single narrow strap at the back, designed for the most minimal coverage.
+Tanga: She wears a lace tanga with a narrower side band than a hipster and moderate back coverage, combining a soft, feminine look with comfort.
+Cheeky Panties: She wears cheeky panties in smooth fabric with a low-rise waistband and a moderate cut at the back that offers partial coverage.
+Hipster: She wears hipster panties that sit low on the hips with wide side panels and full coverage, made in soft stretchy fabric.
+Boyshorts: She wears boyshorts with a short, shorts-like leg that covers the hips and upper thighs, comfortable and sporty.
+Boxer Briefs: She wears loose-fitting boxer-style briefs in soft cotton with a relaxed shorts silhouette and an elastic waistband.
+Bikini Briefs: She wears classic bikini briefs with a mid-low rise and moderate front and back coverage, a simple everyday staple.
+Midi Briefs: She wears midi briefs that sit comfortably at the mid-waist with full coverage front and back in a smooth fabric.
+Maxi Briefs: She wears high-rise maxi briefs that reach up to the waist and provide maximum coverage, soft and comfortable.
+Full Briefs: She wears full briefs with a high waist and full coverage front and back, a classic, supportive cut.
+High-Cut Briefs: She wears high-cut briefs with legholes cut high on the hips, creating a longer, leg-lengthening silhouette.
+High-Waist Briefs: She wears high-waist briefs that rise above the navel, offering full coverage and a smooth line under high-waisted clothes.
+Control Briefs: She wears shaping control briefs in firm, supportive fabric that gently smooths and shapes the stomach and waist.
+Seamless Panties: She wears seamless panties knit without visible seams so they stay invisible under fitted clothing.
+Laser-Cut Panties: She wears laser-cut panties with raw-cut, unstitched edges that lie flat for a smooth, invisible look.
+Thong: She wears a thong with a full front panel, wider side bands than a G-string, and a narrow back strip for more comfort.
+C-String: She wears a C-string, a strapless, curved piece of fabric held in place by a flexible frame, with no waistband.
+Vinyl Panties: She wears glossy vinyl panties with a shiny, wet-look finish and a full brief cut.
+Lace Panties: She wears lace panties made entirely of floral lace with scalloped edges for a delicate, romantic look.
+Mesh Panties: She wears sheer mesh panties in a light, breathable, airy fabric with a smooth fit.
+Cut-Out Panties: She wears cut-out panties with strappy open details at the front, back, or sides for a modern design.
+Bandeau Panties: She wears bandeau-style panties with minimal coverage and adjustable side ties.
+Brazilian Panties: She wears lace Brazilian panties with less back coverage than a bikini but more than a thong.
+Triangle Panties: She wears triangle panties with triangular fabric panels and lace-up ties at the sides.
+Side-Tie Panties: She wears side-tie panties with soft ribbon bows at each hip that make the fit adjustable.
+Sport Panties: She wears sport panties in moisture-wicking, stretchy fabric that offer support and freedom of movement.
+Period Panties: She wears period panties with a built-in absorbent, leak-proof layer for comfortable protection during menstruation.
+Maternity Panties: She wears maternity panties with a soft, stretchy high front panel designed to support a growing belly.
+Postpartum Panties: She wears postpartum panties with extra soft, high-waisted coverage and support for recovery after birth.
+Tummy Control Panties: She wears hold-in tummy control panties with a firm high-waist panel that smooths and supports the stomach.
+No-Show Panties: She wears invisible no-show panties with a low rise and seamless edges so they disappear under clothing.
+Adhesive Panties: She wears adhesive panties, a self-adhering fabric piece with no bands, designed for open-back or open-side dresses.
+Nipple Covers: She wears soft silicone nipple covers that discreetly cover the nipples, worn with or without a bra.
+Open-Crotch Panties: She wears open-crotch lace panties with a sheer floral lace body, a scalloped waistband, and an open gusset design, a lingerie-style piece with a delicate, decorative finish.
+Pearl String Panties: She wears pearl string panties with a thin elastic waistband and a single strand of smooth faux pearls running down the center in place of a fabric panel, a decorative, jewelry-inspired lingerie piece.
 """)
 
 
@@ -484,6 +591,7 @@ SLOTS = {
     "Backless Dresses": "full", "Tops": "top", "Blouses": "top",
     "Summer Dresses": "full", "Jumpsuits": "full", "Jerseys": "top", "Kurtis": "top",
     "Gymwear": "set", "Pants": "bottom", "Shorts": "bottom", "Jeans": "bottom",
+    "Burqa": "full", "Shalwars": "bottom", "Underwear": "bottom",
 }
 TOP_CATEGORIES = [name for name, slot in SLOTS.items() if slot == "top"]
 BOTTOM_CATEGORIES = [name for name, slot in SLOTS.items() if slot == "bottom"]

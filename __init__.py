@@ -14,6 +14,7 @@ from .nodes.combine_text_node import NODES as _combine_text
 from .nodes.compress_image_node import NODES as _compress_image
 from .nodes.control_panel_node import NODES as _control_panel
 from .nodes.crop_image_node import NODES as _crop_image
+from .nodes.film_grain_node import NODES as _film_grain
 from .nodes.get_lines_node import NODES as _get_lines
 from .nodes.image_to_svg_node import NODES as _image_to_svg
 from .nodes.image_info import NODES as _image_info
@@ -30,8 +31,10 @@ from .nodes.preview_anything_node import NODES as _preview_anything
 from .nodes.preview_audio_node import NODES as _preview_audio
 from .nodes.prompt_pad_node import NODES as _prompt_pad
 from .nodes.prompt_tags_node import NODES as _prompt_tags
+from .nodes.prompt_expander_node import NODES as _prompt_expander
 from .nodes.prompt_combiner_node import NODES as _prompt_combiner
 from .nodes.random_line_node import NODES as _random_line
+from .nodes.replace_text_advanced_node import NODES as _replace_text_advanced
 from .nodes.resolution_node import NODES as _resolution
 from .nodes.rotate_image_node import NODES as _rotate_image
 from .nodes.route66_node import NODES as _route66
@@ -51,7 +54,9 @@ from .nodes.ethnicity_selector_node import NODES as _ethnicity_selector
 from .nodes.style_modifier_node import NODES as _style_modifier
 from .nodes.heel_randomizer_node import NODES as _heel_randomizer
 from .nodes.body_type_node import NODES as _body_type
+from .nodes.bounding_boxes_node import NODES as _bounding_boxes
 from .nodes.pose_selector_node import NODES as _pose_selector
+from .nodes.simple_standing_poses_node import NODES as _simple_standing_poses
 from .nodes.wardrobe_selector_node import NODES as _wardrobe_selector
 from .nodes.show_text_node import NODES as _show_text
 from .nodes.slider_node import NODES as _slider
@@ -67,19 +72,23 @@ NODES: list[type[io.ComfyNode]] = [
     *_load_image,
     *_load_image_crop_area,
     *_image_info,
+    *_bounding_boxes,
     *_load_video,
     *_load_folder,
     *_model_combo,
     *_save_image,
     *_compress_image,
     *_image_to_svg,
+    *_film_grain,
     *_save_mp4,
     *_save_video,
     *_prompt_pad,
     *_prompt_tags,
     *_system_prompt,
+    *_prompt_expander,
     *_get_lines,
     *_combine_text,
+    *_replace_text_advanced,
     *_prompt_combiner,
     *_crop_image,
     *_upscale_latent,
@@ -111,6 +120,7 @@ NODES: list[type[io.ComfyNode]] = [
     *_lighting_enhance_prompt,
     *_body_type,
     *_pose_selector,
+    *_simple_standing_poses,
     *_wardrobe_selector,
 ]
 

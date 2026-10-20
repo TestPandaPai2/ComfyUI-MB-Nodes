@@ -11,7 +11,7 @@ Plain multiline text box with dynamic prompts (`{a|b|c}` wildcards) on by defaul
 Joins any number of text inputs with a chosen delimiter. Input slots auto-grow up to 32.
 
 ### Prompt Combiner (MB)
-Joins prompt parts (auto-growing slots) in order between a prefix and suffix. `tidy` cleans each part into a sentence; weighted parts are left alone. Live preview: any change upstream or a new connection re-runs just the combiner and its inputs.
+Joins prompt parts (auto-growing slots) in order between a prefix and suffix. `tidy` cleans each part into a sentence; weighted parts are left alone. Preview shows the result after each run.
 
 ### Random Line Select (MB)
 Splits text into lines, outputs one picked by a seed widget (wraps to the line count).
@@ -46,6 +46,9 @@ Compresses and converts images to jpg, webp or png in the output folder. Set a q
 ### Image To SVG (MB)
 Vectorizes images into color SVG with vtracer. Presets: Accurate (photo), Poster, Logo / flat, Black & white, or Custom for every tracer setting. Outputs one SVG string per image plus the SVG rendered back as an image to compare against the source, and shows the SVG in the node. `save` (on by default) writes each SVG to the output folder under `filename_prefix`. Needs `vtracer` and `resvg-py`.
 
+### Film Grain (MB)
+Adds film grain to images or video frames. Presets: Fine 35mm, Kodak Portra 400, Tri-X 400, 16mm, Super 8, or Custom to use the sliders for intensity, grain size, color amount and luminance response (grain strongest in midtones). Each frame in a batch gets its own grain; the seed keeps results repeatable.
+
 ### SaveMP4 (MB)
 Encodes an image batch to h264 mp4 with optional muxed audio; `trim_to_audio` and `preview_only` included.
 
@@ -57,6 +60,9 @@ Prompt scratchpad — save/load `.txt` files from a `SavedPrompts` folder. `text
 
 ### System Prompt (MB)
 Same idea for LLM system prompts, with its own library folder, an "Add folder..." picker for outside libraries, and `.txt`/`.md` loading.
+
+### Prompt Expander (MB)
+Expands a short prompt with a local Ollama model (`url`, default `http://127.0.0.1:11434`). Picking a `preset` fills the system prompt box, which is what gets sent, edits included. Eight presets are built in, including **System prompt creator**: describe the expander you want as the prompt, and it writes a system prompt you can paste into the box and save; **Save Preset** stores the box under `preset_name` in `ExpanderPresets.json`, **Delete Preset** removes a custom one, **Pick Model** lists installed models. `max_tokens` caps the reply (0 = no limit). `keep_alive` 0 unloads the model after each call to free VRAM.
 
 ### Get Lines (MB)
 Grows one output per line of incoming text (up to 32), auto-detected or pinned via right-click settings.
@@ -92,7 +98,7 @@ Up to 16 controls (slider, switch, dropdown, seed, text) in one node. Each contr
 Load Diffusion Model + Load CLIP + Load VAE combined into one node. Outputs MODEL, CLIP, and VAE.
 
 ### Wildcard Select (MB)
-Picks one item out of a `.txt` in ComfyUI's `wildcards` folder and wraps it in a prompt weight. `seed` is a KSampler-style widget mapped onto the item count, `weight` is a 0–5 slider, and `weight_format` decides whether the parentheses appear at weight 1.0 (`auto`), always, or never. Blank lines and `#` comments are skipped; `bypass` outputs an empty string.
+Picks one item out of a `.txt` in ComfyUI's `wildcards` folder and wraps it in a prompt weight. `seed` is a KSampler-style widget mapped onto the item count, `weight` is a 0–5 slider, and `weight_format` decides whether the parentheses appear at weight 1.0 (`auto`), always, or never. `prefix` and `suffix` are added outside the weight on `string`; `raw` stays the bare item. Blank lines and `#` comments are skipped; `bypass` outputs an empty string.
 
 ### Civitai Info (MB)
 Reads Civitai metadata for a model file. `folder` picks the model directory (checkpoints, diffusion_models, loras, text_encoders, vae) and `model` narrows to that folder's files. Sources are tried in order: the `.civitai.info` sidecar, a manager-written `.metadata.json`, the safetensors header's own `__metadata__`, and finally civitai.com by SHA256 when `online_lookup` is on (`allow_hashing` additionally lets it hash the file when no hash is known yet). Outputs model/version names, base model, creator, trained words, tags, plain-text description, model and download URLs, preview image URLs, AIR, SHA256, ids, an nsfw flag and the raw JSON. Nothing found means empty strings and `found` false, never an error.
@@ -117,6 +123,9 @@ Outfit description from a chosen or seeded-random category and style, including 
 
 ### Category outputs
 Every randomizer and selector also outputs the picked names on their own: `category`, plus `style` on nodes with a style inside the category.
+
+### Simple Standing Poses (MB)
+Dropdown of 30 simple standing poses, or a seeded-random one with `randomize_pose`. Outputs the full pose description with optional `weight`. `closeup` swaps in a chest-up close-up version of the same pose.
 
 ## Settings
 

@@ -51,6 +51,28 @@ ETHNICITIES = {
     "Inuit": "Light to medium brown skin, often with ruddy cheeks. Straight black hair, dark eyes with an epicanthic fold, a round, broad face, full cheeks, a small, low-bridged nose, and a compact, stocky build.",
 }
 
+# skin_tone slider steps 1..10, pale to very dark. 0 keeps the ethnicity's own
+# skin sentence; otherwise this replaces it.
+SKIN_TONES = [
+    "Pale, porcelain skin.",
+    "Fair skin.",
+    "Light skin.",
+    "Light olive skin.",
+    "Olive skin.",
+    "Tan skin.",
+    "Medium brown skin.",
+    "Brown skin.",
+    "Dark brown skin.",
+    "Very dark, deep ebony skin.",
+]
+
+
+def with_skin_tone(description, tone):
+    """Swap the leading skin sentence of a description for the slider's tone."""
+    if not tone:
+        return description
+    return f"{SKIN_TONES[tone - 1]} {description.split('. ', 1)[1]}"
+
 
 class MBEthnicitySelector(io.ComfyNode):
     @classmethod
@@ -66,14 +88,16 @@ class MBEthnicitySelector(io.ComfyNode):
                 io.Boolean.Input("randomize", default=False, tooltip="Pick the ethnicity from the seed instead of the ethnicity widget."),
                 io.Int.Input("seed", default=0, min=0, max=MAX_SEED, control_after_generate=True),
                 io.Float.Input("weight", default=1.0, min=0.0, max=2.0, step=0.05, display_mode=io.NumberDisplay.slider, tooltip="Prompt weight. At 1.0 the text is output as-is, otherwise as (text:weight)."),
+                io.Int.Input("age", default=25, min=18, max=90, display_mode=io.NumberDisplay.slider, tooltip="Age added to the start of the prompt."),
+                io.Int.Input("skin_tone", default=0, min=0, max=len(SKIN_TONES), display_mode=io.NumberDisplay.slider, tooltip="0 keeps the ethnicity's own skin tone. 1 pale, 2 fair, 3 light, 4 light olive, 5 olive, 6 tan, 7 medium brown, 8 brown, 9 dark brown, 10 very dark."),
             ],
             outputs=[io.String.Output("prompt"), io.String.Output("category")],
         )
 
     @classmethod
-    def execute(cls, ethnicity, randomize, seed, weight) -> io.NodeOutput:
+    def execute(cls, ethnicity, randomize, seed, weight, age, skin_tone) -> io.NodeOutput:
         name = random.Random(seed).choice(list(ETHNICITIES)) if randomize else ethnicity
-        return io.NodeOutput(weighted(f"{name}: {ETHNICITIES[name]}", weight), name)
+        return io.NodeOutput(weighted(f"{age}-year-old {name}: {with_skin_tone(ETHNICITIES[name], skin_tone)}", weight), name)
 
 
 NODES = [MBEthnicitySelector]

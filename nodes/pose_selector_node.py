@@ -278,6 +278,38 @@ POSES = {
         "Downward Dog": "She holds a downward dog pose with her hips raised high and her hands and feet pressed to the floor.",
         "Kneeling Forward Lean": "She kneels in side profile with her palms planted flat on the floor in front of her, leaning forward with a gently arched back, turning her face toward the camera with a bright, friendly smile.",
     },
+    "Squatting": {
+        "Deep Editorial Squat": "She sinks into a deep squat on the balls of her feet with her knees spread wide, forearms draped over her knees and wrists hanging loose, her back straight and chin lifted as she stares coolly into the lens.",
+        "Heels-Down Flat Squat": "She squats all the way down with her heels flat on the floor and her knees together, arms wrapped around her shins, resting her cheek on her knees as she gazes sideways at the camera.",
+        "Knees-Apart Elbow Rest": "She squats low with her knees pushed wide apart, elbows resting on her inner thighs and her hands clasped loosely between them, leaning slightly forward with a bold, direct stare.",
+        "Tiptoe Balance Squat": "She squats high on the very tips of her toes with her heels lifted, knees together and angled to one side, fingertips touching the floor beside her for balance, her head tilted with a soft expression.",
+        "One-Knee-Up Asymmetric Squat": "She squats with one knee raised high toward her chest and the other dropped low and turned outward, one arm draped over the raised knee and the other hand resting on the floor, creating a sharp, angular editorial shape.",
+        "Chin-on-Fist Squat": "She squats on the balls of her feet with her knees close together, one elbow propped on her knee and her chin resting on her fist, eyes locked on the camera with a pensive, unsmiling look.",
+        "Side-Profile Squat": "She squats in clean side profile with her back long and straight, arms extended forward over her knees with fingers relaxed, her chin raised and gaze fixed ahead to create a strong, graphic silhouette.",
+        "Back-View Squat Glance": "She squats facing away from the viewer on the balls of her feet, knees spread, one hand resting on the floor behind her as she twists to look back over her shoulder with a cool expression.",
+        "Hands-on-Head Squat": "She squats low with her knees apart and both hands resting on top of her head, elbows flared wide, her shoulders relaxed and her face tilted up toward the lens with a languid look.",
+        "Hair-Grab Squat": "She squats on her toes with her knees turned to one side, one hand gripping a handful of her hair at the crown and the other dangling over her knee, lips parted in a fierce, editorial stare.",
+        "Crossed-Arms Knee Squat": "She squats with her knees together and her arms crossed on top of them, resting her chin on her stacked forearms, peering up at the camera with wide, watchful eyes.",
+        "Wide Sumo Squat": "She squats in a wide, grounded sumo stance with her feet turned out and her hips low, palms pressed together at her chest, her spine tall and her expression strong and centered.",
+        "Coat-Draped Squat": "She squats low on the balls of her feet with an oversized coat pooling on the floor around her, the lapels gathered in one hand at her chest, her gaze moody and distant.",
+        "Fingers-to-Floor Squat": "She squats deep with her knees spread and both sets of fingertips pressed lightly to the floor between her feet like a sprinter at the blocks, her head raised and eyes intense.",
+        "Shoulder-Over Squat Turn": "She squats with her knees angled away from the camera, twisting her torso so one shoulder points toward the lens, her chin tucked over that shoulder and her eyes looking straight into the camera.",
+        "Squat with Hand on Cheek": "She squats on her toes with her knees together and angled to the side, one hand cupping her cheek and the other resting on her knee, her head tilted and her expression soft and dreamy.",
+        "Leaning-Back Squat": "She squats low and leans her weight back with both palms planted on the floor behind her, chest open and knees apart, her head tilted back slightly with a relaxed, effortless attitude.",
+        "Heel-Lifted Pigeon-Toe Squat": "She squats on her toes with her feet turned inward and her knees knocking together, hands resting on the tops of her knees, giving a quirky, playful editorial look with a deadpan stare.",
+        "Bag-in-Lap Squat": "She squats on the balls of her feet with a structured handbag balanced on her knees, both hands resting on its top handle, her posture upright and her gaze polished and composed.",
+        "Low Squat Over-the-Knee Peek": "She squats with her knees pulled tight together and up to her chest, peeking over the top of her knees so only her eyes and forehead show above them, her arms wrapped around her legs.",
+        "Wrist-Draped Lean Squat": "She squats with her knees apart and one wrist draped lazily over each knee, leaning her upper body forward toward the camera with her shoulders rolled in and her eyes heavy-lidded.",
+        "Street Corner Squat": "She squats casually on the edge of a curb with her knees wide and her forearms resting on them, one hand holding a pair of sunglasses, looking off to the side with urban nonchalance.",
+        "Twisted Torso Squat": "She squats facing one direction with her hips while twisting her shoulders fully toward the camera, one arm reaching across her body to rest on the opposite knee, creating a dynamic spiral line.",
+        "Elbows-In Prayer Squat": "She squats deep with her heels down and her elbows pressing her knees outward, hands joined at her chest in a prayer position, her face calm and her eyes closed.",
+        "Skirt-Gathered Squat": "She squats low with her flowing skirt gathered in both hands and pulled up around her knees, the fabric fanning out on the floor, her head tilted as she glances up through her lashes.",
+        "Hands-Clasped Overhead Squat": "She squats on the balls of her feet with her knees apart and both arms stretched straight up overhead, hands clasped together, her torso long and her gaze lifted upward.",
+        "Hat-Brim Squat": "She squats with her knees together and angled sideways, one hand holding the brim of a wide hat tilted low over one eye, the other arm resting on her knees, her lips set in a sultry pout.",
+        "Off-Balance Fashion Squat": "She squats unevenly with her weight thrown onto one foot and the other leg stretched out to the side, one hand on the floor for balance and the other flung outward, caught in an awkward, high-fashion angle.",
+        "Collarbone-Touch Squat": "She squats on her toes with her knees together, one hand resting lightly along her collarbone and the other dangling over her knee, her neck elongated and her chin turned toward one shoulder.",
+        "Low Squat Direct Gaze": "She squats close to the ground facing the camera head-on with her knees wide and hands hanging loosely between them, her shoulders squared and her eyes fixed directly on the lens in a raw, confrontational stare.",
+    },
     "Dynamic / Action": {
         "Mid-Air Leap": "She leaps through the air with her legs split and arms flung outward, caught at the peak of a joyful jump.",
         "Knee-Tuck Jump": "She jumps mid-air with one knee tucked up high and her arms pulled in, full of bouncy energy.",
@@ -295,6 +327,97 @@ POSES = {
     },
 }
 
+# Same poses framed from the chest up: only what stays in frame is described.
+# Categories missing here have no close-up option.
+CLOSEUPS = {
+    "Standing": {
+        "Stepping Hands-Behind-Head Pose": "Close-up shot from the chest up. Both hands are lifted behind her head, elbows framing her face, her shoulders swaying with a relaxed, confident rhythm and her chin tilted slightly upward.",
+        "Back-View Hand-on-Hip Stand": "Close-up shot from the shoulders up, seen from behind. She faces away with one hand touching the back of her head, her shoulders tilted as if surveying the view ahead.",
+        "Wide-Stance Back View": "Close-up shot from the shoulders up, seen from behind. She faces away with strong, square shoulders and her head held steady as she looks off into the distance.",
+        "Back-View Forward Lean": "Close-up shot from the shoulders up. She faces away, leaning forward slightly, glancing back over her shoulder with a curious expression.",
+        "Hands-on-Knees Bend": "Close-up shot from the chest up. She is bent forward with her shoulders rounded and her head lifted toward the viewer, lips parted as she catches her breath after a long run.",
+        "Thigh-Rest Lean": "Close-up shot from the chest up. Her shoulders lean slightly to one side and her head is tilted, eyes lowered toward something with mild interest.",
+        "Shy Standing Pose": "Close-up shot from the chest up. One hand is raised to her hair and the other held near her chest, her shoulders drawn in and her expression shy and hesitant.",
+        "Hip-Hand Leg Kick": "Close-up shot from the chest up. Her shoulders tilt with a playful bounce and she smiles brightly, as if posing for a cheerful photo.",
+        "Power Stance Hands Behind Head": "Close-up shot from the chest up. Both hands are lifted behind her head, chest open and shoulders back, looking bold and self-assured.",
+        "Open-Arms Stand": "Close-up shot from the chest up. Her arms open slightly away from her body toward the edges of the frame, her expression warm, as if welcoming someone.",
+        "Side-Bend Stretch": "Close-up shot from the chest up. She leans to one side with one arm arching over her head, her neck and shoulders forming a long, graceful curve.",
+        "Forward Reach": "Close-up shot from the chest up. She leans slightly toward the viewer with both arms extending forward out of frame, her eyes focused as if reaching to catch something.",
+        "Balancing Arms Out": "Close-up shot from the chest up. Her arms stretch wide to either side out of frame, her shoulders level and her face focused as if balancing along a narrow ledge.",
+        "Back-View Wave": "Close-up shot from the shoulders up, seen from behind. She faces away with one arm raised in a cheerful wave beside her head, turning slightly to say goodbye.",
+        "Hand-to-Chest Stand": "Close-up shot from the chest up. She is in side view with a hand pressed gently to her chest, her head bowed slightly, looking touched or deep in thought.",
+        "Raised-Knee Stand": "Close-up shot from the chest up. Her arms are bent at her sides for balance and her shoulders lifted lightly, her expression bright as if mid-step or mid-dance.",
+        "Side Profile Stand": "Close-up shot from the chest up. She is in clean side profile with straight, relaxed posture, gazing calmly ahead.",
+        "Turning Look-Back": "Close-up shot from the chest up. Her back is partly turned as she twists to look behind her, one hand raised near her shoulder in surprise.",
+        "Slim Relaxed Stand": "Close-up shot from the chest up. Her shoulders are loose and light, her face calm and simple, as if waiting patiently.",
+        "Leaning Reach": "Close-up shot from the chest up. She leans forward with one arm extending outward toward the edge of the frame, as if reaching for a door handle or offering a hand.",
+        "Thoughtful Bend": "Close-up shot from the chest up. Her shoulders are slightly hunched and her head lowered, one hand near her face, lost in quiet contemplation.",
+        "Shading-Eyes Lookout": "Close-up shot from the chest up. One hand is raised to shade her eyes as she peers far into the distance.",
+        "Dance Pose": "Close-up shot from the chest up. Her hands are raised near her face and her shoulders sway as she moves to an upbeat rhythm.",
+        "Flexing Stand": "Close-up shot from the chest up. Her arms are bent and fists raised beside her face, flexing playfully like she's showing off her strength.",
+        "Walking Step": "Close-up shot from the chest up. Her shoulders swing naturally with her stride and her gaze is fixed ahead with easy purpose.",
+        "Casual Hip Rest": "Close-up shot from the chest up. Her shoulders tilt as her weight shifts to one side, her expression relaxed and casually confident.",
+        "Classic Hand-on-Hip Stand": "Close-up shot from the chest up. Her shoulders tilt as her weight shifts and her chin is lifted as she gazes off to the side with effortless confidence.",
+        "Hands-in-Pockets Profile Turn": "Close-up shot from the chest up. She is in a sleek three-quarter turn with her head turned in profile, shoulders long and elegant like a model between shots.",
+        "Hand-in-Hair Crossed Leg": "Close-up shot from the chest up. One hand runs through her hair and her loose shirt slips casually at the shoulder as she gives the viewer a relaxed, cool look.",
+        "Blazer Pockets Power Pose": "Close-up shot from the chest up. She faces the viewer squarely in an open blazer, shoulders set and chin raised in a polished, self-assured look.",
+        "Profile Stride with Tote": "Close-up shot from the chest up. She is in side profile mid-stride, the strap of a tote bag over her shoulder, moving with graceful purpose.",
+        "Runway Walk": "Close-up shot from the chest up. She walks toward the viewer with a confident runway gaze, hair blowing back as if a breeze follows her.",
+        "Mid-Stride Look Back": "Close-up shot from the chest up. She turns her head to glance back over her shoulder mid-stride with a cool, composed expression.",
+        "Profile Walk in Blazer": "Close-up shot from the chest up. She is in side profile mid-step, her blazer hanging loosely from her shoulders and her ponytail swinging behind her.",
+        "Back-View Hands on Hips": "Close-up shot from the shoulders up, seen from behind. She faces away with her elbows angled out at her sides, her head turned slightly as she surveys the scene.",
+        "Back-View Over-Shoulder Glance": "Close-up shot from the shoulders up. She faces away, tilting her head to glance back over her shoulder with quiet curiosity.",
+        "Back-View Arm Raised": "Close-up shot from the shoulders up, seen from behind. She faces away with one arm lifted to rest on her head, her neck and shoulders forming a graceful curve.",
+        "Slipping Shirt Look Back": "Close-up shot from the shoulders up. She faces away with an oversized shirt slipping off one shoulder, turning her head to look softly back.",
+        "Back-View Clasped Hands": "Close-up shot from the shoulders up, seen from behind. She faces away with straight, calm shoulders and a poised, patient posture.",
+        "Wide-Stance Pocket Pose": "Close-up shot from the chest up. She leans back slightly with her shoulders relaxed, looking at the viewer with casual, laid-back confidence.",
+        "Relaxed Contrapposto": "Close-up shot from the chest up. Her shoulders tilt gently as her weight rests on one hip, her expression natural and easygoing.",
+        "Sassy Hand on Hip": "Close-up shot from the chest up. Her shoulders are squared and her head held high with attitude, one brow slightly raised.",
+        "Back-View Hands Behind Head": "Close-up shot from the shoulders up, seen from behind. She faces away with both hands lifted behind her head, elbows wide as she stretches her shoulders.",
+        "Hand-on-Hip Upward Gaze": "Close-up shot from the chest up. Her head is tipped upward as she looks toward the sky, as if watching something pass overhead.",
+        "Front-Facing Hip Rest": "Close-up shot from the chest up. She faces forward with relaxed shoulders, her expression calm and friendly.",
+        "Forward Walk": "Close-up shot from the chest up. She walks toward the viewer, shoulders moving gently with her steps, her gaze fixed ahead with quiet focus.",
+        "Tool-Over-Shoulder Stance": "Close-up shot from the chest up. She holds a long tool raised beside her shoulder, her chin up, looking ready for adventure.",
+        "Thoughtful Chin Touch": "Close-up shot from the chest up. One hand is raised to touch her chin, her head tilted as she considers something carefully.",
+        "Hand Behind Head Front Pose": "Close-up shot from the chest up. One hand is lifted behind her head, elbow framing her face, in a relaxed, confident pose.",
+        "Hand Behind Head Back Pose": "Close-up shot from the shoulders up, seen from behind. She faces away with one hand behind her head, elbow raised in a graceful, balanced pose.",
+        "Upward Glance Hip Rest": "Close-up shot from the chest up. She turns her face upward and to the side with a dreamy, distant look.",
+        "Overhead Arms Clasp": "Close-up shot from the chest up. Both arms are raised above her head with her hands clasped together, her neck and shoulders lengthened in a relaxed stretch.",
+        "Casual Waist-Up Hip Rest": "Close-up shot from the chest up. Her shoulders tilt slightly in a calm, easy pose as she looks at the viewer.",
+        "Confident Arms-Down Stand": "Close-up shot from the chest up. Her shoulders are relaxed and level as she meets the viewer's eyes with a cool, self-assured stare.",
+        "Hand-Behind-Head Waist Rest": "Close-up shot from the chest up. One hand is lifted behind her head, her shoulders angled in a relaxed, casual pose.",
+        "Shy Shirt Tug": "Close-up shot from the chest up. Her shoulders are drawn in shyly in an oversized T-shirt, her cheeks blushing and lips pouting in shy embarrassment.",
+        "Reaching to Viewer": "Close-up shot from the chest up. One arm stretches toward the viewer with fingers spread as if inviting them closer, her head tilted with a soft, warm expression.",
+        "Thoughtful Face Touch": "Close-up shot from the chest up. One hand is lifted to her cheek and her eyes are half-closed, looking calm and lost in a quiet thought.",
+        "Confident Hands on Hips": "Close-up shot from the chest up. Her elbows angle out at her sides, chest open and head held high in a bold, self-assured look.",
+        "Over-the-Shoulder Upward Glance": "Close-up shot from the chest up. Her back is partly turned as she twists to look up and over her shoulder, her neck forming a graceful curve.",
+        "Relaxed Hip-Hand Stand": "Close-up shot from the chest up. Her shoulders are easy and natural, her expression relaxed as she looks at the viewer.",
+        "Hands-on-Thighs Lean": "Close-up shot from the chest up. She leans slightly toward the viewer with her shoulders forward, looking with soft, curious attention.",
+        "Overhead Arm Frame": "Close-up shot from the chest up. Both arms are raised and folded over the top of her head, framing her face as she gazes calmly ahead.",
+        "Hand-on-Head Stand": "Close-up shot from the chest up. One hand rests on top of her head, her expression gentle and slightly dreamy.",
+        "Classic Hip Pose": "Close-up shot from the chest up. Her shoulders are relaxed and her chin lifted with poise as she looks at the viewer.",
+        "Arms Behind Head Stretch": "Close-up shot from the chest up. Both hands are clasped behind her head, elbows open wide, her shoulders lengthened in a relaxed stretch.",
+        "Side Forward Lean": "Close-up shot from the chest up. She is in side profile, leaning forward with her head extended slightly, as if peering at something interesting.",
+        "Side-View Glance Back": "Close-up shot from the chest up. She is in side profile, turning her head to glance back over her shoulder with a soft, curious look.",
+        "Toasting Pose": "Close-up shot from the chest up. She holds a wine glass raised in one hand and gestures playfully with the other, as if celebrating with friends.",
+        "Sipping Drink Pose": "Close-up shot from the chest up. She lifts a glass to her lips with one hand, her shoulders tilted in a relaxed party mood.",
+        "Front Neutral Stand": "Close-up shot from the chest up. She faces forward with level, relaxed shoulders and a calm, balanced expression.",
+        "Three-Quarter Front Stand": "Close-up shot from the chest up. She is angled three-quarters toward the viewer with relaxed shoulders and a calm expression.",
+        "Back-View Neutral Stand": "Close-up shot from the shoulders up, seen from behind. She faces completely away with level shoulders, steady and still.",
+        "Back Three-Quarter Stand": "Close-up shot from the shoulders up. She faces away at a three-quarter angle, her head turned slightly to the side as she looks off into the distance.",
+        "Hair Flip Mid-Turn": "Close-up shot from the chest up. She is mid-turn with her hair flipping through the air across the frame, one hand trailing behind it.",
+        "Leaning Against Wall": "Close-up shot from the chest up. One shoulder leans against a wall and her arms are loosely crossed, her expression relaxed.",
+        "Hands in Back Pockets": "Close-up shot from the shoulders up. She faces away, glancing back over one shoulder at the viewer.",
+        "Crossed Arms Confident Stand": "Close-up shot from the chest up. Her arms are crossed over her chest with a cool, self-assured expression.",
+        "Holding Phone Mirror Selfie": "Close-up shot from the chest up. She holds her phone up at chest height as if taking a mirror selfie, her shoulders tilted to one side.",
+        "Adjusting Sunglasses": "Close-up shot from the chest up. One hand lifts her sunglasses at the bridge of her nose, her expression cool and composed.",
+        "Tiptoe Stretch": "Close-up shot from the chest up. Both arms reach high overhead out of frame, her neck and shoulders stretched long.",
+        "Hand on Neck Glance Down": "Close-up shot from the chest up. One hand rests on the back of her neck as she gazes down shyly.",
+        "Coat Over Shoulders": "Close-up shot from the chest up. A coat is draped over her shoulders and she holds its lapels closed with one hand.",
+        "Crossed-Ankle Lean": "Close-up shot from the chest up. She leans back slightly with relaxed shoulders, her expression casual and at ease.",
+    },
+}
+
 
 class MBPoseSelector(io.ComfyNode):
     @classmethod
@@ -305,7 +428,8 @@ class MBPoseSelector(io.ComfyNode):
             category="MBNodes",
             inputs=[
                 io.DynamicCombo.Input("category", options=[
-                    io.DynamicCombo.Option(name, [io.Combo.Input("pose", options=list(poses), tooltip="Pose used when randomize_pose is off.")])
+                    io.DynamicCombo.Option(name, [io.Combo.Input("pose", options=list(poses), tooltip="Pose used when randomize_pose is off.")]
+                        + ([io.Boolean.Input("closeup", default=False, tooltip="Describe the same pose as a chest-up close-up shot.")] if name in CLOSEUPS else []))
                     for name, poses in POSES.items()
                 ]),
                 io.Boolean.Input("randomize_pose", default=False, tooltip="Pick a pose from the selected category using the seed instead of the pose widget."),
@@ -317,9 +441,10 @@ class MBPoseSelector(io.ComfyNode):
 
     @classmethod
     def execute(cls, category, randomize_pose, seed, weight) -> io.NodeOutput:
-        poses = POSES[category["category"]]
+        name = category["category"]
+        poses = CLOSEUPS[name] if category.get("closeup") else POSES[name]
         pose = random.Random(seed).choice(list(poses)) if randomize_pose else category["pose"]
-        return io.NodeOutput(weighted(poses[pose], weight), category["category"], pose)
+        return io.NodeOutput(weighted(poses[pose], weight), name, pose)
 
 
 NODES = [MBPoseSelector]

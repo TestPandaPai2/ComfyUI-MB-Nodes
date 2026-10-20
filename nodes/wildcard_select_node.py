@@ -102,6 +102,16 @@ class MBWildcardSelect(io.ComfyNode):
                     socketless=True,
                     tooltip="auto: skip the parentheses at weight 1.0. always: always wrap. off: never wrap.",
                 ),
+                io.String.Input(
+                    "prefix",
+                    default="",
+                    tooltip="Text added before the weighted item. Include your own space or comma.",
+                ),
+                io.String.Input(
+                    "suffix",
+                    default="",
+                    tooltip="Text added after the weighted item. Include your own space or comma.",
+                ),
                 io.Boolean.Input(
                     "bypass",
                     default=False,
@@ -117,7 +127,7 @@ class MBWildcardSelect(io.ComfyNode):
         )
 
     @classmethod
-    def execute(cls, wildcard, seed, weight, weight_format, bypass) -> io.NodeOutput:
+    def execute(cls, wildcard, seed, weight, weight_format, bypass, prefix="", suffix="") -> io.NodeOutput:
         if bypass:
             return io.NodeOutput("", "", 0, 0)
 
@@ -128,11 +138,11 @@ class MBWildcardSelect(io.ComfyNode):
         index = seed % len(items)
         item = items[index]
         return io.NodeOutput(
-            apply_weight(item, weight, weight_format), item, index + 1, len(items)
+            prefix + apply_weight(item, weight, weight_format) + suffix, item, index + 1, len(items)
         )
 
     @classmethod
-    def fingerprint_inputs(cls, wildcard, seed, weight, weight_format, bypass):
+    def fingerprint_inputs(cls, wildcard, seed, weight, weight_format, bypass, prefix="", suffix=""):
         # Editing the wildcard file has to re-run the node; a fixed seed with an
         # untouched file must still hit the cache.
         path = folder_paths.get_full_path(WILDCARD_FOLDER, wildcard) if wildcard else None
@@ -140,7 +150,7 @@ class MBWildcardSelect(io.ComfyNode):
             mtime = os.path.getmtime(path) if path else 0
         except OSError:
             mtime = 0
-        return f"{wildcard}|{seed}|{weight}|{weight_format}|{bypass}|{mtime}"
+        return f"{wildcard}|{seed}|{weight}|{weight_format}|{bypass}|{prefix}|{suffix}|{mtime}"
 
 
 NODES = [MBWildcardSelect]

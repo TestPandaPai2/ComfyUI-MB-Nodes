@@ -64,6 +64,12 @@ def test_off_never_wraps(wildcard_dir):
     assert out.args[0] == "red"
 
 
+def test_prefix_and_suffix_sit_outside_the_weight(wildcard_dir):
+    out = MBWildcardSelect.execute("colors.txt", 0, 1.25, "auto", False, "a ", " dress")
+    assert out.args[0] == "a (red:1.25) dress"
+    assert out.args[1] == "red"
+
+
 def test_parentheses_in_an_item_are_escaped(wildcard_dir):
     (wildcard_dir / "tricky.txt").write_text("a (b) c\n", encoding="utf-8")
     folder_paths.filename_list_cache.pop(ws.WILDCARD_FOLDER, None)

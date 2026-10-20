@@ -153,6 +153,26 @@ HAIR_COLORS = [
     "ash blonde", "platinum blonde", "silver gray", "pastel pink", "lavender",
 ]
 
+HAIR_TEXTURES = {
+    "Silky": "silky and smooth, with a soft, flowing sheen",
+    "Glossy": "glossy and mirror-shiny, reflecting the light in bright highlights",
+    "Wet": "wet and slick, clinging together in dark, dripping strands",
+    "Damp": "slightly damp and air-drying, with loose, separated strands",
+    "Rough": "rough and coarse, with a dry, matte, textured finish",
+    "Frizzy": "frizzy, with a soft halo of flyaways and fuzzy strands",
+    "Wavy": "naturally wavy, with soft, uneven bends through the length",
+    "Curly": "naturally curly, with springy, defined ringlets",
+    "Coily": "tightly coiled, with dense, springy zigzag texture",
+    "Crimped": "crimped into tight, zigzag ridges from root to tip",
+    "Voluminous": "full and voluminous, lifted at the roots with lots of body",
+    "Fine": "fine and thin, light and wispy with little volume",
+    "Thick": "thick and dense, heavy with a full, abundant feel",
+    "Messy": "messy and tousled, with piece-y, undone strands",
+    "Windswept": "windswept, with loose strands blowing across her face",
+    "Sleek": "sleek and flat, pressed perfectly straight with no flyaways",
+    "Matte": "matte and soft, with a dry-shampoo, lived-in texture",
+    "Feathery": "light and feathery, with soft, airy ends",
+}
 
 class MBHairstyleRandomizer(io.ComfyNode):
     """One seed drives every random pick: the style inside the chosen length
@@ -173,6 +193,7 @@ class MBHairstyleRandomizer(io.ComfyNode):
                 ]),
                 io.Boolean.Input("random_style", default=False, tooltip="Pick the style from the selected category using the seed instead of the style widget."),
                 io.Combo.Input("color", options=["none", "random", *HAIR_COLORS], default="none", tooltip="Hair color added to the prompt. \"random\" picks one from the seed."),
+                io.Combo.Input("texture", options=["none", "random", *HAIR_TEXTURES], default="none", tooltip="Hair texture added to the prompt. \"random\" picks one from the seed."),
                 io.Boolean.Input("skip_prefix", default=False, tooltip="Drop the leading \"She has\" from the description."),
                 io.Int.Input("seed", default=0, min=0, max=MAX_SEED, control_after_generate=True),
                 io.Float.Input("weight", default=1.0, min=0.0, max=2.0, step=0.05, display_mode=io.NumberDisplay.slider, tooltip="Prompt weight. At 1.0 the text is output as-is, otherwise as (text:weight)."),
@@ -181,7 +202,7 @@ class MBHairstyleRandomizer(io.ComfyNode):
         )
 
     @classmethod
-    def execute(cls, category, random_style, color, skip_prefix, seed, weight) -> io.NodeOutput:
+    def execute(cls, category, random_style, color, skip_prefix, seed, weight, texture="none") -> io.NodeOutput:
         rng = random.Random(seed)
         styles = HAIRSTYLES[category["category"]]
         style = rng.choice(list(styles)) if random_style else category["style"]
@@ -193,6 +214,10 @@ class MBHairstyleRandomizer(io.ComfyNode):
             color = rng.choice(HAIR_COLORS)
         if color != "none":
             text += f" Her hair is {color}."
+        if texture == "random":
+            texture = rng.choice(list(HAIR_TEXTURES))
+        if texture != "none":
+            text += f" Her hair texture is {HAIR_TEXTURES[texture]}."
         return io.NodeOutput(weighted(text, weight), category["category"], style)
 
 

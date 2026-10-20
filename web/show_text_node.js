@@ -23,10 +23,10 @@ app.registerExtension({
                 widget.inputEl.readOnly = true;
                 widget.inputEl.style.opacity = 0.7;
                 widget.serialize = false; // shown value is re-derived from the run, not saved
+                // Size once when the box first appears; later runs keep whatever size the user set.
+                if (nodeData.name === "MBShowText") resizeToContent(this);
             }
             widget.value = value;
-
-            if (nodeData.name === "MBShowText") resizeToContent(this);
         };
     },
 });
