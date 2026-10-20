@@ -1,11 +1,6 @@
 import comfy.samplers
-import comfy.utils
 import nodes
 from comfy_api.latest import io
-
-UPSCALE_METHOD = "nearest-exact"  # matches the fast/cheap default MBUpscaleLatent uses
-MIN_MULTIPLIER = 0.05
-MAX_MULTIPLIER = 8.0
 
 
 class MBSampler(io.ComfyNode):
@@ -49,54 +44,6 @@ class MBSampler(io.ComfyNode):
                     default=comfy.samplers.KSampler.SCHEDULERS[0],
                 ),
                 io.Float.Input("denoise", default=1.0, min=0.0, max=1.0, step=0.01),
-                io.Int.Input(
-                    "start_step",
-                    default=0,
-                    min=0,
-                    max=10000,
-                    advanced=True,
-                    tooltip="Step index to start sampling at. Use with end_step to run only part of the schedule (e.g. base -> refiner chains).",
-                ),
-                io.Int.Input(
-                    "end_step",
-                    default=10000,
-                    min=0,
-                    max=10000,
-                    advanced=True,
-                    tooltip="Step index to stop sampling at. Leave at 10000 to sample through the last step.",
-                ),
-                io.Boolean.Input(
-                    "add_noise",
-                    default=True,
-                    label_on="add",
-                    label_off="skip",
-                    advanced=True,
-                    tooltip="Add noise before sampling. Turn off when continuing from a latent already partially sampled by an earlier MBSampler.",
-                ),
-                io.Boolean.Input(
-                    "return_with_leftover_noise",
-                    default=False,
-                    label_on="leftover",
-                    label_off="full",
-                    advanced=True,
-                    tooltip="Return the latent still carrying its remaining noise instead of fully denoising -- for feeding into a subsequent MBSampler stage.",
-                ),
-                io.Boolean.Input(
-                    "upscale_latent",
-                    default=False,
-                    label_on="upscale",
-                    label_off="off",
-                    tooltip="Upscale the incoming latent by the multiplier below before sampling.",
-                ),
-                io.Float.Input(
-                    "upscale_multiplier",
-                    default=1.5,
-                    min=MIN_MULTIPLIER,
-                    max=MAX_MULTIPLIER,
-                    step=0.05,
-                    display_mode=io.NumberDisplay.slider,
-                    tooltip="Scale factor applied to the incoming latent's width and height.",
-                ),
                 io.Boolean.Input(
                     "decode_image",
                     default=True,
@@ -133,20 +80,10 @@ class MBSampler(io.ComfyNode):
     @classmethod
     def execute(
         cls, model, positive, negative, latent_image, seed, steps, cfg, sampler_name, scheduler,
-        denoise, start_step, end_step, add_noise, return_with_leftover_noise,
-        upscale_latent, upscale_multiplier, decode_image, vae, tiled_vae_decoding, tile_size, overlap,
+        denoise, decode_image, tiled_vae_decoding, tile_size, overlap, vae=None,
     ) -> io.NodeOutput:
-        if upscale_latent and upscale_multiplier != 1.0:
-            tensor = latent_image["samples"]
-            width = max(1, round(tensor.shape[-1] * upscale_multiplier))
-            height = max(1, round(tensor.shape[-2] * upscale_multiplier))
-            latent_image = {key: value for key, value in latent_image.items() if key != "noise_mask"}
-            latent_image["samples"] = comfy.utils.common_upscale(tensor, width, height, UPSCALE_METHOD, "disabled")
-
         (out_latent,) = nodes.common_ksampler(
             model, seed, steps, cfg, sampler_name, scheduler, positive, negative, latent_image, denoise=denoise,
-            disable_noise=not add_noise, start_step=start_step, last_step=end_step,
-            force_full_denoise=not return_with_leftover_noise,
         )
 
         image = None

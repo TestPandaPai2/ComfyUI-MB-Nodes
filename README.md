@@ -77,7 +77,7 @@ Rotates an image 90, 180 or 270 degrees. The three toggles behave like radio but
 Scales a latent by a multiplier from a row of clickable buttons (customizable via right-click settings).
 
 ### Sampler (MB)
-KSampler + VAE decode in one node, with model/positive/negative/vae pass-through for chaining stages. Live sampling preview included. `upscale_latent` scales the incoming latent before sampling; `decode_image` toggles the VAE decode (skipped gracefully if no vae is connected); `tiled_vae_decoding` swaps in tiled decode for large images.
+KSampler + VAE decode in one node, with model/positive/negative/vae pass-through for chaining stages. Live sampling preview included. `decode_image` toggles the VAE decode (skipped gracefully if no vae is connected); `tiled_vae_decoding` swaps in tiled decode for large images.
 
 ### Branch Runner (MB)
 A no-op sink with a **Run Branch** button that queues only the branch connected to it (via ComfyUI's partial execution), or the branch under whichever output node you last clicked if left unwired.
