@@ -14,8 +14,10 @@ import { openDialog, radioRow } from "./dialog.js";
 // currently-shipped mechanism, pulled from
 // comfyui_frontend_package/static/assets/*.js.map -> extensions/core/widgetInputs.ts.
 // This file generalizes it from one output to N, tagging each output slot and
-// widget with the settings record it belongs to (`mbRecord`) so lanes can be
-// added, removed and reordered without any index-juggling.
+// widget with the id of the settings record it belongs to (`mbLane`) so lanes
+// can be added, removed and reordered without any index-juggling. Ids, not
+// object identity: node.properties is reactive, so a record read back from
+// properties.controls is a proxy that never === the raw object.
 
 const NODE_ID = "MBControlPanel";
 const MAX_CONTROLS = 16;
@@ -37,6 +39,7 @@ function chainCallback(prevCallback, fn) {
 
 function newRecord() {
     return {
+        id: crypto.randomUUID(),
         name: null,
         widgetType: null,
         kind: null,
@@ -52,12 +55,22 @@ function newRecord() {
     };
 }
 
+// output.links is deprecated and LGraphNode has no public per-slot link getter.
+function outputLinks(node, slot) {
+    if (!node.graph) return [];
+    return [...node.graph.links.values()].filter((l) => l.origin_id === node.id && l.origin_slot === slot);
+}
+
 function findOutputIndex(node, record) {
-    return node.outputs?.findIndex((o) => o.mbRecord === record) ?? -1;
+    return node.outputs?.findIndex((o) => o.mbLane === record.id) ?? -1;
+}
+
+function recordOf(node, output) {
+    return node.properties.controls.find((r) => r.id === output?.mbLane);
 }
 
 function findWidget(node, record) {
-    return node.widgets?.find((w) => w.mbRecord === record);
+    return node.widgets?.find((w) => w.mbLane === record.id);
 }
 
 function ensureProperties(node) {
@@ -67,7 +80,7 @@ function ensureProperties(node) {
 
 function relabelOutputs(node) {
     node.outputs?.forEach((out, i) => {
-        const record = out.mbRecord;
+        const record = recordOf(node, out);
         if (!record) return;
         out.name = `value_${i + 1}`;
         out.label = record.name || `value_${i + 1}`;
@@ -99,7 +112,7 @@ function pushValueTo(targetNode, input, value) {
 
 function randomSeed(options = {}) {
     const min = options.min ?? 0;
-    const max = options.max ?? Number.MAX_SAFE_INTEGER;
+    const max = Math.min(options.max ?? Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER);
     return Math.floor(min + Math.random() * (max - min));
 }
 
@@ -130,12 +143,12 @@ function applyColor(node, hex) {
 const SEED_BTN_H = 22;
 
 function addSeedButtons(node, record) {
-    if ((node.widgets ?? []).some((w) => w.mbSeedButtonsFor === record)) return;
+    if ((node.widgets ?? []).some((w) => w.mbSeedButtonsFor === record.id)) return;
 
     const widget = {
         type: "mb_cp_seed_buttons",
         name: "seed_buttons",
-        mbSeedButtonsFor: record,
+        mbSeedButtonsFor: record.id,
         serialize: false,
         options: { serialize: false },
         _rects: [],
@@ -200,18 +213,9 @@ function addSeedButtons(node, record) {
 
 // --- lane widget lifecycle ---------------------------------------------------
 
-// The toggle widget's on/off label option key has gone by a couple of names
-// across ComfyUI versions -- set both so whichever one the running widget
-// reads picks it up.
 function setBoolLabels(widget, on, off) {
-    if (on) {
-        widget.options.on = on;
-        widget.options.label_on = on;
-    }
-    if (off) {
-        widget.options.off = off;
-        widget.options.label_off = off;
-    }
+    if (on) widget.options.on = on;
+    if (off) widget.options.off = off;
 }
 
 function applyOverrides(node, record, widget, type) {
@@ -227,7 +231,7 @@ function applyOverrides(node, record, widget, type) {
     } else if (type === "COMBO") {
         const full = Array.isArray(widget.options.values) ? widget.options.values.slice() : [];
         node.__cpFullValues = node.__cpFullValues ?? new Map();
-        node.__cpFullValues.set(record, full);
+        node.__cpFullValues.set(record.id, full);
         if (record.comboVisible?.length) {
             const filtered = full.filter((v) => record.comboVisible.includes(v));
             if (filtered.length) {
@@ -257,10 +261,12 @@ function buildLaneWidget(node, record, input) {
     node.outputs[idx].type = type;
 
     const inputData = [Array.isArray(cfg[0]) ? cfg[0] : type, opts];
-    const built = ComfyWidgets[type](node, `ctrl_${idx}`, inputData, app);
+    node.__cpWidgetSeq = (node.__cpWidgetSeq ?? 0) + 1;
+    const built = ComfyWidgets[type](node, `ctrl_${node.__cpWidgetSeq}`, inputData, app);
     const widget = built?.widget;
     if (!widget) return;
-    widget.mbRecord = record;
+    widget.mbLane = record.id;
+    widget.mbDefault = opts.default;
 
     record.widgetType = type;
     record.kind =
@@ -286,25 +292,21 @@ function teardownLane(node, record) {
         node.outputs[idx].type = ANY;
     }
     node.widgets = (node.widgets ?? []).filter((w) => {
-        if (w.mbRecord !== record && w.mbSeedButtonsFor !== record) return true;
+        if (w.mbLane !== record.id && w.mbSeedButtonsFor !== record.id) return true;
         w.onRemove?.();
         return false;
     });
     record.widgetType = null;
     record.kind = null;
-    node.__cpFullValues?.delete(record);
+    node.__cpFullValues?.delete(record.id);
 }
 
 function applyLane(node, record) {
     const idx = findOutputIndex(node, record);
     if (idx < 0) return;
-    const links = node.outputs[idx]?.links;
-    if (!links?.length || !node.graph) return;
     const widget = findWidget(node, record);
     if (!widget) return;
-    for (const linkId of links) {
-        const link = node.graph.links[linkId];
-        if (!link) continue;
+    for (const link of outputLinks(node, idx)) {
         const targetNode = node.graph.getNodeById(link.target_id);
         const input = targetNode?.inputs?.[link.target_slot];
         if (targetNode && input) pushValueTo(targetNode, input, widget.value);
@@ -320,13 +322,12 @@ function syncAllLanes(node) {
         for (const record of node.properties.controls) {
             const idx = findOutputIndex(node, record);
             if (idx < 0) continue;
-            const output = node.outputs[idx];
-            const hasLink = (output.links?.length ?? 0) > 0;
+            const link = outputLinks(node, idx)[0];
+            const hasLink = !!link;
             const widget = findWidget(node, record);
 
             if (hasLink && !widget) {
-                const link = node.graph?.links?.[output.links[0]];
-                const targetNode = link ? node.graph.getNodeById(link.target_id) : null;
+                const targetNode = node.graph.getNodeById(link.target_id);
                 const input = targetNode?.inputs?.[link.target_slot];
                 if (targetNode && input) buildLaneWidget(node, record, input);
             } else if (!hasLink && widget) {
@@ -346,7 +347,7 @@ function relayoutWidgets(node) {
     for (const record of node.properties.controls) {
         const vw = findWidget(node, record);
         if (vw) ordered.push(vw);
-        const bw = (node.widgets ?? []).find((w) => w.mbSeedButtonsFor === record);
+        const bw = (node.widgets ?? []).find((w) => w.mbSeedButtonsFor === record.id);
         if (bw) ordered.push(bw);
     }
     ensureAddButton(node);
@@ -370,12 +371,11 @@ function ensureAddButton(node) {
     btn.mbAddButton = true;
 }
 
-function addLane(node) {
+function addLane(node, record = newRecord()) {
     if (node.properties.controls.length >= MAX_CONTROLS) return;
-    const record = newRecord();
     node.properties.controls.push(record);
     const out = node.addOutput(`value_${node.properties.controls.length}`, ANY);
-    out.mbRecord = record;
+    out.mbLane = record.id;
     relabelOutputs(node);
 }
 
@@ -383,7 +383,7 @@ function removeLane(node, record) {
     teardownLane(node, record);
     const idx = findOutputIndex(node, record);
     if (idx >= 0) node.removeOutput(idx);
-    const ci = node.properties.controls.indexOf(record);
+    const ci = node.properties.controls.findIndex((r) => r.id === record.id);
     if (ci >= 0) node.properties.controls.splice(ci, 1);
     relabelOutputs(node);
     relayoutWidgets(node);
@@ -392,29 +392,14 @@ function removeLane(node, record) {
 
 // --- workflow load / fresh-node bring-up -----------------------------------
 
+// Values live on the record (set on every widget change, see buildLaneWidget),
+// so restore is keyed by lane, not position.
 function restoreWidgetValues(node) {
-    // Primary path: value lives directly on the record (set on every widget
-    // change, see buildLaneWidget), so restore is keyed by lane, not position
-    // -- correct even if a lane's link target went missing and its widget
-    // never got built.
-    let usedRecordValues = false;
     for (const record of node.properties.controls) {
         if (record.value === undefined) continue;
         const widget = findWidget(node, record);
         if (widget) widget.value = record.value;
-        usedRecordValues = true;
     }
-    if (usedRecordValues) return;
-
-    // Legacy fallback: workflows saved before per-record values existed only
-    // carry a flat widgets_values array, index-matched to serializable
-    // widgets. Best-effort only -- misaligns if a lane's link target is gone.
-    const values = node.widgets_values;
-    if (!Array.isArray(values)) return;
-    const serializable = (node.widgets ?? []).filter((w) => w.options?.serialize !== false && w.serialize !== false);
-    serializable.forEach((w, i) => {
-        if (values[i] !== undefined) w.value = values[i];
-    });
 }
 
 function finalizeNode(node) {
@@ -428,7 +413,7 @@ function finalizeNode(node) {
         for (const out of node.outputs) {
             const record = newRecord();
             node.properties.controls.push(record);
-            out.mbRecord = record;
+            out.mbLane = record.id;
         }
     } else {
         // Loaded or pasted node -- outputs must match the saved lane count;
@@ -438,7 +423,8 @@ function finalizeNode(node) {
             node.addOutput(`value_${node.outputs.length + 1}`, ANY);
         }
         node.properties.controls.forEach((record, i) => {
-            node.outputs[i].mbRecord = record;
+            record.id ??= crypto.randomUUID(); // saved before lanes had ids
+            node.outputs[i].mbLane = record.id;
         });
     }
 
@@ -482,7 +468,7 @@ function numOrNull(v) {
     return v === "" || Number.isNaN(n) ? null : n;
 }
 
-function buildLaneRow(node, record) {
+function buildLaneRow(node, record, onRemove) {
     const item = document.createElement("div");
     item.className = "mb-dialog-item";
     item.style.cssText = "flex-direction:column; align-items:stretch; gap:6px;";
@@ -507,7 +493,7 @@ function buildLaneRow(node, record) {
     let removed = false;
     remove.onclick = () => {
         removed = true;
-        removeLane(node, record);
+        onRemove(record);
         item.remove();
     };
 
@@ -550,11 +536,15 @@ function buildLaneRow(node, record) {
             record.boolLabelOff = offField.value || null;
             record.boolDefault = startTrue.radio.checked;
             const widget = findWidget(node, record);
-            if (widget) setBoolLabels(widget, record.boolLabelOn, record.boolLabelOff);
+            if (widget) {
+                setBoolLabels(widget, record.boolLabelOn, record.boolLabelOff);
+                widget.value = record.boolDefault;
+                widget.callback?.(widget.value);
+            }
         });
     } else if (record.kind === "dropdown") {
         const widget = findWidget(node, record);
-        const full = node.__cpFullValues?.get(record) ?? widget?.options?.values ?? [];
+        const full = node.__cpFullValues?.get(record.id) ?? widget?.options?.values ?? [];
         const visible = new Set(record.comboVisible?.length ? record.comboVisible : full);
         const list = document.createElement("div");
         list.className = "mb-dialog-list";
@@ -605,9 +595,11 @@ function resetValues(node) {
         const widget = findWidget(node, record);
         if (!widget) continue;
         if (record.kind === "slider") {
-            const min = widget.options?.min ?? 0;
-            const max = widget.options?.max ?? 0;
-            widget.value = (min + max) / 2;
+            const { min, max } = widget.options ?? {};
+            let value = widget.mbDefault ?? min ?? 0;
+            if (min != null && value < min) value = min;
+            if (max != null && value > max) value = max;
+            widget.value = value;
         } else if (record.kind === "switch") {
             widget.value = record.boolDefault === true;
         } else if (record.kind === "dropdown") {
@@ -630,27 +622,31 @@ function openControlPanelSettings(node) {
             const list = document.createElement("div");
             list.style.cssText = "display:flex; flex-direction:column; gap:8px; max-height:320px; overflow-y:auto;";
             let rows = [];
+            // Adds and removes stay in this list until Apply, so Cancel drops them.
+            const pending = node.properties.controls.slice();
 
             function renderRows() {
                 list.innerHTML = "";
-                rows = node.properties.controls.map((record) => buildLaneRow(node, record));
+                rows = pending.map((record) =>
+                    buildLaneRow(node, record, (gone) => {
+                        pending.splice(pending.indexOf(gone), 1);
+                        addBtn.disabled = false;
+                    }),
+                );
                 rows.forEach((r) => list.appendChild(r.el));
             }
-            renderRows();
 
             const addBtn = document.createElement("button");
             addBtn.className = "mb-dialog-button";
             addBtn.textContent = "+ Add control";
             addBtn.onclick = () => {
-                if (node.properties.controls.length >= MAX_CONTROLS) return;
-                addLane(node);
-                relayoutWidgets(node);
-                resizeToContent(node);
-                node.setDirtyCanvas(true, true);
+                if (pending.length >= MAX_CONTROLS) return;
+                pending.push(newRecord());
                 renderRows();
-                addBtn.disabled = node.properties.controls.length >= MAX_CONTROLS;
+                addBtn.disabled = pending.length >= MAX_CONTROLS;
             };
-            addBtn.disabled = node.properties.controls.length >= MAX_CONTROLS;
+            addBtn.disabled = pending.length >= MAX_CONTROLS;
+            renderRows();
 
             const resetBtn = document.createElement("button");
             resetBtn.className = "mb-dialog-button";
@@ -675,6 +671,14 @@ function openControlPanelSettings(node) {
             body.append(list, actionsRow, colorRow);
 
             commit = () => {
+                for (const record of node.properties.controls.slice()) {
+                    if (!pending.some((p) => p.id === record.id)) removeLane(node, record);
+                }
+                for (const record of pending) {
+                    if (!node.properties.controls.some((c) => c.id === record.id)) addLane(node, record);
+                }
+                relayoutWidgets(node);
+                resizeToContent(node);
                 rows.forEach((r) => r.commit());
                 applyColor(node, colorInput.value);
                 relabelOutputs(node);
@@ -723,11 +727,10 @@ app.registerExtension({
                 return false;
             }
 
-            const record = this.outputs[slot]?.mbRecord;
+            const record = recordOf(this, this.outputs[slot]);
             if (!record) return true;
 
-            const output = this.outputs[slot];
-            if (output.links?.length) {
+            if (this.isOutputConnected(slot)) {
                 const wantType = resolvedType(input);
                 if (record.widgetType && wantType !== ANY && record.widgetType !== wantType) {
                     notify(
