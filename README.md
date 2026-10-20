@@ -68,7 +68,7 @@ Expands a short prompt with a local Ollama model (`url`, default `http://127.0.0
 Grows one output per line of incoming text (up to 32), auto-detected or pinned via right-click settings.
 
 ### Pad Image (MB)
-Adds a solid-colour border. The `Pad Image` button opens a dialog showing the upstream image: drag any edge or corner outward to pad, with optional aspect-ratio lock and colour picker.
+Pads an image for outpainting or framing and outputs an `outpaint_mask` (1 on the pad, optional `mask_feather`). `size_mode`: manual (the `Pad Image` button opens a dialog: drag any edge or corner outward, with aspect-ratio lock and colour picker), target size or aspect ratio with an anchor. Fill with a colour, replicated, reflected or blurred edges; snap to a multiple of 8–64, transparent padding, and `seam_blend` to fade the edge into the fill.
 
 ### Rotate Image (MB)
 Rotates an image 90, 180 or 270 degrees. The three toggles behave like radio buttons, and `clockwise` flips the direction (ignored by 180).

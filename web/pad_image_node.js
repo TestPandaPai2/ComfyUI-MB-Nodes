@@ -4,10 +4,9 @@ import { openDialog } from "./dialog.js";
 import { FIXED_RATIOS, HANDLES, HANDLE } from "./crop_geometry.js";
 import { upstreamPreview } from "./crop_image_node.js";
 
-// The pad lives in these widgets (pixels per side + colour), hidden from the
-// node body and edited only inside the pad dialog.
+// In manual mode the pad lives in these widgets (pixels per side), hidden from
+// the node body and edited only inside the pad dialog along with the colour.
 const SIDES = ["left", "top", "right", "bottom"];
-const DIALOG_WIDGETS = [...SIDES, "color"];
 // Mirrors MAX_PAD in nodes/pad_image_node.py.
 const MAX_PAD = 8192;
 
@@ -86,6 +85,8 @@ function showDialog(node, image) {
     let pad = getPad(node);
     let color = getWidget(node, "color")?.value || "#000000";
     let choice = node.properties?.mbPadLock ?? "free";
+    const fillMode = getWidget(node, "fill_mode")?.value ?? "color";
+    const transparent = !!getWidget(node, "transparent")?.value;
 
     let canvas;
     let readout;
@@ -115,6 +116,58 @@ function showDialog(node, image) {
         };
     }
 
+    // Stretch the edge pixels over each side; corners take the corner pixel.
+    function drawReplicate(ctx, box) {
+        const s = view.scale;
+        const x0 = box.x, x1 = view.x, x2 = view.x + imgW * s, x3 = box.x + box.w;
+        const y0 = box.y, y1 = view.y, y2 = view.y + imgH * s, y3 = box.y + box.h;
+        const cols = [[0, 1, x0, x1], [0, imgW, x1, x2], [imgW - 1, 1, x2, x3]];
+        const rows = [[0, 1, y0, y1], [0, imgH, y1, y2], [imgH - 1, 1, y2, y3]];
+        for (const [sx, sw, dx0, dx1] of cols) {
+            for (const [sy, sh, dy0, dy1] of rows) {
+                if (dx1 > dx0 && dy1 > dy0) ctx.drawImage(image, sx, sy, sw, sh, dx0, dy0, dx1 - dx0, dy1 - dy0);
+            }
+        }
+    }
+
+    // Approximate preview of the node's fill; the exact result comes from Python.
+    function drawFill(ctx, box) {
+        if (transparent) {
+            const cell = 10;
+            for (let y = 0; y * cell < box.h; y++) {
+                for (let x = 0; x * cell < box.w; x++) {
+                    ctx.fillStyle = (x + y) % 2 ? "#3a3a3d" : "#5a5a5e";
+                    ctx.fillRect(box.x + x * cell, box.y + y * cell, cell, cell);
+                }
+            }
+            return;
+        }
+        if (fillMode === "color") {
+            ctx.fillStyle = color;
+            ctx.fillRect(box.x, box.y, box.w, box.h);
+            return;
+        }
+        if (fillMode === "blur edge") {
+            ctx.filter = `blur(${Math.max(2, Math.max(pad.left, pad.right, pad.top, pad.bottom) / 8 * view.scale)}px)`;
+        }
+        drawReplicate(ctx, box);
+        ctx.filter = "none";
+        if (fillMode !== "reflect") return;
+
+        const w = imgW * view.scale;
+        const h = imgH * view.scale;
+        for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+                if (!dx && !dy) continue;
+                ctx.save();
+                ctx.translate(view.x + dx * w + (dx ? w : 0), view.y + dy * h + (dy ? h : 0));
+                ctx.scale(dx ? -1 : 1, dy ? -1 : 1);
+                ctx.drawImage(image, 0, 0, w, h);
+                ctx.restore();
+            }
+        }
+    }
+
     function draw() {
         if (!drag) fitView();
         const ctx = canvas.getContext("2d");
@@ -124,8 +177,12 @@ function showDialog(node, image) {
         ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
         const box = outer();
-        ctx.fillStyle = color;
-        ctx.fillRect(box.x, box.y, box.w, box.h);
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(box.x, box.y, box.w, box.h);
+        ctx.clip();
+        drawFill(ctx, box);
+        ctx.restore();
         ctx.drawImage(image, view.x, view.y, imgW * view.scale, imgH * view.scale);
 
         ctx.strokeStyle = accentColor();
@@ -314,8 +371,33 @@ app.registerExtension({
 
     async nodeCreated(node) {
         if (node.comfyClass !== "MBPadImage") return;
-        for (const name of DIALOG_WIDGETS) setWidgetVisible(node, name, false);
-        addButton(node, "Pad Image", () => openPadDialog(node));
-        resizeToContent(node);
+        for (const name of SIDES) setWidgetVisible(node, name, false);
+        const button = addButton(node, "Pad Image", () => openPadDialog(node));
+
+        // The dialog only drives manual mode; the other modes size the pad in
+        // Python, so the button goes and the colour shows on the node instead.
+        const sync = () => {
+            const manual = (getWidget(node, "size_mode")?.value ?? "manual") === "manual";
+            button.hidden = !manual;
+            button.options = { ...button.options, hidden: !manual };
+            setWidgetVisible(node, "color", !manual);
+            resizeToContent(node);
+        };
+        const modeWidget = getWidget(node, "size_mode");
+        if (modeWidget) {
+            const prev = modeWidget.callback;
+            modeWidget.callback = function (...args) {
+                const result = prev?.apply(this, args);
+                sync();
+                return result;
+            };
+        }
+        const onConfigure = node.onConfigure;
+        node.onConfigure = function (...args) {
+            const result = onConfigure?.apply(this, args);
+            sync();
+            return result;
+        };
+        sync();
     },
 });
