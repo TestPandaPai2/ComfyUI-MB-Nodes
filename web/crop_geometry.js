@@ -21,7 +21,8 @@ export const HANDLES = [
     ["sw", 0, 1], ["s", 0.5, 1], ["se", 1, 1],
 ];
 
-const FILL_OUTSIDE = "rgba(0, 0, 0, 0.55)";
+const FILL_OUTSIDE = "rgba(0, 0, 0, 0.65)";
+const LINE_SHADOW = "rgba(0, 0, 0, 0.6)";
 const LINE_SOFT = "rgba(255, 255, 255, 0.35)";
 const HANDLE_FILL = "#ffffff";
 const TEXT = "#ececee";
@@ -230,8 +231,8 @@ export function hitTest(frame, rect, px, py) {
 }
 
 /** The image, the dimmed surround, the box with its thirds and grips, and the
- * output size in the corner. */
-export function drawCrop(ctx, frame, image, rect, label) {
+ * output size in the corner. `grid` off leaves the thirds out. */
+export function drawCrop(ctx, frame, image, rect, label, grid = true) {
     ctx.save();
     ctx.drawImage(image, frame.x, frame.y, frame.w, frame.h);
 
@@ -250,7 +251,7 @@ export function drawCrop(ctx, frame, image, rect, label) {
 
     ctx.strokeStyle = LINE_SOFT;
     ctx.lineWidth = 1;
-    for (let i = 1; i < 3; i++) {
+    for (let i = 1; grid && i < 3; i++) {
         ctx.beginPath();
         ctx.moveTo(rx + (rw * i) / 3, ry);
         ctx.lineTo(rx + (rw * i) / 3, ry + rh);
@@ -258,6 +259,11 @@ export function drawCrop(ctx, frame, image, rect, label) {
         ctx.lineTo(rx + rw, ry + (rh * i) / 3);
         ctx.stroke();
     }
+
+    // A dark halo under the accent keeps the box visible on bright images.
+    ctx.strokeStyle = LINE_SHADOW;
+    ctx.lineWidth = 4;
+    ctx.strokeRect(rx, ry, rw, rh);
 
     ctx.strokeStyle = accentColor();
     ctx.lineWidth = 2;

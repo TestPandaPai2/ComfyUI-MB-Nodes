@@ -146,6 +146,61 @@ function setSplit(state, fraction) {
     state.line.style.left = percent;
 }
 
+const COMPARE_MIN_H = 160;
+const PREVIEW_MIN_H = 80;
+const STOCK_PREVIEW = "$$canvas-image-preview"; // the frontend's own image preview widget
+const SIZE_LABEL_H = 15; // the frontend's "W × H" line under its preview
+
+// The image the preview shows and how its box relates to the node: padX is
+// node width minus box width, padY is widget height minus box height.
+// null while there is nothing to keep in proportion (no image, or a batch
+// shown as a grid).
+function aspectTarget(node) {
+    const compare = node.mbCompare;
+    const compareWidget = node.widgets?.find((w) => w.name === "mb_compare");
+    if (compare && compareWidget && !compareWidget.hidden) {
+        const { naturalWidth: iw, naturalHeight: ih } = compare.imgAfter;
+        if (!iw || !ih) return null;
+        return { widget: compareWidget, iw, ih, padX: node.mbPadX ?? 20, padY: node.mbPadY ?? 0 };
+    }
+    const widget = node.widgets?.find((w) => w.name === STOCK_PREVIEW);
+    const imgs = node.imgs;
+    if (!widget || !imgs?.length) return null;
+    const image = imgs[imgs.length === 1 ? 0 : node.imageIndex];
+    if (!image?.naturalWidth) return null;
+    const label = app.extensionManager?.setting?.get("Comfy.Node.AllowImageSizeDraw") ? SIZE_LABEL_H : 0;
+    return { widget, iw: image.naturalWidth, ih: image.naturalHeight, padX: 0, padY: label };
+}
+
+// Height follows width while the node is resized, so the preview box always
+// has the image's shape and no empty bars.
+function lockAspect(node, size) {
+    const target = aspectTarget(node);
+    if (!target || node.mbChrome == null) return;
+    const boxH = Math.max(PREVIEW_MIN_H, ((size[0] - target.padX) * target.ih) / target.iw);
+    size[1] = Math.round(node.mbChrome + boxH + target.padY);
+}
+
+// Measured after layout: everything above and below the preview (mbChrome),
+// and the compare box's inset inside its widget. A new image shape snaps the
+// node to it once.
+function trackLayout(node) {
+    const target = aspectTarget(node);
+    if (!target?.widget.computedHeight) return;
+    node.mbChrome = node.size[1] - target.widget.computedHeight;
+    const root = node.mbCompare?.root;
+    if (target.widget.name === "mb_compare" && root?.clientWidth) {
+        node.mbPadX = node.size[0] - root.clientWidth;
+        node.mbPadY = target.widget.computedHeight - root.clientHeight;
+    }
+    const shape = `${target.iw}x${target.ih}`;
+    if (node.mbLockedTo !== shape) {
+        node.mbLockedTo = shape;
+        node.setSize([node.size[0], node.size[1]]);
+        node.setDirtyCanvas(true, true);
+    }
+}
+
 function ensureCompare(node) {
     if (node.mbCompare) return node.mbCompare;
 
@@ -174,8 +229,14 @@ function ensureCompare(node) {
         if (node.mbBadge) node.mbBadge.textContent = statsText(node.mbStats ?? [], state.index);
     });
 
-    const widget = node.addDOMWidget("mb_compare", "mb_compare", root, { serialize: false, hideOnZoom: false });
-    widget.computeSize = (width) => [width, widget.hidden ? 0 : 260];
+    // No computeSize: a fixed height there keeps the frontend from handing the
+    // widget the node's spare height, so the preview never grew with the node.
+    const widget = node.addDOMWidget("mb_compare", "mb_compare", root, {
+        serialize: false,
+        hideOnZoom: false,
+        getMinHeight: () => COMPARE_MIN_H,
+    });
+    imgAfter.addEventListener("load", () => node.setDirtyCanvas(true, true));
     setSplit(state, 0.5);
     node.mbCompare = state;
     return state;
@@ -237,6 +298,20 @@ app.registerExtension({
         nodeType.prototype.onExecuted = function (message) {
             onExecuted?.apply(this, arguments);
             onOutput(this, message);
+        };
+
+        const onResize = nodeType.prototype.onResize;
+        nodeType.prototype.onResize = function (size) {
+            const r = onResize?.apply(this, arguments);
+            lockAspect(this, size);
+            return r;
+        };
+
+        const onDrawForeground = nodeType.prototype.onDrawForeground;
+        nodeType.prototype.onDrawForeground = function () {
+            const r = onDrawForeground?.apply(this, arguments);
+            trackLayout(this);
+            return r;
         };
     },
 

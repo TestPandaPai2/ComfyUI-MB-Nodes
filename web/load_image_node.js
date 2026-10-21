@@ -1,6 +1,6 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
-import { addButton, getWidget, resizeToContent } from "./common.js";
+import { addButton, getWidget, resizeToContent, setWidgetVisible } from "./common.js";
 import { pasteImage } from "./clipboard_image.js";
 
 const SNAP = 8; // must match SNAP in nodes/load_image_node.py
@@ -73,8 +73,16 @@ async function updateInfo(node) {
     render(node, await measure(getWidget(node, "image")?.value));
 }
 
+const PASTE_ID = "MBNodes.Feature.ClipboardPaste";
+const PASTE_BUTTON = "📋 Paste from clipboard";
+
+function showPaste(node, on) {
+    if (setWidgetVisible(node, PASTE_BUTTON, on !== false)) resizeToContent(node);
+}
+
 function wireNode(node) {
-    addButton(node, "📋 Paste from clipboard", () => pasteImage(node));
+    addButton(node, PASTE_BUTTON, () => pasteImage(node));
+    showPaste(node, app.extensionManager?.setting?.get(PASTE_ID));
 
     const info = node.addWidget("text", "output", "no image loaded", () => {}, {
         serialize: false,
@@ -103,6 +111,22 @@ function wireNode(node) {
 
 app.registerExtension({
     name: "MBNodes.LoadImage",
+
+    settings: [
+        {
+            id: PASTE_ID,
+            category: ["MB", "Features", "Clipboard paste"],
+            name: "Clipboard paste",
+            tooltip: "Paste from clipboard button on Load Image (MB).",
+            type: "boolean",
+            defaultValue: true,
+            onChange: (on) => {
+                for (const node of app.graph?._nodes ?? []) {
+                    if (node.comfyClass === "MBLoadImage") showPaste(node, on);
+                }
+            },
+        },
+    ],
 
     async nodeCreated(node) {
         if (node.comfyClass !== "MBLoadImage") return;

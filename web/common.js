@@ -44,6 +44,19 @@ export function addButton(node, label, callback) {
     return widget;
 }
 
+// Top-bar buttons are registered once with the extension, so a Features toggle
+// hides one through its class instead of removing it.
+export function hideButton(className, hidden) {
+    const id = `${className}-hidden`;
+    let tag = document.getElementById(id);
+    if (!tag) {
+        tag = document.createElement("style");
+        tag.id = id;
+        document.head.appendChild(tag);
+    }
+    tag.textContent = hidden ? `.${className} { display: none !important; }` : "";
+}
+
 // Grow/shrink to fit the visible widgets without narrowing a node the user has
 // widened by hand.
 export function resizeToContent(node) {

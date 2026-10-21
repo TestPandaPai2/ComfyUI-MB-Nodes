@@ -142,7 +142,19 @@ function openPicker(nodes) {
 app.registerExtension({
     name: "MBNodes.ReplaceNodes",
 
+    settings: [
+        {
+            id: "MBNodes.Feature.ReplaceNode",
+            category: ["MB", "Features", "Replace Node menu"],
+            name: "Replace Node menu",
+            tooltip: "Replace Node... in the node right-click menu.",
+            type: "boolean",
+            defaultValue: true,
+        },
+    ],
+
     getNodeMenuItems(node) {
+        if (app.extensionManager?.setting?.get("MBNodes.Feature.ReplaceNode") === false) return [];
         const selected = Object.values(app.canvas.selected_nodes ?? {});
         const nodes = selected.includes(node) ? selected : [node];
         return [
