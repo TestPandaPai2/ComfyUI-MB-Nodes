@@ -107,6 +107,30 @@ HEELS = {
         "Wrap-Around Snake Heels": "She wears wrap-around snake heels with a coiled, crystal-studded strap spiraling up her ankle.",
         "Ankle Wrap Espadrilles": "She wears ankle wrap espadrilles with long ribbon ties wound around her ankles above a woven wedge.",
         "Cage Lace-Up Heels": "She wears cage lace-up heels with geometric cut-outs and laces running up her calf.",
+        "Ballet Ribbon Stilettos": "She wears ballet ribbon stilettos with wide satin ribbons crisscrossing up her ankles like pointe shoe ties.",
+        "Mid-Calf Lace-Up Sandals": "She wears mid-calf lace-up sandals with thin leather laces zigzagging up to the middle of her calf.",
+        "Spiral Strap Heels": "She wears spiral strap heels with a single long strap coiling around her ankle and lower calf.",
+        "Chain Wrap Heels": "She wears chain wrap heels with delicate gold chains wound around her ankles above a slim stiletto.",
+        "Pearl Wrap Heels": "She wears pearl wrap heels with strands of pearls looped around her ankles and draping over her foot.",
+        "Crystal Wrap Sandals": "She wears crystal wrap sandals with sparkling rhinestone straps spiraling up her ankles.",
+        "Buckle Gladiator Heels": "She wears buckle gladiator heels with several horizontal leather straps fastened by small metal buckles up her ankle.",
+        "Cage Gladiator Sandals": "She wears cage gladiator sandals with a lattice of straps enclosing her ankle and lower calf above a block heel.",
+        "Rope Tie Wedges": "She wears rope tie wedges with braided cord laces wrapped around her ankles above a cork wedge.",
+        "Corset Back Heels": "She wears corset back heels with laces running up the back of her ankle like a corset, finished in a bow.",
+        "Crisscross Strap Heels": "She wears crisscross strap heels with thin straps crossing over her foot and winding up around her ankle.",
+        "Silk Scarf Tie Heels": "She wears silk scarf tie heels with long printed silk ties wrapped around her ankles and knotted at the side.",
+        "Leather Wrap Mules": "She wears leather wrap mules with an open back and long leather ties wound around her ankles.",
+        "Wrap Platform Sandals": "She wears wrap platform sandals with long straps wound around her ankles above a chunky platform sole.",
+        "Kitten Heel Ankle Wraps": "She wears kitten heel ankle wraps with soft ties looped around her ankles above a short slim heel.",
+        "Suede Tie-Up Heels": "She wears suede tie-up heels with long suede cords wrapped several times around her ankles and lower calf.",
+        "Tassel Wrap Sandals": "She wears tassel wrap sandals with ankle ties ending in swinging tassels above a block heel.",
+        "Metallic Wrap Stilettos": "She wears metallic wrap stilettos with shiny gold straps winding around her ankles.",
+        "Ghillie Lace Heels": "She wears ghillie lace heels with laces threaded through loops across her foot and wrapped around her ankle.",
+        "Woven Strap Calf Wraps": "She wears woven strap calf wraps with braided leather straps climbing to her mid-calf above a block heel.",
+        "Elastic Band Wrap Heels": "She wears elastic band wrap heels with stretchy bands crossing over her foot and around her ankle.",
+        "Lucite Wrap Heels": "She wears lucite wrap heels with clear straps winding around her ankles above a transparent heel.",
+        "Bow Back Lace-Ups": "She wears bow back lace-ups with ribbon laces crossing up her ankle and tied in a large bow at the back.",
+        "Multi-Strap Ankle Wraps": "She wears multi-strap ankle wraps with several thin parallel straps layered around her ankle above a stiletto.",
     },
     "Knee & Thigh Coverage": {
         "Knee High Boots": "She wears knee high boots that rise to just below her knee on a tall heel.",
@@ -200,6 +224,18 @@ DETAILS = {
         gold aglets on the laces
         crystal-studded straps
         straps wrapped high on the calf
+        kitten heel
+        platform sole
+        cork wedge
+        chain wraps
+        small metal buckles
+        pearl strands
+        crisscross straps
+        tassel ends
+        braided leather ties
+        clear lucite straps
+        suede cord ties
+        silk scarf ties
     """),
     "Knee & Thigh Coverage": split_lines("""
         stretch suede upper

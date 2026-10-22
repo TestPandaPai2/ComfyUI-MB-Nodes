@@ -441,6 +441,86 @@ Long Jacket Overlay Kurti: She wears a sleeveless inner kurti under a sheer, ope
 Pakistani Straight Kurti: She wears a long, straight Pakistani-style kurti reaching below the knee, with an embroidered neckline, a buttoned placket, and a printed lawn fabric.
 Short Tunic Kurti: She wears a short tunic kurti ending at the hip, with a split neck, roll-tab sleeves, and a crisp striped cotton fabric.
 Sequin Party Kurti: She wears a party kurti covered in shimmering sequins over a sheer georgette base, with a deep V-neck and full sheer sleeves.
+Sanganeri Print Kurti: She wears a Sanganeri hand-block printed kurti covered in fine floral buttis on a light cotton base, with a round neck and three-quarter sleeves.
+Bagru Print Kurti: She wears a Bagru block-printed kurti in earthy vegetable-dyed motifs of small flowers and vines, with a notched neck and elbow sleeves.
+Dabu Print Kurti: She wears a dabu mud-resist printed kurti with crackled indigo-dyed floral patterns, a mandarin collar, and full sleeves.
+Leheriya Kurti: She wears a leheriya kurti dyed in bright diagonal wave stripes, with a V-neck, short sleeves, and a flowing straight cut.
+Shibori Kurti: She wears a shibori tie-dye kurti with soft folded and bound indigo patterns, a round neck, and loose three-quarter sleeves.
+Kantha Stitch Kurti: She wears a kantha kurti covered in rows of fine running-stitch embroidery forming birds and flowers across the yoke and hem.
+Kashmiri Aari Kurti: She wears a Kashmiri aari-embroidered kurti with dense chain-stitch paisleys and chinar leaves spreading across the neckline and sleeves.
+Tilla Work Kurti: She wears a Kashmiri tilla work kurti with metallic thread embroidery curling in floral vines along the neckline, cuffs, and border.
+Banarasi Brocade Kurti: She wears a Banarasi brocade kurti woven with gold zari floral buttis and a heavy woven border at the hem.
+Chanderi Kurti: She wears a sheer Chanderi silk-cotton kurti with a soft sheen, small woven gold buttis, and a delicate scalloped hem.
+Maheshwari Kurti: She wears a Maheshwari kurti in fine silk-cotton with a woven striped border at the hem and sleeves, and a simple round neck.
+Jamdani Kurti: She wears a Jamdani kurti in sheer handwoven muslin with tiny woven geometric motifs floating across the fabric.
+Madhubani Print Kurti: She wears a Madhubani print kurti with bold folk-art fish, peacocks, and flowers outlined in fine black lines.
+Warli Print Kurti: She wears a Warli print kurti decorated with simple white tribal figures dancing in circles across an earthy base.
+Bagh Print Kurti: She wears a Bagh hand-block printed kurti with crisp red and black geometric and floral motifs on an off-white base.
+Kutch Embroidery Kurti: She wears a Kutch embroidered kurti with bright interlacing stitches and tiny mirrors forming geometric patterns across the yoke.
+Sindhi Tanka Kurti: She wears a Sindhi tanka kurti with colorful thread embroidery and small round mirrors framing the neckline and sleeves.
+Kashida Paisley Kurti: She wears a kashida embroidered kurti with flowing paisley and floral vines stitched across the front panel.
+Batik Kurti: She wears a batik kurti with wax-resist dyed floral patterns and fine crackle lines running through the fabric.
+Pichwai Print Kurti: She wears a Pichwai print kurti with lotus flowers, cows, and leaves in traditional painted style across the hem and sleeves.
+Hip-Length Crop Kurti: She wears a hip-length crop kurti ending just at the hip bone, with a round neck, short sleeves, and a straight cut.
+Short A-Line Kurti Top: She wears a short A-line kurti top that flares gently to the hip, with a square neck and puff sleeves.
+Short Straight Kurti: She wears a short straight kurti ending at the hip, with side slits, a round neck, and three-quarter sleeves, made to pair with jeans.
+Short Flared Kurti: She wears a short flared kurti that swings out just above the hip, with a V-neck and flutter sleeves.
+Short Kaftan Kurti: She wears a short kaftan kurti with wide batwing sleeves and a loose, airy body that ends at the hip.
+Short Angrakha Top: She wears a short angrakha top with an overlapping wrap front tied at the side, ending at the hip, with elbow sleeves.
+Short Tie-Up Kurti: She wears a short kurti ending at the hip, with a front tie-up knot at the hem and a keyhole neckline.
+Short Peplum Kurti Top: She wears a short kurti top with a fitted bodice and a small peplum flare that ends at the hip, with cap sleeves.
+Short Kurti with Tassels: She wears a short hip-length kurti with tasseled tie strings at the neckline and a playful printed body.
+Short Shirt Kurti: She wears a short shirt-style kurti ending at the hip, with a collar, a full button placket, and roll-up sleeves.
+Short Smocked Kurti: She wears a short kurti with a smocked bodice and a softly gathered body that ends at the hip, with puff sleeves.
+Short Embroidered Yoke Kurti: She wears a short hip-length kurti with a richly embroidered yoke and a plain flowing body below it.
+Short Sleeveless Kurti: She wears a short sleeveless kurti ending at the hip, with a high mandarin collar and a fitted cut.
+Short Asymmetric Kurti: She wears a short kurti with an angled hem that rises from one hip to the other, with a boat neck and elbow sleeves.
+Short Bell Sleeve Kurti: She wears a short hip-length kurti with dramatic bell sleeves and a square neckline.
+Short Tiered Kurti: She wears a short kurti with two gathered tiers ending at the hip, trimmed with thin lace bands.
+Short Wrap Kurti: She wears a short wrap kurti that crosses over the bust and ties at the side, ending at the hip.
+Short Box Kurti: She wears a short boxy kurti with a relaxed square shape, dropped shoulders, and a hem that stops at the hip.
+Short Pintuck Kurti: She wears a short hip-length kurti with fine pintucks down the front, a round neck, and three-quarter sleeves.
+Short Front Slit Kurti: She wears a short kurti ending at the hip, with a small center slit at the hem and a sweetheart neckline.
+Pathani Kurta: She wears a Pathani-style kurta with a structured shirt collar, a half button placket, a long straight body, and full sleeves with cuffs.
+Afghani Kurta: She wears an Afghani kurta with a loose, flowing body, a round neck with a short slit, and wide full sleeves.
+Nehru Collar Kurta: She wears a straight kurta with a short stand-up Nehru collar, a concealed button placket, and full sleeves.
+Panjabi Style Kurta: She wears a Bengali panjabi-style kurta with a band collar, a side-buttoned placket, and a long, loose straight body.
+Long Straight Kurta: She wears a long straight kurta reaching past her knees, with a round neck, side slits, and full sleeves.
+Calf-Length Kurta: She wears a calf-length kurta with a simple slit neck, a straight cut, and deep side slits for easy movement.
+Side-Button Kurta: She wears a kurta that fastens with a row of fabric-covered buttons along one shoulder, with a high neck and full sleeves.
+Achkan Style Kurta: She wears an achkan-style kurta with a fitted body, a high band collar, a front button line, and a knee-length flared hem.
+Kurta with Pockets: She wears a relaxed cotton kurta with patch pockets at the hips, a notched neck, and rolled sleeves.
+Short Sleeve Kurta: She wears a straight kurta with crisp short sleeves, a mandarin collar, and a clean knee-length hem.
+Overlap Neck Kurta: She wears a kurta with an overlapping crossover neckline, a straight body, and full sleeves.
+Embroidered Placket Kurta: She wears a plain straight kurta with a richly embroidered button placket running down the front.
+Kurta Dress: She wears a knee-length kurta on its own as a dress, with a flared A-line body, a round neck, and short sleeves.
+Belted Kurta Dress: She wears a kurta as a dress on its own, cinched at the waist with a fabric belt, falling just above the knee.
+Shirt Kurta Dress: She wears a long shirt-style kurta as a dress, with a collar, a full button placket, and a curved hem above the knee.
+Tiered Kurta Dress: She wears a tiered kurta dress on its own, with gathered layers flaring from the waist to the knee.
+Sleeveless Kurta Dress: She wears a sleeveless kurta as a dress, with a V-neck and a straight body ending just above the knee.
+Kaftan Kurta Dress: She wears a loose kaftan kurta as a dress, with wide batwing sleeves and a flowing body to the knee.
+Anarkali Kurta Dress: She wears a short Anarkali kurta as a dress on its own, with a fitted bodice and a full flared skirt to the knee.
+Wrap Kurta Dress: She wears a wrap kurta as a dress, crossing over the bust and tied at the waist, with three-quarter sleeves and a knee-length hem.
+Potli Button Neck Kurti: She wears a kurti with a deep slit neckline lined with tiny round potli buttons, a straight cut, and three-quarter sleeves.
+Boat Neck Kurti: She wears a kurti with a wide boat neckline sitting across her collarbones, a straight body, and elbow sleeves.
+Sweetheart Neck Kurti: She wears a kurti with a curved sweetheart neckline, a fitted bodice, and short puff sleeves.
+Square Neck Kurti: She wears a kurti with a clean square neckline, a fitted bodice, and a softly flared body.
+U-Neck Kurti: She wears a kurti with a deep U-shaped neckline edged in lace, a straight cut, and three-quarter sleeves.
+Keyhole Neck Kurti: She wears a kurti with a round neck and a small keyhole opening closed with a single loop button.
+Collar Neck Kurti: She wears a kurti with a soft flat Peter Pan collar, a straight body, and short sleeves.
+Mandarin Collar Kurti: She wears a kurti with a short stand-up mandarin collar, a half placket, and full sleeves.
+Notched Round Neck Kurti: She wears a kurti with a round neck cut with a small V-notch at the center, a straight cut, and elbow sleeves.
+Angrakha Neck Kurti: She wears a kurti with an overlapping angrakha-style neckline tied with a string, a fitted bodice, and full sleeves.
+Leaf Neck Kurti: She wears a kurti with a neckline cut in a pointed leaf shape and edged in piping, with three-quarter sleeves.
+Scalloped Neck Kurti: She wears a kurti with a scalloped neckline edged in embroidery, a straight body, and short sleeves.
+Chinese Collar Kurti: She wears a kurti with a narrow Chinese collar, a button-down front, and roll-up sleeves.
+Henley Neck Kurti: She wears a kurti with a henley neckline and a short button placket, in a relaxed straight cut.
+Cowl Neck Kurti: She wears a kurti with a soft draped cowl neckline falling in folds at the chest, with a fluid flared body.
+High Neck Kurti: She wears a kurti with a high neck closed at the back, a fitted body, and sleeveless armholes.
+Asymmetric Neck Kurti: She wears a kurti with a one-sided slanted neckline fastened with buttons at the shoulder.
+Gathered Neck Kurti: She wears a kurti with a neckline gathered on a drawstring, creating soft ruffles around the neck.
+Pleated Neck Kurti: She wears a kurti with fine knife pleats radiating from a round neckline, and a flowing straight body.
+Deep V-Neck Kurti: She wears a kurti with a plunging V-neckline, a fitted bodice, and long flared sleeves.
 
 GYMWEAR
 

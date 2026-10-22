@@ -95,9 +95,16 @@ class MBImageInfo(io.ComfyNode):
             node_id="MBImageInfo",
             display_name="Image Info (MB)",
             category="MBNodes",
-            description="Unpack an image_info bundle into image, mask, width, height and filename.",
+            description="Unpack an image_info bundle into image, mask, width, height and filename. A wired image replaces the bundle's image.",
             search_aliases=["image info", "unpack image info", "image metadata"],
-            inputs=[ImageInfo.Input("image_info")],
+            inputs=[
+                ImageInfo.Input("image_info", optional=True),
+                io.Image.Input(
+                    "image",
+                    optional=True,
+                    tooltip="Replaces the bundle's image; its mask is fitted onto this one.",
+                ),
+            ],
             outputs=[
                 io.Image.Output("image"),
                 io.Mask.Output("mask"),
@@ -109,8 +116,11 @@ class MBImageInfo(io.ComfyNode):
         )
 
     @classmethod
-    def execute(cls, image_info) -> io.NodeOutput:
+    def execute(cls, image_info=None, image=None) -> io.NodeOutput:
         info = image_info or {}
+        if image is not None:
+            info = {**info, "image": image, "mask": fit_mask(info.get("mask"), image),
+                    "width": int(image.shape[2]), "height": int(image.shape[1])}
         image = info.get("image")
         mask = info.get("mask")
 

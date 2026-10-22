@@ -16,6 +16,7 @@ from .nodes.control_panel_node import NODES as _control_panel
 from .nodes.crop_image_node import NODES as _crop_image
 from .nodes.film_grain_node import NODES as _film_grain
 from .nodes.get_lines_node import NODES as _get_lines
+from .nodes.group_runner_node import NODES as _group_runner
 from .nodes.image_to_svg_node import NODES as _image_to_svg
 from .nodes.image_info import NODES as _image_info
 from .nodes.krea_styles_node import NODES as _krea_styles
@@ -64,6 +65,8 @@ from .nodes.system_prompt_node import NODES as _system_prompt
 from .nodes.text_node import NODES as _text
 from .nodes.upscale_latent_node import NODES as _upscale_latent
 from .nodes.wildcard_select_node import NODES as _wildcard_select
+from .nodes.wildcard_view_all_node import NODES as _wildcard_view_all
+from .nodes.word_remover_node import NODES as _word_remover
 
 NODES: list[type[io.ComfyNode]] = [
     *_text,
@@ -89,12 +92,14 @@ NODES: list[type[io.ComfyNode]] = [
     *_get_lines,
     *_combine_text,
     *_replace_text_advanced,
+    *_word_remover,
     *_prompt_combiner,
     *_crop_image,
     *_upscale_latent,
     *_pad_image,
     *_rotate_image,
     *_branch_runner,
+    *_group_runner,
     *_preview_anything,
     *_preview_audio,
     *_random_line,
@@ -104,6 +109,7 @@ NODES: list[type[io.ComfyNode]] = [
     *_krea_styles,
     *_control_panel,
     *_wildcard_select,
+    *_wildcard_view_all,
     *_saree_randomizer,
     *_high_heels_randomizer,
     *_bodycon_randomizer,

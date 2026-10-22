@@ -149,9 +149,15 @@ function setSplit(state, fraction) {
 function ensureCompare(node) {
     if (node.mbCompare) return node.mbCompare;
 
+    // `root` fills the widget area; `frame` is the image's own box inside it,
+    // shaped to the image's aspect ratio so the checkerboard and the split
+    // line cover the image and nothing beside it.
     const root = document.createElement("div");
     root.style.cssText =
-        "position:relative;width:100%;height:100%;min-height:160px;overflow:hidden;cursor:ew-resize;" +
+        "width:100%;height:100%;min-height:160px;display:flex;align-items:center;justify-content:center;container-type:size;";
+    const frame = document.createElement("div");
+    frame.style.cssText =
+        "position:relative;width:100%;height:100%;overflow:hidden;cursor:ew-resize;" +
         "background:repeating-conic-gradient(#8884 0% 25%, transparent 0% 50%) 50% / 16px 16px;";
     const layer = "position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;";
     const imgBefore = document.createElement("img");
@@ -160,14 +166,24 @@ function ensureCompare(node) {
     imgAfter.style.cssText = layer;
     const line = document.createElement("div");
     line.style.cssText = `position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;pointer-events:none;background:${accentColor()};`;
-    root.append(imgBefore, imgAfter, line);
+    frame.append(imgBefore, imgAfter, line);
+    root.append(frame);
 
-    const state = { root, imgBefore, imgAfter, line, before: [], after: [], index: 0, split: 0.5 };
-    root.addEventListener("pointermove", (e) => {
-        const rect = root.getBoundingClientRect();
+    const state = { root, imgBefore, imgAfter, line, before: [], after: [], index: 0, split: 0.5, aspect: 0 };
+    imgAfter.addEventListener("load", () => {
+        const { naturalWidth: w, naturalHeight: h } = imgAfter;
+        if (!w || !h) return;
+        frame.style.aspectRatio = `${w} / ${h}`;
+        frame.style.width = `min(100cqw, calc(100cqh * ${w / h}))`;
+        frame.style.height = "auto";
+        state.aspect = h / w;
+        resizeToContent(node);
+    });
+    frame.addEventListener("pointermove", (e) => {
+        const rect = frame.getBoundingClientRect();
         if (rect.width) setSplit(state, (e.clientX - rect.left) / rect.width);
     });
-    root.addEventListener("click", () => {
+    frame.addEventListener("click", () => {
         if (state.after.length < 2) return;
         state.index = (state.index + 1) % state.after.length;
         renderCompare(state);
@@ -175,7 +191,11 @@ function ensureCompare(node) {
     });
 
     const widget = node.addDOMWidget("mb_compare", "mb_compare", root, { serialize: false, hideOnZoom: false });
-    widget.computeSize = (width) => [width, widget.hidden ? 0 : 260];
+    // 20px: the DOM widget's side margins, so the image fills the width it gets.
+    widget.computeSize = (width) => [
+        width,
+        widget.hidden ? 0 : state.aspect ? Math.max(160, Math.round((width - 20) * state.aspect)) : 260,
+    ];
     setSplit(state, 0.5);
     node.mbCompare = state;
     return state;
