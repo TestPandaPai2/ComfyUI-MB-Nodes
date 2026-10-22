@@ -564,24 +564,160 @@ Pastel Gym Outfit: She wears a matching pastel periwinkle sports bra and legging
 
 PANTS
 
-Wide-Leg Trousers: She wears high-waisted wide-leg trousers with front pleats, falling loosely to the floor in a fluid drape.
-Cigarette Pants: She wears slim cigarette pants with a high waist and a cropped, tapered leg that ends just above her ankles.
-Palazzo Pants: She wears flowing palazzo pants with an elastic waist and extra-wide legs that sway with every step.
-Cargo Pants: She wears relaxed cargo pants with a drawstring waist, large flap pockets on the thighs, and cuffed ankles.
-Leather Pants: She wears sleek high-waisted leather pants that hug her hips and legs with a subtle glossy sheen.
+Skinny Jeans: She wears skinny jeans with a mid-to-high rise and a tight, stretchy fit that hugs her legs from hip to ankle.
+Straight-Leg Jeans: She wears straight-leg jeans with a mid-rise waist and an even, straight leg that falls cleanly from hip to ankle.
+Wide-Leg Jeans: She wears wide-leg jeans with a high waist and a loose, flowing leg that widens from the hip down to the hem.
+Mom Jeans: She wears mom jeans with a high waist, a relaxed fit through the hips, and a slightly tapered leg ending at the ankle.
+Boyfriend Jeans: She wears boyfriend jeans with a relaxed, slouchy fit, a slightly dropped waist, and casually rolled cuffs at the hem.
+Flare Jeans: She wears flare jeans fitted through the hips and thighs that flare out dramatically from the knee to the hem.
+Bootcut Jeans: She wears bootcut jeans fitted through the thigh with a subtle flare below the knee, designed to sit over boots.
+Barrel-Leg Jeans: She wears barrel-leg jeans with a high waist and a curved, rounded leg that balloons at the knee and tapers at the ankle.
+Baggy Jeans: She wears baggy jeans with a loose, oversized fit, a low-slung waist, and extra fabric pooling around the ankles.
+Jeggings: She wears jeggings that look like skinny jeans with a stretchy legging-like fabric and an elastic or faux-button waistband.
+Cargo Pants: She wears cargo pants with a relaxed straight leg and large flap pockets stitched on the sides of the thighs.
+Carpenter Pants: She wears carpenter pants with a loose, straight leg, a hammer loop, and extra utility pockets on the side.
+Parachute Pants: She wears parachute pants in lightweight nylon with a drawstring waist, cargo pockets, and gathered, toggled cuffs at the ankle.
+Joggers: She wears joggers in soft fleece with an elastic drawstring waist and a tapered leg ending in ribbed ankle cuffs.
+Sweatpants: She wears sweatpants in cozy brushed cotton with an elastic waist, side pockets, and cuffed ankles.
+Track Pants: She wears track pants with a drawstring waist, a straight leg, and contrasting stripes running down the sides.
+Lounge Pants: She wears lounge pants in soft, drapey fabric with a drawstring waist and a wide, relaxed leg.
+Palazzo Pants: She wears palazzo pants with a high waist and extremely wide, flowing legs that sway like a long skirt.
+Culottes: She wears culottes with a high waist, soft pleats, and a wide, cropped leg ending at mid-calf.
+Paperbag Pants: She wears paperbag pants with a gathered, ruffled high waist cinched by a tie belt and a relaxed tapered leg.
+Linen Pants: She wears linen pants in breathable, lightly textured linen with a drawstring waist and a loose, straight leg.
+Drawstring Pants: She wears drawstring pants with a soft elastic waist, a tie cord, and a relaxed, straight leg.
+Harem Pants: She wears harem pants with a low, baggy drop crotch, full billowy legs, and fitted gathered cuffs at the ankles.
+Dhoti Pants: She wears dhoti pants with draped, cowled fabric at the front and legs that gather into fitted cuffs at the ankles.
+Tailored Trousers: She wears tailored trousers with a structured waistband, a pressed center crease, and a clean, straight leg.
+Cigarette Pants: She wears cigarette pants with a slim, straight leg that ends just above the ankle, sleek and polished.
+Dress Pants: She wears dress pants with a flat front, a sharp crease, and a smooth straight leg, formal and office-ready.
+Pleated Trousers: She wears pleated trousers with front pleats at the waist that add volume through the hips and a tapered leg.
+Wide-Leg Trousers: She wears wide-leg trousers with a high waist, front pleats, and a full leg that falls straight to the floor.
+Ankle-Length Trousers: She wears ankle-length trousers with a tailored waist and a straight leg cropped neatly at the ankle bone.
+Leggings: She wears leggings in smooth, stretchy fabric with a high elastic waistband and a skin-tight fit to the ankle.
+Flared Leggings: She wears flared leggings fitted through the hips and thighs that flare out gently from the knee.
+Yoga Pants: She wears yoga pants with a wide, high waistband and a soft, slightly flared leg made for stretching.
+Running Tights: She wears running tights in compressive, moisture-wicking fabric with a high waist and a full-length fit.
+Compression Leggings: She wears compression leggings in thick, supportive fabric that firmly hugs and shapes the legs.
+Gym Pants: She wears gym pants with an elastic drawstring waist and a relaxed jogger fit gathered at the ankle.
+Cycling Leggings: She wears cycling leggings with a high waistband and a snug fit ending just above the knee.
+Leather Pants: She wears leather pants with a high waist and a sleek, straight leg with a smooth, polished finish.
+Faux Leather Pants: She wears faux leather pants with a high waist, a straight leg, and a soft, supple vegan-leather sheen.
+Corduroy Pants: She wears corduroy pants in soft ribbed cord with front pleats and a relaxed straight leg.
+Velvet Pants: She wears velvet pants in plush, luxurious velvet with a high waist and a wide, flowing leg.
+Satin Pants: She wears satin pants in a glossy, fluid fabric with a smooth waistband and a relaxed wide leg.
+Sequin Pants: She wears sequin pants covered in sparkling sequins with a high waist and a straight leg, made for parties.
+Printed Pants: She wears printed pants with an all-over floral pattern, a high waist, and a relaxed straight leg.
+Plaid Pants: She wears plaid pants with a bold checkered pattern, a tailored waist, and a straight, cropped leg.
+Camouflage Pants: She wears camouflage pants with an all-over camo print, cargo pockets, and a relaxed straight leg.
+Chinos: She wears chinos in smooth cotton twill with slant pockets and a slim, straight, tapered leg.
+Capri Pants: She wears capri pants with a fitted, slim leg that ends at mid-calf.
 Tailored Flare Pants: She wears tailored flare pants fitted through the hips and thighs before flaring out from the knee to the floor.
 Linen Drawstring Pants: She wears airy linen drawstring pants with a relaxed straight leg and soft natural creases.
 Paperbag Waist Pants: She wears paperbag waist pants with a gathered high waistband tied with a matching belt and tapered legs.
 
 SHORTS
 
+Denim Shorts: She wears classic light-wash denim shorts with a mid-rise waist, five-pocket styling, a button and zip fly, and a softly frayed raw hem.
+Tailored Shorts: She wears black tailored shorts with front pleats, a structured high waistband, a button closure, and a crisp, wide leg ending mid-thigh.
+Athletic Shorts: She wears black athletic shorts with an elastic drawstring waist, curved side splits, and contrasting white piping along the hem.
+Biker Shorts: She wears black biker shorts in stretchy, smooth fabric with a high waistband and a snug fit ending mid-thigh.
+Paperbag Shorts: She wears black paperbag shorts with a gathered, ruffled high waist cinched by a tie belt knotted in a bow, and a loose, flowy leg.
+Cargo Shorts: She wears olive cargo shorts with a mid-rise waist, button fly, and large flap pockets stitched on both sides.
+Chino Shorts: She wears khaki chino shorts in smooth cotton twill with slant front pockets and neatly rolled cuffs at the hem.
+Running Shorts: She wears black running shorts with an elastic waistband, lightweight fabric, and curved split sides for easy movement.
+Loose Fit Shorts: She wears heather grey loose fit shorts in soft jersey with an elastic waist and a relaxed, roomy leg.
+High-Waist Shorts: She wears black high-waist shorts with a tall waistband fastened by three stacked buttons and a fitted, sculpted cut.
+Hot Pants: She wears black hot pants with a mid-rise denim waist, five-pocket styling, and a very short hem with neat cuffed edges.
+Boxer Shorts: She wears pink-and-white striped boxer shorts with an elastic drawstring waist and a loose, airy cotton leg.
+Culotte Shorts: She wears black culotte shorts with a smooth high waistband, soft pleats, and a wide, flared leg that falls to just above the knee.
+Utility Shorts: She wears black utility shorts in sturdy denim with a high waist, belt loops, and large flap cargo pockets on each side.
+Denim Cut-Offs: She wears distressed denim cut-offs with ripped front panels, a high waist, and a heavily frayed, uneven raw hem.
+Board Shorts: She wears black board shorts with a drawstring tie waist, side stripes, and a quick-dry, mid-length cut for the beach.
+Cotton Hot Pants: She wears white cotton hot pants with a high waist, five-pocket styling, and a clean, short hem, crisp and summery.
+Leather Hot Pants: She wears black faux leather hot pants with a high waist, front pockets, and a glossy, sleek finish.
+Colored Hot Pants: She wears pastel pink denim hot pants with a high waist, five-pocket styling, and a lightly frayed hem.
+Ripped Hot Pants: She wears ripped denim hot pants with large distressed shredded patches across the front and a frayed hem.
+Plaid Hot Pants: She wears black-and-white plaid hot pants with a high waist, front pleats, and a slightly flared A-line leg.
 Denim Cutoff Shorts: She wears high-waisted denim cutoff shorts with frayed raw hems and a slightly distressed wash.
-Tailored Shorts: She wears tailored high-waisted shorts with front pleats, belt loops, and a crisp mid-thigh hem.
-Biker Shorts: She wears fitted biker shorts in a stretchy matte fabric that end at mid-thigh.
-Paperbag Shorts: She wears paperbag shorts with a gathered, belted high waist and loose, flowy legs.
 Linen Shorts: She wears breezy linen shorts with an elastic drawstring waist and a relaxed, wide fit.
 Leather Shorts: She wears high-waisted faux leather shorts with a short hem and a smooth, glossy finish.
 Micro Shorts: She wears tiny micro shorts with a low-rise waist and a very short hem that bares most of her thighs.
+
+CARDIGANS
+
+Classic Cardigan: She wears a classic beige knit cardigan with a V-neckline, a simple button-up front, ribbed cuffs and hem, and a relaxed, timeless fit.
+V-Neck Cardigan: She wears a soft lavender V-neck cardigan with a deep V-shaped neckline, small buttons down the front, and a fitted, flattering silhouette.
+Round Neck Cardigan: She wears a sage green round neck cardigan with a crew neckline, a neat button front, and a soft, casual knit.
+Long Cardigan: She wears a dusty pink long cardigan that falls to the knee, with an open front, patch pockets, and a cozy, layered feel.
+Short Cardigan: She wears a black short cardigan that ends at the waist, with a round neckline, small buttons, and a sleek, fitted cut.
+Oversized Cardigan: She wears a cream oversized cardigan with dropped shoulders, chunky buttons, a deep V-neck, and a roomy, slouchy fit.
+Button-Up Cardigan: She wears a navy button-up cardigan with contrasting white stripe trim along the neckline, placket, and pocket edges, preppy and polished.
+Open Front Cardigan: She wears a light grey open front cardigan with no buttons or zipper, its soft knit panels draping loosely down the front.
+Chunky Knit Cardigan: She wears a cream chunky knit cardigan made of thick, textured yarn with a V-neck and large buttons, warm and cozy.
+Lightweight Cardigan: She wears a pale blue lightweight cardigan in a thin, fine-gauge knit with a V-neck and small buttons, perfect for mild weather.
+Turtleneck Cardigan: She wears a charcoal turtleneck cardigan with a folded high collar, a button front, and a warm, structured knit.
+Cropped Cardigan: She wears a black-and-white striped cropped cardigan with a round neck, small buttons, and a short hem ending above the waist.
+Hooded Cardigan: She wears a heather grey hooded cardigan with a knit hood, button front, and patch pockets, casual and sporty.
+Belted Cardigan: She wears a rose-colored belted cardigan with a wrap front, wide shawl lapels, and a tie belt that cinches the waist.
+Crochet Cardigan: She wears a cream crochet cardigan with open floral crochet patterns, a V-neck, and a light, airy, boho feel.
+Jacquard Cardigan: She wears a navy jacquard cardigan with a woven white snowflake and Fair Isle pattern, a crew neck, and a festive button front.
+Ribbed Cardigan: She wears a mauve ribbed cardigan made of vertical ribbed knit with a V-neck and buttons, snug and figure-fitting.
+Cable Knit Cardigan: She wears a cream cable knit cardigan with twisted cable patterns running down the front, a V-neck, and classic buttons.
+Printed Cardigan: She wears a cream printed cardigan dotted with small pink floral motifs, a round neck, and a sweet button front.
+Shawl Collar Cardigan: She wears an olive shawl collar cardigan with a wide folded collar that wraps around the neckline, buttons, and a relaxed, elegant fit.
+Fuzzy Cardigan: She wears a soft pink fuzzy cardigan made of fluffy mohair-style yarn with a V-neck and buttons, dreamy and plush.
+Lace Cardigan: She wears an ivory lace cardigan in delicate open lace fabric with a round neck and small buttons, feminine and elegant.
+Denim Cardigan: She wears a blue denim cardigan with a collarless V-neck, metal buttons, and patch pockets, a stylish mix of knit shape and denim fabric.
+Asymmetrical Cardigan: She wears a black asymmetrical cardigan with an off-center button closure and an uneven, angled hem for a modern look.
+
+JACKETS
+
+Denim Jacket: She wears a classic light-wash denim jacket with a pointed collar, metal button front, chest flap pockets, and button cuffs, cut to hip length for a casual, timeless look.
+Leather Jacket: She wears a sleek black leather jacket with notched lapels, a hidden zip front, and slim tailored sleeves, polished and effortlessly cool.
+Biker Jacket: She wears a black leather biker jacket with an asymmetrical zip front, wide snap-down lapels, zippered pockets, and a belted hem for an edgy, rebellious look.
+Bomber Jacket: She wears an olive green bomber jacket with a full zip front, ribbed knit collar, cuffs, and hem, and a relaxed, slightly puffed body.
+Varsity Jacket: She wears a varsity jacket with a black wool body, cream leather sleeves, striped ribbed collar and cuffs, snap buttons, and a chenille letter patch on the chest.
+Puffer Jacket: She wears a cream puffer jacket with thick horizontal quilted channels, a high stand-up collar, and a zip front, warm and voluminous.
+Quilted Jacket: She wears an olive quilted jacket with diamond-stitched padding, a collarless neckline, snap front, and patch pockets, light and practical.
+Hooded Jacket: She wears a soft pink hooded jacket with a drawstring hood, full zip front, and relaxed fit, casual and cozy.
+Windbreaker Jacket: She wears a lightweight lilac windbreaker with a drawstring hood, zip front, and elastic cuffs, made of thin wind-resistant nylon.
+Trench Coat: She wears a camel trench coat with a double-breasted front, wide notched lapels, shoulder epaulettes, and a tied waist belt, falling to the knee.
+Blazer: She wears a tailored black blazer with sharp notched lapels, a single-button front, and structured shoulders, polished and professional.
+Overcoat: She wears a long camel wool overcoat with wide lapels, a single-breasted front, and a straight, knee-length cut, refined and warm.
+Peacoat: She wears a navy wool peacoat with a double-breasted button front, wide lapels, and a hip-length structured cut, classic and nautical.
+Duffle Coat: She wears a cream wool duffle coat with a roomy hood and toggle fastenings made of wooden pegs and rope loops down the front.
+Cape Jacket: She wears a deep red cape jacket that drapes loosely from the shoulders over the arms, with an open front and an elegant, flowing silhouette.
+Poncho Jacket: She wears a plaid poncho jacket made of a wide wrap of soft wool that drapes over the shoulders, finished with fringed edges.
+Parka Jacket: She wears an olive parka with a hood trimmed in faux fur, a drawstring waist, multiple utility pockets, and a long, insulated cut.
+Faux Fur Jacket: She wears a plush blush faux fur jacket with a shaggy, fluffy texture, oversized collar, and a cozy, relaxed fit.
+Shacket: She wears a plaid shacket, a thick flannel shirt-jacket with a pointed collar, button front, and chest flap pockets, worn open or closed.
+Utility Jacket: She wears an olive utility jacket with a collar, button front, multiple flap pockets, and a drawstring waist, practical and military-inspired.
+Safari Jacket: She wears a khaki safari jacket with four bellows pockets, a pointed collar, shoulder epaulettes, and a self-tie belt at the waist.
+Cropped Jacket: She wears a pink cropped jacket with a collar, button front, and chest pockets, ending just above her waist.
+Longline Jacket: She wears a black longline jacket with slim lapels and an extended length falling to mid-thigh, sleek and elongating.
+Waterproof Jacket: She wears a sky-blue waterproof jacket with a hood, zip front, sealed seams, and a smooth weatherproof finish.
+Fleece Jacket: She wears a soft cream fleece jacket with a high stand collar, full zip, and a plush, fuzzy texture for warmth.
+Corduroy Jacket: She wears a brown corduroy jacket with a ribbed velvety texture, pointed collar, button front, and chest pockets.
+Shearling Jacket: She wears a brown leather shearling jacket lined with cream fleece, with a wide fluffy collar and cuffs and an asymmetrical zip.
+Kimono Jacket: She wears a light floral kimono jacket with wide open sleeves and a loose, flowing open front, airy and bohemian.
+Bolero Jacket: She wears a short black bolero jacket that ends just below the bust, with long sleeves and an open front, perfect over dresses.
+Shrug Jacket: She wears a soft pink shrug jacket that drapes over the shoulders and arms, with cascading open front panels.
+Capelet Jacket: She wears a cream capelet jacket, a short cape that covers the shoulders and upper arms, with a neat collar and button closure.
+Denim Vest: She wears a sleeveless denim vest with a pointed collar, button front, and chest flap pockets, casual and layered.
+Padded Jacket: She wears a dusty pink padded jacket with soft quilted panels, a stand collar, and a zip front, warm yet lightweight.
+Belted Jacket: She wears a black leather belted jacket with wide lapels, a zip front, and a buckled waist belt that cinches her silhouette.
+Asymmetrical Jacket: She wears a grey asymmetrical jacket with an off-center zip, a wide draped lapel, and a sharp, modern cut.
+Waterfall Jacket: She wears a dusty rose waterfall jacket with soft draped front panels that cascade down in flowing folds.
+Military Jacket: She wears an olive military jacket with double rows of gold buttons, shoulder epaulettes, a stand collar, and flap pockets.
+Anorak Jacket: She wears a lilac anorak with a drawstring hood, a half-zip pullover front, a cinched waist, and a large front pocket.
+Raincoat: She wears a bright yellow raincoat with a hood, snap button front, and a glossy waterproof finish.
+Sports Jacket: She wears a black sports track jacket with a zip front, a stand collar, and white stripes running down the sleeves.
+Harrington Jacket: She wears a beige Harrington jacket with a short collar, zip front, ribbed cuffs and hem, and a lightweight cotton finish.
+Flight Jacket: She wears an olive flight jacket with an orange lining, a ribbed collar and cuffs, a full zip, and a utility sleeve pocket.
+Reversible Jacket: She wears a reversible jacket with a black side and a beige side, a simple collar, and a zip front, so it can be worn either way.
+Sleeveless Long Jacket: She wears a camel sleeveless long jacket with notched lapels and a tailored cut falling to mid-thigh, layered over a top.
+Denim Shirt Jacket: She wears a dark-wash denim shirt jacket with a pointed collar, snap button front, chest pockets, and a slightly longer, relaxed fit.
 
 JEANS
 
@@ -670,7 +806,7 @@ SLOTS = {
     "Bodycon Dresses": "full", "Crop Tops": "top", "Virgin Killer": "top",
     "Backless Dresses": "full", "Tops": "top", "Blouses": "top",
     "Summer Dresses": "full", "Jumpsuits": "full", "Jerseys": "top", "Kurtis": "top",
-    "Gymwear": "set", "Pants": "bottom", "Shorts": "bottom", "Jeans": "bottom",
+    "Gymwear": "set", "Pants": "bottom", "Shorts": "bottom", "Cardigans": "top", "Jackets": "top", "Jeans": "bottom",
     "Burqa": "full", "Shalwars": "bottom", "Underwear": "bottom",
 }
 TOP_CATEGORIES = [name for name, slot in SLOTS.items() if slot == "top"]

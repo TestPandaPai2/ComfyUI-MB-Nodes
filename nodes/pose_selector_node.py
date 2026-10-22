@@ -276,6 +276,28 @@ POSES = {
         "Leaping Over Puddle": "She leaps forward over a puddle with her legs stretched in a long stride and arms out for balance.",
         "Throwing Confetti": "She stands with both arms flung upward, tossing a burst of confetti into the air.",
     },
+    "Full Body Poses": {
+        "Relaxed Crossed-Ankle Stand": "Standing facing forward with the weight on one leg and the other foot crossed lightly in front at the ankle, one arm hanging loosely at the side and the other hand resting near the hip, shoulders relaxed and head tilted slightly with a soft gaze toward the camera.",
+        "Mid-Stride Turn": "Caught mid-step with the body angled three-quarters, the back leg extended with the heel lifted and the front foot planted, one arm bent at the elbow near the waist and the other hanging low, head turned toward the camera over the shoulder.",
+        "Knock-Knee Hip Tilt": "Standing facing forward with the knees turned gently inward and touching, feet apart and toes pointing in, one hand resting at the hip and the other arm relaxed, chin lowered with a playful, coy look.",
+        "Straight-On Arms-Down Stand": "Standing squarely facing the camera with feet close together and legs straight, both arms hanging naturally at the sides, posture tall and symmetrical with a calm, direct gaze.",
+        "Hand-Behind-Head Wide Stance": "Standing with feet set wider than hip-width, one arm raised and bent so the hand rests behind the head, the other arm relaxed at the side, hips tilted and chest open in a confident, carefree stance.",
+        "Contrapposto Hip Shift": "Standing with the weight shifted onto one straight leg so the hip pushes out, the opposite knee softly bent and the foot turned out, one arm hanging and the other hand loosely at the waist, head tilted toward the lifted hip.",
+        "Back-Turn Over-the-Shoulder Glance": "Standing with the back mostly toward the camera and the body in a side three-quarter angle, one leg stepping slightly forward, arms relaxed down the sides, head turned back over the shoulder to look at the camera.",
+        "Hand-to-Shoulder Cross-Leg": "Standing with one leg crossed in front of the other, one hand lifted to rest on the opposite shoulder and the other arm hanging low, torso angled slightly away with a soft, shy expression.",
+        "Hands-on-Hips Power Stance": "Standing facing forward with feet apart and weight evenly balanced, both hands planted on the hips with elbows angled out wide, chest lifted and chin raised in a bold, self-assured pose.",
+        "Crossed-Knee Arm-Bent Stand": "Standing with knees crossed tightly so one leg sits in front of the other, one arm bent with the hand resting on the waist and the other relaxed at the side, shoulders slightly turned for a slim, elegant line.",
+        "Back View Hands-to-Neck": "Standing with the back fully toward the camera and feet slightly apart, both hands lifted to the back of the neck, elbows out, head turned slightly to the side.",
+        "Side Step Look-Back": "Standing in side profile with one foot stepping forward and the heel of the back foot raised, one arm bent with the hand near the chest and the other hanging, head turned toward the camera with a gentle smile.",
+        "Hand-in-Hair Leg Pop": "Standing with one hand raised to run through the hair at the crown, the other arm loosely at the side, weight on one leg while the other knee bends inward with the foot pointed, creating a playful, fashion-editorial line.",
+        "Wide-Step Hip Hand": "Standing with legs set in a wide, angled step, one hand resting on the hip and the other arm relaxed, torso leaning slightly toward the back leg with an easy, confident expression.",
+        "Pigeon-Toed Front Stand": "Standing facing forward with knees softly bent and toes turned inward, one hand at the side and the other resting near the hip, shoulders slightly raised in a sweet, casual pose.",
+        "Shoulder-Touch Straight Stand": "Standing tall facing the camera with feet close together, one hand lifted to rest lightly on the shoulder and the other arm hanging straight, head slightly tilted with a calm, poised look.",
+        "Relaxed Hip Lean": "Standing with the weight sunk into one hip, the opposite leg extended slightly forward with the toe pointed, both arms hanging relaxed, head tipped toward the raised shoulder.",
+        "Lean-Back Wide Stance": "Standing with feet planted wide and the upper body leaning slightly back, both arms loose at the sides with one hand brushing the thigh, chin lifted in a cool, laid-back attitude.",
+        "Forward-Step Arms Down": "Standing with one foot stepping forward and the other angled back, body facing the camera, both arms relaxed down the sides with a natural, mid-walk feel.",
+        "Crossed-Leg Hand-at-Waist": "Standing with one leg crossed in front of the other at the knee, one hand resting at the waist and the other arm extended down, torso turned slightly in a soft, balanced, model-like pose.",
+    },
 }
 
 # Same poses framed from the chest up: only what stays in frame is described.
