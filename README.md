@@ -32,13 +32,13 @@ Picks or uploads an image, with a preview and optional megapixel-target resize. 
 Compact Load Image with a custom face: toolbar (upload/paste/settings), arrow + thumbnail file picker, preview, and two size cards (input/output). The full resize engine — max megapixels, longest side, scale by, fit inside, crop to fill, match ratio, plus snap/resample/upscale and a per-node accent — lives in the ⚙ gear. Outputs image and image_info only.
 
 ### Load Image Crop (MB)
-Loads an image and crops it to the area selected on the node's preview: drag to draw the crop area, drag inside it to move, drag its corners to resize, click to clear. With no crop drawn the full image is output. `aspect` locks the box to a preset (free, source, 1:1, 16:9, …). `max_megapixels` > 0 scales the output up or down to that size (aspect preserved; 0 keeps the crop size), then both sides snap to the nearest multiple of `resolution_steps`, resampled with `upscale_method`. Outputs image.
+Loads an image and crops it to the area selected on the node's preview: drag to draw the crop area, drag inside it to move, drag its corners to resize, double-click to clear. Wheel zooms the preview (Ctrl-wheel still zooms the graph), Alt-drag pans it; the corner chips fill (`Full`), center, flip the ratio (`Swap`) or reset the zoom (`Fit`). With no crop drawn the full image is output. `aspect` locks the box to a preset (free, source, 1:1, 16:9, …). `max_megapixels` > 0 scales the output up or down to that size (aspect preserved; 0 keeps the crop size), then both sides snap to the nearest multiple of `resolution_steps`, resampled with `upscale_method`. Outputs image.
 
 ### Crop Image (MB)
 Crop dialog (drag/resize box, aspect presets, divisible-by) for an `image` input instead of a file picker. Crop is stored as fractions of the image so it survives resolution changes; falls back to a cached preview when nothing upstream has an image yet.
 
 ### Save Image (MB)
-Saves png/jpg/webp/avif to the output folder or anywhere you type, and passes the images through. `preview` mode skips the write; a cached copy always survives a restart. `preset` (lossless / visually_lossless / balanced / small) sets the per-format quality; `custom` uses the quality widgets. Changing format or preset re-encodes the last run live, and a badge shows the file size and the saving vs png. Connect `compare_image` for a before/after slider (hover to move it, click to step through a batch).
+Saves png/jpg/webp/avif to the output folder or anywhere you type, and passes the images through. Once an image is showing, resizing the node keeps the preview in the image's proportions (width drives, height follows), for both the normal preview and the compare_image slider; a new image shape snaps the node to it. `preview` mode skips the write; a cached copy always survives a restart. `preset` (lossless / visually_lossless / balanced / small) sets the per-format quality; `custom` uses the quality widgets. Changing format or preset re-encodes the last run live, and a badge shows the file size and the saving vs png. Connect `compare_image` for a before/after slider (hover to move it, click to step through a batch).
 
 ### Compress Image (MB)
 Compresses and converts images to jpg, webp or png in the output folder. Set a quality, a target size in KB (quality drops until the file fits), a max dimension to downscale, or lossless webp. An optional mask becomes alpha for png/webp; jpg is flattened on white. Shows the preview and each file's size.
@@ -55,6 +55,9 @@ Encodes an image batch to h264 mp4 with optional muxed audio; `trim_to_audio` an
 ### Preview Audio (MB)
 Plays incoming audio on the node (own volume slider, doesn't touch output) and can optionally save it as mp3/opus/wav/flac.
 
+### Prompt (MB)
+Save prompts as tags and reuse them by writing `@name`; tags expand recursively when the graph runs, and `@name:1.2` expands to `(prompt:1.2)`. Turn on `dynamic_prompts` to pick one option from each `{a|b|c}` (nested allowed, `{|shiny}` for an optional word) after tags expand, so choices inside saved tags work too; `seed` decides the picks (fixed by default, set its control to randomize for a new pick every run). Braces without a `|` are left as typed. The output is tidied (repeated spaces, empty comma slots and stray commas at line ends removed). **Save Tag** asks for the name (pre-filled from `tag_name`) and, if the name exists, shows the saved and new text side by side before overwriting. **Insert Tag** opens a searchable list and inserts the pick at the cursor; typing `@` pops the same list at the cursor. The line under the buttons shows the expanded word count and any unresolved `@names` (also counted in the title bar); click it to see and copy the full expanded prompt. **Manage Tags** edits, renames and deletes tags, saving only what changed, so tags saved elsewhere meanwhile are kept. Search matches names and prompt text (highlighted); tags sharing a prefix (`style_…`, `char-…`) group under collapsible headers; sort by name, recently edited (in this browser) or most used by other tags. Deleted tags stay struck through with **Undo** until you save. `@refs` in the prompt box are highlighted (red when unknown) and typing `@` offers tags. Closing with unsaved changes warns first; close again to discard. Keys: ↑↓ move, Del delete, Ctrl+N new, Ctrl+S save. The dialog can be resized and the prompt box fills its height.
+
 ### Prompt Pad (MB)
 Prompt scratchpad — save/load `.txt` files from a `SavedPrompts` folder. `text_in` overrides the output when connected.
 
@@ -65,7 +68,7 @@ Same idea for LLM system prompts, with its own library folder, an "Add folder...
 Expands a short prompt with a local Ollama model (`url`, default `http://127.0.0.1:11434`). Picking a `preset` fills the system prompt box, which is what gets sent, edits included. Eight presets are built in, including **System prompt creator**: describe the expander you want as the prompt, and it writes a system prompt you can paste into the box and save; **Save Preset** stores the box under `preset_name` in `ExpanderPresets.json`, **Delete Preset** removes a custom one, **Pick Model** lists installed models. `max_tokens` caps the reply (0 = no limit). `keep_alive` 0 unloads the model after each call to free VRAM.
 
 ### Get Lines (MB)
-Grows one output per line of incoming text (up to 32), auto-detected or pinned via right-click settings.
+Grows one output per line of incoming text (up to 32). In auto mode the count follows the text widget feeding it as you type, or the real count after a run when the text comes from another node; connected outputs are never removed. `keep_blank_lines` gives blank lines their own empty output. Right-click → **Lines** to pin a fixed count (1–32) or go back to Auto. The title bar shows the current count.
 
 ### Pad Image (MB)
 Pads an image for outpainting or framing and outputs an `outpaint_mask` (1 on the pad, optional `mask_feather`). `size_mode`: manual (the `Pad Image` button opens a dialog: drag any edge or corner outward, with aspect-ratio lock and colour picker), target size or aspect ratio with an anchor. Fill with a colour, replicated, reflected or blurred edges; snap to a multiple of 8–64, transparent padding, and `seam_blend` to fade the edge into the fill.
@@ -80,7 +83,7 @@ Scales a latent by a multiplier from a row of clickable buttons (customizable vi
 KSampler + VAE decode in one node, with model/positive/negative/vae pass-through for chaining stages. Live sampling preview included. `decode_image` toggles the VAE decode (skipped gracefully if no vae is connected); `tiled_vae_decoding` swaps in tiled decode for large images.
 
 ### Branch Runner (MB)
-A no-op sink with a **Run Branch** button that queues only the branch connected to it (via ComfyUI's partial execution), or the branch under whichever output node you last clicked if left unwired.
+A no-op sink with a **Run Branch** button that queues only this node and everything feeding it (via ComfyUI's partial execution). The button shows how many nodes that is, and hovering it outlines them on the canvas. `runs` (1–100) queues the branch that many times; the button reads `Running…` until the queue drains. **Alt+Enter** runs the selected Branch Runners. Left unwired it does nothing and doesn't block a normal Queue.
 
 ### Preview Anything (MB)
 Accepts any input type. Image/mask/audio/video get a real live preview on the node; everything else shows its text repr. Passes the value through unchanged. Runnable standalone.
@@ -89,13 +92,16 @@ Accepts any input type. Image/mask/audio/video get a real live preview on the no
 Category + style dropdowns over the bundled Krea2 prompt-styles table (286 styles, 15 categories). Outputs `"StyleName: Prompt"`. `randomize` picks a random style within the selected category only; `bypass` outputs an empty string.
 
 ### Route 66 (MB)
-Multi-lane reroute. Each lane passes its input straight through to the matching output; a fresh empty lane appears as you connect more wires (up to 20), and each socket takes the colour/type of what plugs in. One tidy node to carry many wires across the graph instead of a pile of single reroute dots.
+Multi-lane reroute. Each lane passes its input straight through to the matching output; a fresh empty lane appears as you connect more wires (up to 20), and each socket takes the colour/type of what plugs in. Each lane is labelled with its type, or a name you set by double-clicking its output. A wire dropped on the node body goes to the first free lane. Right-click → `Tidy lanes` closes gaps and orders lanes by where their wires come from; `Compact` hides the title bar (otherwise it shows the lane count). One tidy node to carry many wires across the graph instead of a pile of single reroute dots.
+
+### WiFi Send (MB) / WiFi Receive (MB)
+Route 66 without the wire. **WiFi Send** takes up to 20 lanes under a `channel` name (lanes grow as you connect; double-click a lane to name it). **WiFi Receive** picks a channel from the senders at the same graph level and outputs the same lanes, with the same types, colours and names, updating live. Both are frontend-only: when you queue, receiver outputs resolve straight to whatever feeds the sender, so the server sees plain links. Selecting either draws dashed ghost wires between a sender and its receivers; nodes on a channel share a title colour; right-click → **Go to sender** / **Go to receiver**. Two senders on one channel are flagged "duplicate channel", and a receiver with no sender shows "no signal"; either blocks the queue with a message naming the channel. Subgraphs are separate: a receiver only hears senders in its own graph.
 
 ### Control Panel (MB)
 Up to 16 controls (slider, switch, dropdown, seed, text) in one node. Each control is blank until you wire its output to something — it then adopts that input's shape (drag-slider, toggle, filtered dropdown, seed with randomize/reroll, or text) and reverts to blank on disconnect. Right-click for settings: add/remove/rename controls, slider ranges, switch labels, dropdown option filtering, and node colour.
 
 ### Load Models Combo (MB)
-Load Diffusion Model + Load CLIP + Load VAE combined into one node. Outputs MODEL, CLIP, and VAE.
+Load Diffusion Model + Load CLIP + Load VAE combined into one node. Outputs MODEL, CLIP, and VAE. Clicking the model, CLIP or VAE dropdown opens a grouped menu: starred files (★), the last 5 picked (🕒), **Search all…** (the stock filterable list), then files grouped by subfolder; the arrows still step through the list. Right-click the node to star or unstar the current files. **Presets** saves and applies the whole set (model, dtype, CLIP, CLIP type/device, VAE). A file the workflow points at but that isn't on disk is outlined red, with "missing file" in the title bar. Favorites, recents and presets are kept in your ComfyUI user settings.
 
 ### Wildcard Select (MB)
 Picks one item out of a `.txt` in ComfyUI's `wildcards` folder and wraps it in a prompt weight. `seed` is a KSampler-style widget mapped onto the item count, `weight` is a 0–5 slider, and `weight_format` decides whether the parentheses appear at weight 1.0 (`auto`), always, or never. `prefix` and `suffix` are added outside the weight on `string`; `raw` stays the bare item. Blank lines and `#` comments are skipped; `bypass` outputs an empty string.
@@ -131,12 +137,38 @@ Dropdown of 30 simple standing poses, or a seeded-random one with `randomize_pos
 
 Right-click a node (or a selection) → **Replace Node...** and pick a type from the search list. Each node is swapped in place: links are reconnected by slot name, then index, then first compatible type; widget values with matching names carry over; title, colour and mode are kept. Links with no matching slot are dropped and reported. One Ctrl+Z undoes it.
 
+## Restart Button
+
+Power icon in the top action bar. One click restarts the ComfyUI server the page is connected to, with no confirmation; the page reconnects once it is back. Works with comfy-cli and plain launches (including the Windows portable build).
+
+## Colour Palettes
+
+11 palettes added to ComfyUI's own list (Settings → Appearance → Color Palette): **MB Graphite**, **MB OLED**, **MB Slate**, **MB Plum**, **MB Forest**, and true-black OLED palettes with soft accents: **MB Arctic**, **MB Deep Indigo**, **MB Glacier Mint**, **MB Ember**, **MB Ruby**, **MB Rose**. The palette icon in the top bar cycles through them.
+
 ## Settings
 
 Open ComfyUI's settings dialog and pick the **MB** panel.
 
+### About
+Pack version, node count and a link to this README.
+
+### Features
+On/off switches, all on by default and applied live: **Node count badge**, **Restart button**, **Palette switcher**, **Replace Node menu**, **Clipboard paste** (the button on Load Image (MB)).
+
+### Node defaults
+Starting values for newly added nodes; saved workflows keep their own: **Branch Runner: runs** (1–100), **Get Lines: start mode** (Auto or Fixed 1–32), **Load Image Crop: aspect**.
+
 ### Theme → Accent colour
-MB nodes use the stock ComfyUI look. Accent for active buttons, selections and highlights: **Pink** (default), **Green**, **Purple**, **Teal**, **Gold**, **Blue**, **Red**, **Orange**, **Indigo**, **Slate**, **Orchid**.
+MB nodes use the stock ComfyUI look. Accent for active buttons, selections and highlights: **Pink** (default), **Green**, **Purple**, **Teal**, **Gold**, **Blue**, **Red**, **Orange**, **Indigo**, **Slate**, **Orchid**, or **Custom** — any colour from **Theme → Custom accent colour**.
+
+### Theme → Palette switcher cycle
+Tick the MB palettes the top-bar palette button steps through. None ticked means all.
+
+### Theme → Accent tints UI
+Off by default. When on, the accent also colours node selection outlines, the wire being dragged and the UI's primary highlight, over any colour palette.
+
+### Theme → Style polish
+Off by default. Rounder node corners, rounded menus and dialogs, thin scrollbars.
 
 ### Links → Link render mode
 Custom routing for every link on the canvas, on top of ComfyUI's own three styles:
@@ -152,8 +184,17 @@ Custom routing for every link on the canvas, on top of ComfyUI's own three style
 - **Dashed** — flat bezier with a static (non-animated) dash pattern.
 - **Ghost Wire** — a Telephone Line that only draws fully while one of its nodes is selected; otherwise just a short nub at each end.
 - **Tension** — the reverse of Telephone Line: short links bow like loose rope, links stretched past a tunable reach pull straight and thin.
+- **PCB Trace** — 45° diagonal routing with a via dot at each bend and a pad ring at each end.
+- **Spotlight** — links dim except those touching the selected or hovered node.
+- **Fade Mid** — links fade out toward their middle, solid only near the slots; full strength on hover.
+- **Hairline** — 1px lines with no border or centre marker.
+- **Teleport** — links longer than a tunable distance collapse to short stubs tagged with matching letters (A, B, … AA); hover a stub or select either node to see the full link.
+- **Bundle** — every link off one output shares a straight trunk before splitting, so many links leave the slot as one wire.
 
 Links on a reroute keep ComfyUI's own rendering. Custom-mode links are coloured by the input type they land on.
 
 ### Links → Link opacity
 Opacity of links in whichever mode is picked above, 0–100% (default 100), live.
+
+### Links: Telephone Line / Ghost Wire, Links: Tension, Links: Teleport
+Per-mode tuning, grouped under the mode it affects: **Sag** and **Max dip** for Telephone Line and Ghost Wire, **Bow** and **Reach** for Tension, **Distance** for Teleport.

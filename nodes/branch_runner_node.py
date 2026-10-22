@@ -20,8 +20,10 @@ class MBBranchRunner(io.ComfyNode):
             search_aliases=["run branch", "partial execution", "queue branch"],
             is_output_node=True,
             inputs=[
+                # Optional so an unwired Branch Runner doesn't fail a normal full Queue.
                 io.AnyType.Input(
                     "value",
+                    optional=True,
                     tooltip="Anything. Only used to give the branch something to run into -- the value itself is discarded.",
                 ),
             ],
@@ -29,7 +31,7 @@ class MBBranchRunner(io.ComfyNode):
         )
 
     @classmethod
-    def execute(cls, value) -> io.NodeOutput:
+    def execute(cls, value=None) -> io.NodeOutput:
         return io.NodeOutput()
 
 

@@ -135,9 +135,10 @@ function ensureStyle() {
  * Opens a modal. `render` fills the body element; `onApply` runs on Apply and
  * can return false to keep the dialog open (failed validation); `onClose` runs
  * however the dialog goes away — Apply, Cancel, Escape or a click outside.
+ * `canClose` can return false to keep it open on any of those but Apply.
  * `width` overrides the default narrow body, for dialogs that hold a canvas.
  */
-export function openDialog({ title, render, onApply, onClose, applyLabel = "Apply", width }) {
+export function openDialog({ title, render, onApply, onClose, canClose, applyLabel = "Apply", width }) {
     ensureStyle();
 
     const overlay = document.createElement("div");
@@ -179,21 +180,27 @@ export function openDialog({ title, render, onApply, onClose, applyLabel = "Appl
         close();
     }
 
+    // Every way out except Apply; `canClose` can veto it (unsaved edits).
+    function dismiss() {
+        if (canClose?.() === false) return;
+        close();
+    }
+
     function onKeyDown(event) {
         if (event.key === "Escape") {
             event.stopPropagation(); // keep the canvas from acting on it too
-            close();
+            dismiss();
         } else if (event.key === "Enter") {
             event.stopPropagation();
             submit();
         }
     }
 
-    cancel.addEventListener("click", close);
-    dialog.querySelector(".mb-dialog-close").addEventListener("click", close);
+    cancel.addEventListener("click", dismiss);
+    dialog.querySelector(".mb-dialog-close").addEventListener("click", dismiss);
     apply.addEventListener("click", submit);
     overlay.addEventListener("mousedown", (event) => {
-        if (event.target === overlay) close();
+        if (event.target === overlay) dismiss();
     });
     document.addEventListener("keydown", onKeyDown, true);
 

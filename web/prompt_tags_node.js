@@ -40,37 +40,108 @@ function setText(node, text) {
 
 // ------------------------------------------------------------------- saving
 
+const SAVE_CSS = `
+.mb-ts { display: flex; flex-direction: column; gap: 10px; }
+.mb-ts-name { display: flex; align-items: center; background: var(--comfy-input-bg); border: 1px solid transparent; border-radius: 8px; }
+.mb-ts-name:focus-within { border-color: var(--mb-accent); }
+.mb-ts-name.mb-invalid { border-color: #e5484d; }
+.mb-ts-name span { padding-left: 12px; color: var(--mb-accent); font-weight: 500; }
+.mb-ts-name input { flex: 1; min-width: 0; padding: 8px 12px 8px 3px; background: transparent; color: var(--input-text); border: none; outline: none; font: inherit; }
+.mb-ts-note { font-size: 12px; color: var(--descrip-text); min-height: 16px; }
+.mb-ts-note.mb-warn { color: #e8a33d; }
+.mb-ts-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.mb-ts-compare div { background: var(--comfy-menu-secondary-bg); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; line-height: 1.5; max-height: 160px; overflow-y: auto; white-space: pre-wrap; color: var(--input-text); }
+.mb-ts-compare b { display: block; font-size: 11px; font-weight: 500; color: var(--descrip-text); margin-bottom: 4px; }
+`;
+
+function ensureSaveStyle() {
+    if (document.getElementById("mb-ts-style")) return;
+    const style = document.createElement("style");
+    style.id = "mb-ts-style";
+    style.textContent = SAVE_CSS;
+    document.head.appendChild(style);
+}
+
+// Asks for the name (pre-filled from tag_name). Typing a name that is already
+// saved shows the saved text next to the new one, and Apply then overwrites it.
 async function saveTag(node) {
     const text = getWidget(node, "text")?.value ?? "";
-    const name = (getWidget(node, "tag_name")?.value ?? "").trim().replace(/^@/, "");
-
-    if (!TAG_NAME.test(name)) {
-        notify("warn", "Bad tag name", "Use letters, digits, _ and - only.");
-        return;
-    }
     if (!text.trim()) {
         notify("warn", "Nothing to save", "The prompt is empty.");
         return;
     }
-    if (new RegExp(`@${name}(?![A-Za-z0-9_-])`).test(text)) {
-        notify("warn", "Tag refers to itself", `@${name} would stay unexpanded inside its own prompt.`);
-    }
+    await fetchTags().catch(() => {});
+    ensureSaveStyle();
 
-    try {
-        let result = await post("/mbnodes/prompt_tags/save", { name, text, overwrite: false });
-        if (result.status === 409) {
-            if (!confirm(`@${name} already exists.\n\nOverwrite it?`)) return;
-            result = await post("/mbnodes/prompt_tags/save", { name, text, overwrite: true });
-        }
-        if (result.status >= 400) {
-            notify("error", "Save failed", result.data?.error ?? `HTTP ${result.status}`);
-            return;
-        }
-        tags = result.data.tags;
-        notify("success", "Tag saved", `@${result.data.name}`);
-    } catch (e) {
-        notify("error", "Save failed", e?.message ?? String(e));
-    }
+    let input;
+    openDialog({
+        title: "Save tag",
+        applyLabel: "Save",
+        width: 480,
+        render(body) {
+            const root = el("div", "mb-ts");
+            const box = el("div", "mb-ts-name");
+            input = el("input");
+            input.value = (getWidget(node, "tag_name")?.value ?? "").trim().replace(/^@/, "").replace(/\s+/g, "_");
+            box.append(el("span", "", "@"), input);
+            const note = el("div", "mb-ts-note");
+            const compare = el("div", "mb-ts-compare");
+
+            const update = () => {
+                const name = input.value.trim().replace(/^@/, "");
+                const valid = TAG_NAME.test(name);
+                box.classList.toggle("mb-invalid", !!name && !valid);
+                const exists = valid && name in tags;
+                const selfRef = valid && new RegExp(`@${name}(?![A-Za-z0-9_-])`).test(text);
+                note.classList.toggle("mb-warn", exists || selfRef || (!!name && !valid));
+                note.textContent = !name ? "Letters, digits, _ and -. Spaces become _."
+                    : !valid ? "Use letters, digits, _ and - only."
+                    : exists ? `@${name} already exists. Saving overwrites it.`
+                    : selfRef ? `@${name} would stay unexpanded inside its own prompt.`
+                    : `Saves as a new tag.`;
+                compare.replaceChildren();
+                if (exists) {
+                    const saved = el("div");
+                    saved.append(el("b", "", "Saved"), tags[name]);
+                    const next = el("div");
+                    next.append(el("b", "", "New"), text);
+                    compare.append(saved, next);
+                }
+            };
+            // A space would end the @name, so it turns into _ as it is typed.
+            input.addEventListener("input", () => {
+                if (/\s/.test(input.value)) {
+                    const caret = input.selectionStart;
+                    input.value = input.value.replace(/\s/g, "_");
+                    input.setSelectionRange(caret, caret);
+                }
+                update();
+            });
+            root.append(box, note, compare);
+            body.appendChild(root);
+            update();
+            setTimeout(() => input.select(), 0);
+        },
+        onApply() {
+            const name = input.value.trim().replace(/^@/, "");
+            if (!TAG_NAME.test(name)) {
+                input.focus();
+                return false;
+            }
+            // The dialog showed whether this overwrites, so saving is the confirmation.
+            post("/mbnodes/prompt_tags/save", { name, text, overwrite: true })
+                .then(({ status, data }) => {
+                    if (status >= 400) throw new Error(data?.error ?? `HTTP ${status}`);
+                    tags = data.tags;
+                    markEdited([data.name]);
+                    const tagName = getWidget(node, "tag_name");
+                    if (tagName) tagName.value = data.name;
+                    node.setDirtyCanvas(true, true);
+                    notify("success", "Tag saved", `@${data.name}`);
+                })
+                .catch((e) => notify("error", "Save failed", e?.message ?? String(e)));
+        },
+    });
 }
 
 // ------------------------------------------------------------- autocomplete
@@ -103,7 +174,38 @@ function ensurePopupStyle() {
     document.head.appendChild(style);
 }
 
-function attachAutocomplete(node, textarea) {
+const MIRRORED = ["boxSizing", "width", "fontFamily", "fontSize", "fontWeight", "lineHeight", "letterSpacing",
+    "paddingTop", "paddingRight", "paddingBottom", "paddingLeft", "borderTopWidth", "borderLeftWidth", "tabSize"];
+
+// Screen position of the caret: the text before it is laid out in a hidden
+// copy of the textarea and a marker placed where the caret falls. The canvas
+// zoom scales the textarea with a CSS transform, so offsets are scaled to match.
+function caretPoint(textarea) {
+    const style = getComputedStyle(textarea);
+    const mirror = document.createElement("div");
+    for (const key of MIRRORED) mirror.style[key] = style[key];
+    Object.assign(mirror.style, {
+        position: "absolute", visibility: "hidden", top: "0", left: "0",
+        whiteSpace: "pre-wrap", overflowWrap: "break-word",
+    });
+    mirror.textContent = textarea.value.slice(0, textarea.selectionStart);
+    const marker = document.createElement("span");
+    marker.textContent = "​";
+    mirror.appendChild(marker);
+    document.body.appendChild(mirror);
+
+    const rect = textarea.getBoundingClientRect();
+    const scale = rect.width / (textarea.offsetWidth || rect.width);
+    const left = rect.left + (marker.offsetLeft - textarea.scrollLeft) * scale;
+    const top = rect.top + (marker.offsetTop - textarea.scrollTop) * scale;
+    const bottom = top + marker.offsetHeight * scale;
+    mirror.remove();
+    return { left, bottom: Math.min(Math.max(bottom, rect.top), rect.bottom) };
+}
+
+// `pick(text)` applies an accepted completion; `sync(text)` mirrors plain
+// typing while an @word is open, since other listeners are stopped then.
+function attachAutocomplete(textarea, { pick: applyPick, sync }) {
     ensurePopupStyle();
     const popup = document.createElement("div");
     popup.className = "mb-tag-popup";
@@ -154,9 +256,9 @@ function attachAutocomplete(node, textarea) {
                 ? a.localeCompare(b) : a.toLowerCase().startsWith(q) ? -1 : 1);
         if (!matches.length) return hide();
         active = Math.min(active, matches.length - 1);
-        const rect = textarea.getBoundingClientRect();
-        popup.style.left = `${rect.left}px`;
-        popup.style.top = `${rect.bottom + 4}px`;
+        const caret = caretPoint(textarea);
+        popup.style.left = `${Math.min(caret.left, window.innerWidth - 330)}px`;
+        popup.style.top = `${caret.bottom + 4}px`;
         popup.style.display = "";
         render();
     }
@@ -164,7 +266,7 @@ function attachAutocomplete(node, textarea) {
     function pick(name) {
         const caret = textarea.selectionStart;
         const text = textarea.value.slice(0, start) + `@${name} ` + textarea.value.slice(caret);
-        setText(node, text);
+        applyPick(text);
         const pos = start + name.length + 2;
         textarea.setSelectionRange(pos, pos);
         hide();
@@ -173,15 +275,14 @@ function attachAutocomplete(node, textarea) {
     // Other packs (tag autocompleters) also listen for "@" on every textarea.
     // Window capture runs before any listener on the textarea itself, so while
     // an @tag is being typed the event stops here and only our list shows.
-    // Their listeners would also have synced widget.value, so do that here.
+    // Their listeners would also have synced the value, so do that here.
     function onInput(event) {
         if (event.target !== textarea) return;
         active = 0;
         update();
         if (query() === null) return;
         event.stopImmediatePropagation();
-        const widget = getWidget(node, "text");
-        if (widget) widget.value = textarea.value;
+        sync(textarea.value);
     }
 
     function onKeyUp(event) {
@@ -222,26 +323,50 @@ function attachAutocomplete(node, textarea) {
 // ----------------------------------------------------------------- managing
 
 const MANAGER_CSS = `
-.mb-tm { display: grid; grid-template-columns: 230px minmax(0, 1fr); height: 520px; margin: -10px -16px -14px; }
+.mb-tm-dialog {
+    display: flex; flex-direction: column; resize: both;
+    width: 900px; height: min(680px, calc(100vh - 32px));
+    min-width: 640px; min-height: 420px; max-width: calc(100vw - 32px); max-height: calc(100vh - 32px);
+}
+.mb-tm-dialog .mb-dialog-body { flex: 1; min-height: 0; }
+.mb-tm { display: grid; grid-template-columns: 250px minmax(0, 1fr); flex: 1; min-height: 0; margin: -10px -16px -14px; }
 .mb-tm-side { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--comfy-menu-secondary-bg); border-right: 1px solid var(--comfy-input-bg); min-height: 0; }
 .mb-tm-search { position: relative; }
 .mb-tm-search::before { content: "⌕"; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--descrip-text); font-size: 15px; }
 .mb-tm-search input { padding-left: 28px; }
+.mb-tm-sort { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--descrip-text); }
+.mb-tm-sort select { flex: 1; padding: 4px 8px; background: var(--comfy-input-bg); color: var(--input-text); border: 1px solid transparent; border-radius: 6px; font: inherit; outline: none; }
 .mb-tm-list { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+.mb-tm-group { display: flex; align-items: center; gap: 6px; padding: 6px 6px 2px; font-size: 11px; color: var(--descrip-text); cursor: pointer; user-select: none; flex: none; }
+.mb-tm-group b { font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; }
+.mb-tm-group .mb-tm-gcount { margin-left: auto; }
 .mb-tm-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; cursor: pointer; white-space: nowrap; overflow: hidden; flex: none; }
 .mb-tm-row:hover { background: var(--comfy-input-bg); }
 .mb-tm-row.mb-selected { background: color-mix(in srgb, var(--mb-a) 24%, var(--comfy-menu-secondary-bg)); }
 .mb-tm-row b { font-weight: 500; }
 .mb-tm-row span { color: var(--descrip-text); overflow: hidden; text-overflow: ellipsis; }
 .mb-tm-row i { width: 6px; height: 6px; border-radius: 50%; background: var(--mb-a); margin-left: auto; flex: none; }
-.mb-tm-edit { display: flex; flex-direction: column; gap: 12px; padding: 16px 18px; overflow-y: auto; min-width: 0; }
+.mb-tm-row mark { background: color-mix(in srgb, var(--mb-a) 45%, transparent); color: inherit; border-radius: 3px; }
+.mb-tm-row.mb-deleted b, .mb-tm-row.mb-deleted span { text-decoration: line-through; opacity: 0.55; }
+.mb-tm-undo { margin-left: auto; color: var(--mb-a); font-size: 11px; cursor: pointer; flex: none; }
+.mb-tm-keys { font-size: 10.5px; color: var(--descrip-text); line-height: 1.6; }
+.mb-tm-edit { display: flex; flex-direction: column; gap: 12px; padding: 16px 18px; overflow-y: auto; min-width: 0; min-height: 0; }
+.mb-tm-grow { flex: 1; display: flex; flex-direction: column; min-height: 160px; }
 .mb-tm-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--descrip-text); margin-bottom: 5px; }
 .mb-tm input, .mb-tm textarea {
     width: 100%; box-sizing: border-box; padding: 8px 12px; background: var(--comfy-input-bg); color: var(--input-text);
-    border: 1px solid transparent; border-radius: 8px; font: inherit; outline: none;
+    border: 1px solid transparent; border-radius: 8px; font: inherit; line-height: 1.5; outline: none;
 }
-.mb-tm textarea { resize: vertical; min-height: 130px; line-height: 1.5; }
 .mb-tm input:focus, .mb-tm textarea:focus { border-color: var(--mb-a); }
+.mb-tm-field { position: relative; flex: 1; min-height: 0; background: var(--comfy-input-bg); border-radius: 8px; }
+.mb-tm-field textarea { position: relative; z-index: 1; height: 100%; resize: none; background: transparent; overflow-y: scroll; }
+.mb-tm-hl {
+    position: absolute; inset: 0; box-sizing: border-box; padding: 8px 12px; border: 1px solid transparent;
+    font: inherit; line-height: 1.5; white-space: pre-wrap; overflow-wrap: break-word; color: transparent;
+    overflow-y: scroll; scrollbar-color: transparent transparent; pointer-events: none;
+}
+.mb-tm-hl mark { color: transparent; background: color-mix(in srgb, var(--mb-a) 35%, transparent); border-radius: 3px; }
+.mb-tm-hl mark.mb-bad { background: rgba(229, 72, 77, 0.4); }
 .mb-tm-name { display: flex; align-items: center; background: var(--comfy-input-bg); border: 1px solid transparent; border-radius: 8px; }
 .mb-tm-name:focus-within { border-color: var(--mb-a); }
 .mb-tm-name.mb-invalid { border-color: #e5484d; }
@@ -251,11 +376,14 @@ const MANAGER_CSS = `
 .mb-tm-refs { font-size: 12px; color: var(--descrip-text); line-height: 1.9; }
 .mb-tm-chip { display: inline-block; background: color-mix(in srgb, var(--mb-a) 22%, var(--comfy-menu-secondary-bg)); color: var(--input-text); border-radius: 5px; padding: 0 6px; margin-right: 4px; cursor: pointer; }
 .mb-tm-chip:hover { filter: brightness(1.2); }
-.mb-tm-actions { display: flex; gap: 8px; margin-top: auto; }
+.mb-tm-banner { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; background: rgba(229, 72, 77, 0.15); color: var(--input-text); font-size: 12px; }
+.mb-tm-banner .mb-dialog-button { margin-left: auto; }
+.mb-tm-actions { display: flex; gap: 8px; }
 .mb-tm-danger { color: #e5484d !important; margin-left: auto; }
 .mb-tm-empty { color: var(--descrip-text); font-size: 12px; padding: 8px 10px; }
 .mb-tm-count { font-size: 11px; color: var(--descrip-text); background: var(--comfy-input-bg); border-radius: 10px; padding: 2px 8px; }
 .mb-tm-status { flex: 1; align-self: center; font-size: 12px; color: var(--descrip-text); }
+.mb-tm-status.mb-tm-warn { color: #e8a33d; }
 `;
 
 function ensureManagerStyle() {
@@ -266,12 +394,33 @@ function ensureManagerStyle() {
     document.head.appendChild(style);
 }
 
-// Same rules as expand() in nodes/prompt_tags_node.py; only feeds the preview.
+// Same rules as expand() and tidy() in nodes/prompt_tags_node.py; only feeds
+// the previews.
+const TAG_REF = /@([A-Za-z0-9_-]+)(?::(\d+(?:\.\d+)?))?/g;
+// Innermost {a|b|c} group, as CHOICE in nodes/prompt_tags_node.py.
+const CHOICE = /\{[^{}]*\|[^{}]*\}/g;
+
 function expandTags(text, all, chain = []) {
-    return text.replace(/@([A-Za-z0-9_-]+)/g, (match, name) =>
-        name in all && !chain.includes(name) && chain.length < 16
-            ? expandTags(all[name], all, [...chain, name])
-            : match);
+    return text.replace(TAG_REF, (match, name, weight) => {
+        if (!(name in all) || chain.includes(name) || chain.length >= 16) return match;
+        const expanded = expandTags(all[name], all, [...chain, name]);
+        return weight ? `(${expanded.replace(/^[ ,]+|[ ,]+$/g, "")}:${weight})` : expanded;
+    });
+}
+
+function tidy(text) {
+    return text
+        .replace(/[ \t]+/g, " ")
+        .replace(/ ?,(?: ?,)+/g, ",")
+        .replace(/ +,/g, ",")
+        .replace(/^[ ,]+|[ ,]+$/gm, "")
+        .trim();
+}
+
+// What the node outputs, plus any @names left unexpanded in it.
+function resolve(text) {
+    const output = tidy(expandTags(text, tags));
+    return { output, unknown: referencedNames(output) };
 }
 
 function referencedNames(text) {
@@ -289,6 +438,50 @@ function el(tag, className, text) {
     return e;
 }
 
+// Per-browser record of when each tag was last saved, for "Recently edited".
+const EDITED_KEY = "mb-tag-edited";
+const SORT_KEY = "mb-tag-sort";
+const SORTS = { name: "Name", recent: "Recently edited", used: "Most used" };
+const DISCARD_MS = 4000; // window for the second close that discards edits
+
+function editedTimes() {
+    try {
+        return JSON.parse(localStorage.getItem(EDITED_KEY)) ?? {};
+    } catch {
+        return {};
+    }
+}
+
+function markEdited(names) {
+    const times = editedTimes();
+    for (const name of names) times[name] = Date.now();
+    try {
+        localStorage.setItem(EDITED_KEY, JSON.stringify(times));
+    } catch {}
+}
+
+// "style_warm" and "style-cool" share the group "style".
+function groupOf(name) {
+    return /^([^_-]+)[_-]/.exec(name)?.[1] ?? null;
+}
+
+// `text` with every case-insensitive occurrence of `query` wrapped in <mark>.
+function highlighted(text, query) {
+    const fragment = document.createDocumentFragment();
+    if (!query) {
+        fragment.append(text);
+        return fragment;
+    }
+    const lower = text.toLowerCase();
+    let from = 0;
+    for (let at = lower.indexOf(query); at >= 0; at = lower.indexOf(query, from)) {
+        fragment.append(text.slice(from, at), el("mark", "", text.slice(at, at + query.length)));
+        from = at + query.length;
+    }
+    fragment.append(text.slice(from));
+    return fragment;
+}
+
 async function openManageDialog(node) {
     try {
         await fetchTags();
@@ -298,39 +491,109 @@ async function openManageDialog(node) {
     }
     ensureManagerStyle();
 
-    // Edited locally, written back as a whole on Save changes. `orig` is the
-    // saved name, so edits and deletes can be counted against what is on disk.
-    const draft = Object.entries(tags).map(([name, text]) => ({ name, text, orig: name }));
-    let removed = 0;
+    // Edited locally, written back as changes on Save. `orig` is the saved
+    // name, so edits, renames and deletes can be told apart from what is on
+    // disk. Deleted tags stay in the list, struck through, until Save.
+    const draft = Object.entries(tags).map(([name, text]) => ({ name, text, orig: name, deleted: false }));
     let current = null;
     let filter = "";
-    let list, nameBox, nameInput, textInput, words, preview, refs, editor, count, status;
+    let sort = SORTS[localStorage.getItem(SORT_KEY)] ? localStorage.getItem(SORT_KEY) : "name";
+    let visible = []; // rows in list order, for the arrow keys
+    let discardArmed = 0;
+    const collapsed = new Set();
+    let list, nameBox, nameInput, textInput, backdrop, words, preview, refs, editor, banner, count, status;
 
-    const asMap = () => Object.fromEntries(draft.map((t) => [t.name.trim(), t.text]));
+    const live = () => draft.filter((t) => !t.deleted);
+    const asMap = () => Object.fromEntries(live().map((t) => [t.name.trim(), t.text]));
     const edited = (t) => t.orig === null || t.name.trim() !== t.orig || t.text !== tags[t.orig];
+    const changeCount = () => live().filter(edited).length + draft.filter((t) => t.deleted && t.orig !== null).length;
+    const usage = (name) => live().filter((t) => t.name.trim() !== name && referencedNames(t.text).includes(name)).length;
+    const matches = (t) => !filter || t.name.toLowerCase().includes(filter) || t.text.toLowerCase().includes(filter);
 
     function uniqueName(base) {
         let name = base;
-        for (let i = 2; draft.some((t) => t.name.trim() === name); i++) name = `${base}_${i}`;
+        for (let i = 2; live().some((t) => t.name.trim() === name); i++) name = `${base}_${i}`;
         return name;
     }
 
+    function sorted(items) {
+        const byName = (a, b) => a.name.localeCompare(b.name);
+        if (sort === "recent") {
+            const times = editedTimes();
+            return [...items].sort((a, b) => (times[b.name.trim()] ?? 0) - (times[a.name.trim()] ?? 0) || byName(a, b));
+        }
+        if (sort === "used") {
+            const uses = new Map(items.map((t) => [t, usage(t.name.trim())]));
+            return [...items].sort((a, b) => uses.get(b) - uses.get(a) || byName(a, b));
+        }
+        return [...items].sort(byName);
+    }
+
+    function row(tag) {
+        const r = el("div", "mb-tm-row" + (tag === current ? " mb-selected" : "") + (tag.deleted ? " mb-deleted" : ""));
+        const name = el("b");
+        name.append("@", highlighted(tag.name, filter));
+        // A search hit inside the prompt shows the words around it instead of
+        // the first two.
+        const at = filter && !tag.name.toLowerCase().includes(filter) ? tag.text.toLowerCase().indexOf(filter) : -1;
+        const snippet = el("span");
+        if (at >= 0) snippet.append(at > 12 ? "…" : "", highlighted(tag.text.slice(Math.max(0, at - 12), at + filter.length + 30), filter));
+        else snippet.textContent = firstWords(tag.text);
+        r.append(name, snippet);
+        if (tag.deleted) {
+            const undo = el("span", "mb-tm-undo", "Undo");
+            undo.addEventListener("click", (event) => {
+                event.stopPropagation();
+                restore(tag);
+            });
+            r.appendChild(undo);
+        } else if (edited(tag)) {
+            r.appendChild(el("i"));
+        }
+        r.addEventListener("click", () => select(tag));
+        visible.push(tag);
+        return r;
+    }
+
+    // Tags sharing a name prefix are grouped under a collapsible header; a
+    // prefix used once stays a plain row. A search opens every group.
     function drawList() {
         list.replaceChildren();
-        const shown = draft
-            .filter((t) => t.name.toLowerCase().includes(filter))
-            .sort((a, b) => a.name.localeCompare(b.name));
+        visible = [];
+        const shown = sorted(draft.filter(matches));
         if (!shown.length) list.appendChild(el("div", "mb-tm-empty", draft.length ? "No matches." : "No tags saved yet."));
+
+        const groups = new Map();
         for (const tag of shown) {
-            const row = el("div", "mb-tm-row" + (tag === current ? " mb-selected" : ""));
-            row.append(el("b", "", `@${tag.name}`), el("span", "", firstWords(tag.text)));
-            if (edited(tag)) row.appendChild(el("i"));
-            row.addEventListener("click", () => select(tag));
-            list.appendChild(row);
+            const group = groupOf(tag.name.trim());
+            if (!groups.has(group)) groups.set(group, []);
+            groups.get(group).push(tag);
         }
-        count.textContent = `${draft.length} tag${draft.length === 1 ? "" : "s"}`;
-        const changes = draft.filter(edited).length + removed;
-        if (status) status.textContent = changes ? `${changes} unsaved change${changes === 1 ? "" : "s"}` : "All changes saved";
+        const loose = [];
+        for (const [group, members] of [...groups].sort(([a], [b]) => (a ?? "").localeCompare(b ?? ""))) {
+            if (!group || members.length < 2) {
+                loose.push(...members);
+                continue;
+            }
+            const open = filter || !collapsed.has(group);
+            const head = el("div", "mb-tm-group");
+            head.append(el("span", "", open ? "▾" : "▸"), el("b", "", group), el("span", "mb-tm-gcount", String(members.length)));
+            head.addEventListener("click", () => {
+                if (collapsed.has(group)) collapsed.delete(group);
+                else collapsed.add(group);
+                drawList();
+            });
+            list.appendChild(head);
+            if (open) members.forEach((tag) => list.appendChild(row(tag)));
+        }
+        sorted(loose).forEach((tag) => list.appendChild(row(tag)));
+
+        const total = live().length;
+        count.textContent = `${total} tag${total === 1 ? "" : "s"}`;
+        const changes = changeCount();
+        if (status && !status.classList.contains("mb-tm-warn")) {
+            status.textContent = changes ? `${changes} unsaved change${changes === 1 ? "" : "s"}` : "All changes saved";
+        }
     }
 
     function chips(names) {
@@ -338,10 +601,26 @@ async function openManageDialog(node) {
         if (!names.length) span.textContent = "none";
         for (const name of names) {
             const chip = el("span", "mb-tm-chip", `@${name}`);
-            chip.addEventListener("click", () => select(draft.find((t) => t.name.trim() === name)));
+            chip.addEventListener("click", () => select(live().find((t) => t.name.trim() === name)));
             span.appendChild(chip);
         }
         return span;
+    }
+
+    // Behind the transparent textarea: the same text with @refs marked, known
+    // ones in the accent, unknown ones in red.
+    function drawHighlights() {
+        const all = asMap();
+        const text = textInput.value;
+        backdrop.replaceChildren();
+        let from = 0;
+        for (const m of text.matchAll(TAG_REF)) {
+            backdrop.append(text.slice(from, m.index), el("mark", m[1] in all ? "" : "mb-bad", m[0]));
+            from = m.index + m[0].length;
+        }
+        // The trailing newline keeps a last empty line the same height as in the textarea.
+        backdrop.append(text.slice(from) + "\n");
+        backdrop.scrollTop = textInput.scrollTop;
     }
 
     function drawDetails() {
@@ -349,10 +628,13 @@ async function openManageDialog(node) {
         const all = asMap();
         const name = current.name.trim();
         words.textContent = `${current.text.trim().split(/\s+/).filter(Boolean).length} words`;
-        preview.textContent = expandTags(current.text, all, [name]);
+        preview.textContent = tidy(expandTags(current.text, all, [name]));
+        banner.style.display = current.deleted ? "" : "none";
+        nameInput.readOnly = textInput.readOnly = current.deleted;
+        drawHighlights();
 
         const uses = referencedNames(current.text).filter((n) => n in all && n !== name);
-        const usedBy = draft.filter((t) => t !== current && referencedNames(t.text).includes(name)).map((t) => t.name.trim());
+        const usedBy = live().filter((t) => t !== current && referencedNames(t.text).includes(name)).map((t) => t.name.trim());
         const usesLine = el("div", "", "Uses ");
         usesLine.appendChild(chips(uses));
         const byLine = el("div", "", "Used by ");
@@ -368,6 +650,41 @@ async function openManageDialog(node) {
         textInput.value = current?.text ?? "";
         drawDetails();
         drawList();
+        list.querySelector(".mb-selected")?.scrollIntoView({ block: "nearest" });
+    }
+
+    function addTag() {
+        const tag = { name: uniqueName("new_tag"), text: "", orig: null, deleted: false };
+        draft.push(tag);
+        select(tag);
+        nameInput.focus();
+        nameInput.select();
+    }
+
+    // A blank tag that was never saved just goes; anything else is struck
+    // through and can be restored until Save.
+    function deleteCurrent() {
+        if (!current || current.deleted) return;
+        if (current.orig === null && !current.text.trim()) {
+            draft.splice(draft.indexOf(current), 1);
+            select(visible.find((t) => t !== current && !t.deleted) ?? null);
+            return;
+        }
+        current.deleted = true;
+        select(current);
+    }
+
+    function restore(tag) {
+        tag.deleted = false;
+        if (live().some((t) => t !== tag && t.name.trim() === tag.name.trim())) tag.name = uniqueName(tag.name.trim());
+        select(tag);
+    }
+
+    function onText() {
+        if (!current || current.deleted) return;
+        current.text = textInput.value;
+        drawList();
+        drawDetails();
     }
 
     function button(label, onClick, extra = "") {
@@ -376,8 +693,8 @@ async function openManageDialog(node) {
         return b;
     }
 
-    function labelled(text, field, aside) {
-        const wrap = el("div");
+    function labelled(text, field, aside, className = "") {
+        const wrap = el("div", className);
         const label = el("div", "mb-tm-label");
         label.append(el("span", "", text), aside ?? el("span"));
         wrap.append(label, field);
@@ -389,14 +706,58 @@ async function openManageDialog(node) {
     function keepEnter(event) {
         if (event.key === "Enter" && event.target === textInput) event.stopPropagation();
     }
+
+    // Ctrl+S save, Ctrl+N new tag; outside the text fields ↑↓ move through
+    // the list and Delete deletes.
+    function onKeys(event) {
+        const mod = event.ctrlKey || event.metaKey;
+        const key = event.key.toLowerCase();
+        const act = (fn) => {
+            event.preventDefault();
+            event.stopPropagation();
+            fn();
+        };
+        if (mod && key === "s") return act(() => count.closest(".mb-dialog").querySelector(".mb-primary").click());
+        if (mod && key === "n") return act(addTag);
+        if (event.target === textInput || event.target === nameInput) return;
+        if (key === "arrowdown" || key === "arrowup") {
+            return act(() => {
+                const at = visible.indexOf(current);
+                const next = visible[Math.max(0, Math.min(visible.length - 1, at + (key === "arrowdown" ? 1 : -1)))];
+                if (next) select(next);
+            });
+        }
+        if (key === "delete" && event.target.tagName !== "INPUT") act(deleteCurrent);
+    }
+
     window.addEventListener("keydown", keepEnter, true);
+    window.addEventListener("keydown", onKeys, true);
+    let detachAutocomplete = null;
 
     openDialog({
         title: "Tag manager",
-        width: 900,
         applyLabel: "Save changes",
-        onClose: () => window.removeEventListener("keydown", keepEnter, true),
+        onClose: () => {
+            window.removeEventListener("keydown", keepEnter, true);
+            window.removeEventListener("keydown", onKeys, true);
+            detachAutocomplete?.();
+        },
+        // With unsaved edits the first close only warns; closing again within
+        // a few seconds discards them.
+        canClose: () => {
+            const changes = changeCount();
+            if (!changes || Date.now() - discardArmed < DISCARD_MS) return true;
+            discardArmed = Date.now();
+            status.classList.add("mb-tm-warn");
+            status.textContent = `${changes} unsaved change${changes === 1 ? "" : "s"}. Close again to discard.`;
+            setTimeout(() => {
+                status.classList.remove("mb-tm-warn");
+                drawList();
+            }, DISCARD_MS);
+            return false;
+        },
         render(body) {
+            body.parentElement.classList.add("mb-tm-dialog");
             count = el("span", "mb-tm-count");
             body.parentElement.querySelector(".mb-dialog-title").after(count);
             body.parentElement.querySelector(".mb-dialog-title").style.flex = "0 1 auto";
@@ -407,41 +768,69 @@ async function openManageDialog(node) {
             const side = el("div", "mb-tm-side");
             const search = el("div", "mb-tm-search");
             const searchInput = el("input");
-            searchInput.placeholder = "Search tags";
+            searchInput.placeholder = "Search names and prompts";
             searchInput.addEventListener("input", () => {
                 filter = searchInput.value.trim().toLowerCase();
                 drawList();
             });
             search.appendChild(searchInput);
-            list = el("div", "mb-tm-list");
-            const add = button("+ New tag", () => {
-                const tag = { name: uniqueName("new_tag"), text: "", orig: null };
-                draft.push(tag);
-                select(tag);
-                nameInput.focus();
-                nameInput.select();
+
+            const sortRow = el("label", "mb-tm-sort", "Sort");
+            const sortSelect = el("select");
+            for (const [value, label] of Object.entries(SORTS)) {
+                const option = el("option", "", label);
+                option.value = value;
+                sortSelect.appendChild(option);
+            }
+            sortSelect.value = sort;
+            sortSelect.addEventListener("change", () => {
+                sort = sortSelect.value;
+                try {
+                    localStorage.setItem(SORT_KEY, sort);
+                } catch {}
+                drawList();
             });
-            side.append(search, list, add);
+            sortRow.appendChild(sortSelect);
+
+            list = el("div", "mb-tm-list");
+            const keys = el("div", "mb-tm-keys", "↑↓ move · Del delete · Ctrl+N new · Ctrl+S save");
+            side.append(search, sortRow, list, button("+ New tag", addTag), keys);
 
             editor = el("div", "mb-tm-edit");
+
+            banner = el("div", "mb-tm-banner");
+            banner.append(el("span", "", "Deleted. Removed from disk when you save."), button("Undo", () => restore(current)));
 
             nameBox = el("div", "mb-tm-name");
             nameInput = el("input");
             nameInput.addEventListener("input", () => {
+                if (current.deleted) return;
+                if (/\s/.test(nameInput.value)) {
+                    const caret = nameInput.selectionStart;
+                    nameInput.value = nameInput.value.replace(/\s/g, "_");
+                    nameInput.setSelectionRange(caret, caret);
+                }
                 current.name = nameInput.value;
                 const name = nameInput.value.trim();
-                const taken = draft.some((t) => t !== current && t.name.trim() === name);
+                const taken = live().some((t) => t !== current && t.name.trim() === name);
                 nameBox.classList.toggle("mb-invalid", !TAG_NAME.test(name) || taken);
                 drawList();
                 drawDetails();
             });
             nameBox.append(el("span", "", "@"), nameInput);
 
+            const field = el("div", "mb-tm-field");
+            backdrop = el("div", "mb-tm-hl");
             textInput = el("textarea");
-            textInput.addEventListener("input", () => {
-                current.text = textInput.value;
-                drawList();
-                drawDetails();
+            textInput.addEventListener("input", onText);
+            textInput.addEventListener("scroll", () => (backdrop.scrollTop = textInput.scrollTop));
+            field.append(backdrop, textInput);
+            detachAutocomplete = attachAutocomplete(textInput, {
+                pick: (text) => {
+                    textInput.value = text;
+                    onText();
+                },
+                sync: onText,
             });
             words = el("span");
 
@@ -456,43 +845,51 @@ async function openManageDialog(node) {
                     notify("success", "Tag loaded", `@${current.name.trim()}`);
                 }),
                 button("Duplicate", () => {
-                    const tag = { name: uniqueName(`${current.name.trim()}_copy`), text: current.text, orig: null };
+                    const tag = { name: uniqueName(`${current.name.trim()}_copy`), text: current.text, orig: null, deleted: false };
                     draft.push(tag);
                     select(tag);
                 }),
-                button("Delete", () => {
-                    if (current.orig !== null) removed++;
-                    draft.splice(draft.indexOf(current), 1);
-                    select(draft[0]);
-                }, "mb-tm-danger"),
+                button("Delete", deleteCurrent, "mb-tm-danger"),
             );
 
             editor.append(
+                banner,
                 labelled("Name", nameBox),
-                labelled("Prompt", textInput, words),
+                labelled("Prompt", field, words, "mb-tm-grow"),
                 labelled("Expanded preview", preview),
                 labelled("Uses / used by", refs),
                 actions,
             );
             root.append(side, editor);
             body.appendChild(root);
-            select([...draft].sort((a, b) => a.name.localeCompare(b.name))[0]);
+            select(sorted(draft)[0]);
         },
         onApply() {
-            const next = {};
-            for (const tag of draft) {
+            const seen = new Set();
+            for (const tag of live()) {
                 const name = tag.name.trim();
-                if (!TAG_NAME.test(name) || name in next) {
+                if (!TAG_NAME.test(name) || seen.has(name)) {
                     select(tag);
                     notify("warn", "Bad tag name", name ? `@${name} is invalid or used twice.` : "A tag name is empty.");
                     return false;
                 }
-                next[name] = tag.text;
+                seen.add(name);
             }
-            post("/mbnodes/prompt_tags/replace", { tags: next })
+            // Only the changes go to the server, so tags saved elsewhere while
+            // this dialog was open survive.
+            const remove = draft.filter((t) => t.deleted && t.orig !== null).map((t) => t.orig);
+            const rename = {};
+            const set = {};
+            for (const tag of live()) {
+                const name = tag.name.trim();
+                if (tag.orig !== null && tag.orig !== name) rename[tag.orig] = name;
+                if (tag.orig === null || tag.text !== tags[tag.orig]) set[name] = tag.text;
+            }
+            post("/mbnodes/prompt_tags/apply", { delete: remove, rename, set })
                 .then(({ status: code, data }) => {
                     if (code >= 400) throw new Error(data?.error ?? `HTTP ${code}`);
                     tags = data.tags;
+                    markEdited([...Object.values(rename), ...Object.keys(set)]);
                     notify("success", "Tags updated", `${Object.keys(tags).length} tag(s)`);
                 })
                 .catch((e) => notify("error", "Update failed", e?.message ?? String(e)));
@@ -557,7 +954,117 @@ function buttonRow(buttons) {
             const hit = rects(this.width || mouseNode.size[0])
                 .findIndex(([x, w]) => pos[0] >= x && pos[0] <= x + w);
             if (hit < 0) return false;
-            buttons[hit][1]();
+            buttons[hit][1](event);
+            return true;
+        },
+    };
+}
+
+// ------------------------------------------------------------- insert tag
+
+// Searchable list of saved tags (ComfyUI adds its type-to-filter box to dark
+// menus); the pick goes in at the caret.
+async function insertTag(node, textarea, event) {
+    await fetchTags().catch(() => {});
+    const names = Object.keys(tags).sort((a, b) => a.localeCompare(b));
+    if (!names.length) {
+        notify("info", "No tags yet", "Save a prompt as a tag first.");
+        return;
+    }
+    const items = names.map((name) => ({
+        content: `@${name}  ·  ${firstWords(tags[name])}`,
+        callback: () => {
+            const start = textarea?.selectionStart ?? 0;
+            const end = textarea?.selectionEnd ?? start;
+            const text = getWidget(node, "text")?.value ?? "";
+            const before = text.slice(0, start);
+            const insert = `${before && !/\s$/.test(before) ? " " : ""}@${name} `;
+            setText(node, before + insert + text.slice(end));
+            textarea?.focus();
+            textarea?.setSelectionRange(start + insert.length, start + insert.length);
+        },
+    }));
+    new LiteGraph.ContextMenu(items, { event, className: "dark", scale: Math.max(1, app.canvas.ds.scale) });
+}
+
+// ---------------------------------------------------------------- preview
+
+function openPreview(node) {
+    const { output, unknown } = resolve(getWidget(node, "text")?.value ?? "");
+    openDialog({
+        title: "Expanded prompt",
+        applyLabel: "Copy",
+        width: 640,
+        render(body) {
+            ensureManagerStyle();
+            const box = el("div", "mb-tm-preview", output || "(empty)");
+            box.style.maxHeight = "360px";
+            body.appendChild(box);
+            if (getWidget(node, "dynamic_prompts")?.value && output.search(CHOICE) >= 0) {
+                const note = el("div", "", "{a|b} choices are picked with the seed when the graph runs.");
+                note.style.cssText = "color:var(--descrip-text);font-size:12px;margin-top:8px";
+                body.appendChild(note);
+            }
+            if (unknown.length) {
+                const warn = el("div", "", `Unresolved (unknown or self-referencing): ${unknown.map((n) => `@${n}`).join(", ")}`);
+                warn.style.cssText = "color:#e5484d;font-size:12px;margin-top:8px";
+                body.appendChild(warn);
+            }
+        },
+        onApply() {
+            navigator.clipboard.writeText(output)
+                .then(() => notify("success", "Copied", `${output.length} characters`))
+                .catch((e) => notify("error", "Copy failed", e?.message ?? String(e)));
+        },
+    });
+}
+
+const PREVIEW_H = 18;
+const UNKNOWN_COLOR = "#e5484d";
+
+// One line under the buttons: word count of what the node will output, and any
+// @names that won't expand. Click it for the full text.
+function previewLine(node) {
+    return {
+        type: "mb_tag_preview",
+        name: "preview",
+        serialize: false,
+        options: { serialize: false },
+
+        computeSize(width) {
+            return [width ?? 0, PREVIEW_H];
+        },
+
+        computeLayoutSize() {
+            return { minHeight: PREVIEW_H, maxHeight: PREVIEW_H, minWidth: 180 };
+        },
+
+        draw(ctx, drawNode, widgetWidth, y) {
+            const { output, unknown } = resolve(getWidget(node, "text")?.value ?? "");
+            node.__mbUnknown = unknown;
+            const words = output.split(/\s+/).filter(Boolean).length;
+            const main = `→ ${words} word${words === 1 ? "" : "s"}`;
+            ctx.save();
+            ctx.font = "11px Arial";
+            ctx.textAlign = "left";
+            ctx.textBaseline = "middle";
+            // Python's seeded picks can't be reproduced here, so with dynamic
+            // prompts on the line counts the choice groups instead.
+            const choices = getWidget(node, "dynamic_prompts")?.value ? (output.match(CHOICE) ?? []).length : 0;
+            const label = choices ? `${main}  ·  ${choices} choice${choices === 1 ? "" : "s"} picked by seed` : main;
+            ctx.fillStyle = LiteGraph.WIDGET_SECONDARY_TEXT_COLOR ?? "#999";
+            ctx.fillText(label, ROW_MARGIN, y + PREVIEW_H / 2);
+            if (unknown.length) {
+                ctx.fillStyle = UNKNOWN_COLOR;
+                ctx.fillText(`  ·  unresolved: ${unknown.map((n) => `@${n}`).join(", ")}`,
+                    ROW_MARGIN + ctx.measureText(label).width, y + PREVIEW_H / 2);
+            }
+            ctx.restore();
+        },
+
+        mouse(event) {
+            if (event.type !== "pointerdown" && event.type !== "mousedown") return false;
+            openPreview(node);
             return true;
         },
     };
@@ -568,15 +1075,39 @@ app.registerExtension({
 
     async nodeCreated(node) {
         if (node.comfyClass !== "MBPromptTags") return;
-        node.addCustomWidget(buttonRow([
-            ["Save Tag", () => saveTag(node)],
-            ["Manage Tags", () => openManageDialog(node)],
-        ]));
-
         const widget = getWidget(node, "text");
         const textarea = widget?.inputEl ?? widget?.element;
+
+        node.addCustomWidget(buttonRow([
+            ["Save Tag", () => saveTag(node)],
+            ["Insert Tag", (event) => insertTag(node, textarea, event)],
+            ["Manage Tags", () => openManageDialog(node)],
+        ]));
+        node.addCustomWidget(previewLine(node));
+
+        const prevDraw = node.onDrawForeground;
+        node.onDrawForeground = function (ctx) {
+            const r = prevDraw?.apply(this, arguments);
+            const count = node.__mbUnknown?.length ?? 0;
+            if (count && !this.flags?.collapsed) {
+                ctx.save();
+                ctx.font = "11px Arial";
+                ctx.textAlign = "right";
+                ctx.textBaseline = "middle";
+                ctx.fillStyle = UNKNOWN_COLOR;
+                ctx.fillText(`${count} unresolved tag${count === 1 ? "" : "s"}`, this.size[0] - 10, -LiteGraph.NODE_TITLE_HEIGHT / 2);
+                ctx.restore();
+            }
+            return r;
+        };
+
         if (textarea instanceof HTMLTextAreaElement) {
-            const detach = attachAutocomplete(node, textarea);
+            const detach = attachAutocomplete(textarea, {
+                pick: (text) => setText(node, text),
+                sync: (text) => {
+                    if (widget) widget.value = text;
+                },
+            });
             const onRemoved = node.onRemoved;
             node.onRemoved = function () {
                 detach();

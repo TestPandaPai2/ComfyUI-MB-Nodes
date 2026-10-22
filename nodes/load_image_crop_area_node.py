@@ -1,6 +1,6 @@
 """Load Image Crop (MB): load a file and crop it to the area drawn on the
 node's preview. Drag to draw the box, drag inside it to move, drag a grip to
-resize, click to clear. No box means the full image is output. The rect is
+resize, double-click to clear. No box means the full image is output. The rect is
 stored as fractions of the image, so swapping the file keeps the crop
 meaningful; a zero-sized rect is the "no crop" state. The aspect preset only
 locks the box in the editor; the backend crops whatever rect it is given."""
@@ -48,7 +48,7 @@ class MBLoadImageCropArea(io.ComfyNode):
             description=(
                 "Load an image and crop it to the area selected on the preview. "
                 "Drag to draw the crop area, drag inside it to move, drag its corners to resize, "
-                "click to clear. With no crop drawn the full image is output. aspect locks the box "
+                "double-click to clear, wheel to zoom, Alt-drag to pan. With no crop drawn the full image is output. aspect locks the box "
                 "to a preset. If max_megapixels is greater than 0 the output is scaled up or down "
                 "to it, aspect preserved; both sides are then snapped to resolution_steps."
             ),

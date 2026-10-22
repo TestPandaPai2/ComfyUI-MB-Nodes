@@ -4,6 +4,11 @@ The pack is loaded through the V3 entrypoint, so ComfyUI reads the schema each
 node declares in define_schema() rather than a NODE_CLASS_MAPPINGS dict.
 """
 
+import asyncio
+import os
+import sys
+import tomllib
+
 from typing_extensions import override
 
 from comfy_api.latest import ComfyExtension, io
@@ -139,6 +144,53 @@ class MBNodesExtension(ComfyExtension):
 
 async def comfy_entrypoint() -> MBNodesExtension:
     return MBNodesExtension()
+
+
+def _restart():
+    # comfy-cli watches for a .reboot marker and relaunches on exit.
+    session = os.environ.get("__COMFY_CLI_SESSION__")
+    if session:
+        open(session + ".reboot", "w").close()
+        os._exit(0)
+
+    # Same relaunch command ComfyUI-Manager builds for a plain launch.
+    argv = [a for a in sys.argv if a != "--windows-standalone-build"]
+    if argv[0].endswith("__main__.py"):
+        cmds = [sys.executable, "-m", os.path.basename(os.path.dirname(argv[0]))] + argv[1:]
+    elif sys.platform.startswith("win32"):
+        cmds = [f'"{sys.executable}"', f'"{argv[0]}"'] + argv[1:]
+    else:
+        cmds = [sys.executable] + argv
+    print("\nRestarting...\n", flush=True)
+    os.execv(sys.executable, cmds)
+
+
+# Restart button in the top bar. Reading a JSON body keeps cross-origin
+# <form> posts out: a browser won't send application/json without a CORS
+# preflight, which this server does not answer.
+try:
+    from server import PromptServer
+    from aiohttp import web
+
+    @PromptServer.instance.routes.post("/mbnodes/restart")
+    async def _mbnodes_restart(request):
+        await request.json()
+        # Reply first so the button's request completes, then relaunch.
+        asyncio.get_running_loop().call_later(0.3, _restart)
+        return web.json_response({"restarting": True})
+
+    # Version and repo for the About row in the MB settings panel.
+    @PromptServer.instance.routes.get("/mbnodes/about")
+    async def _mbnodes_about(request):
+        with open(os.path.join(os.path.dirname(__file__), "pyproject.toml"), "rb") as f:
+            project = tomllib.load(f)["project"]
+        return web.json_response({
+            "version": project["version"],
+            "repository": project["urls"]["Repository"],
+            "nodes": len(NODES),
+        })
+except Exception:  # server missing (unit runs) or route already registered
+    pass
 
 
 WEB_DIRECTORY = "./web"

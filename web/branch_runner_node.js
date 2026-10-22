@@ -1,114 +1,210 @@
-// Run Branch for Branch Runner (MB). ComfyUI's own partial-execution support
-// (app.queuePrompt's queueNodeIds option, same thing "Queue Selected Output
-// Nodes" uses) only ever runs the OUTPUT_NODE-flagged nodes it's given plus
-// whatever feeds them -- it has no notion of "everything wired to this node".
-// So the button first walks the graph to find that set for itself, then hands
-// the output nodes it finds in it to the native queuing call.
+// Run Branch for Branch Runner (MB). Queues this node through ComfyUI's own
+// partial execution (app.queuePrompt's queueNodeIds, the same thing "Queue
+// Selected Output Nodes" uses), which runs it plus everything that feeds it
+// and nothing else. Hovering the button outlines that set; the label counts
+// it. `runs` queues the branch that many times. Alt+Enter runs the selected
+// Branch Runners.
 
 import { app } from "../../scripts/app.js";
-import { addButton, notify } from "./common.js";
+import { api } from "../../scripts/api.js";
+import { accentColor, addButton, getWidget, notify } from "./common.js";
 
-// Tracks whichever output node was most recently selected on the canvas, so
-// an unwired Branch Runner has something to fall back to. Patched onto the
-// shared LGraphNode prototype rather than per-node, so it also catches output
-// nodes selected before any Branch Runner existed in the graph.
-let lastSelectedOutputNode = null;
+const NODE_ID = "MBBranchRunner";
+const COMMAND_ID = "MBNodes.RunBranch";
+const RUNS_DEFAULT_ID = "MBNodes.Defaults.BranchRunnerRuns";
 
-function installSelectionTracking() {
-    const proto = window.LiteGraph?.LGraphNode?.prototype;
-    if (!proto || proto._mbTracksSelection) return;
-    proto._mbTracksSelection = true;
+// Branch Runners whose queued runs haven't drained yet.
+const running = new Set();
+let hovered = null;
 
-    const original = proto.onSelected;
-    proto.onSelected = function (...args) {
-        if (this?.constructor?.nodeData?.output_node) lastSelectedOutputNode = this;
-        return original?.apply(this, args);
-    };
-}
-
-// Undirected: an ancestor and a descendant of this node are both part of
-// "its branch", since either could be the thing that actually needs running.
-function connectedComponent(node) {
+// This node and every node upstream of it -- what partial execution runs.
+function branchOf(node) {
     const graph = node.graph;
-    const visited = new Set([node.id]);
+    const seen = new Set([node.id]);
     const stack = [node];
-
     while (stack.length) {
-        const current = stack.pop();
-        const neighbours = [];
-
-        for (const input of current.inputs ?? []) {
-            const link = input.link != null ? graph.links[input.link] : null;
-            if (link) neighbours.push(link.origin_id);
-        }
-        for (const output of current.outputs ?? []) {
-            for (const linkId of output.links ?? []) {
-                const link = graph.links[linkId];
-                if (link) neighbours.push(link.target_id);
-            }
-        }
-
-        for (const id of neighbours) {
-            if (visited.has(id)) continue;
-            const next = graph.getNodeById(id);
-            if (!next) continue;
-            visited.add(id);
-            stack.push(next);
+        for (const input of stack.pop().inputs ?? []) {
+            const link = graph.getLink(input.link);
+            if (!link || seen.has(link.origin_id)) continue;
+            const origin = graph.getNodeById(link.origin_id);
+            if (!origin) continue;
+            seen.add(origin.id);
+            stack.push(origin);
         }
     }
-
-    return visited;
+    return seen;
 }
 
-function runBranch(node) {
-    if (!node.graph) return;
+function buttonLabel(node) {
+    if (running.has(node)) return "Running…";
+    if (node.inputs?.[0]?.link == null) return "Run Branch";
+    return `Run Branch (${branchOf(node).size} nodes)`;
+}
 
-    // An unwired input means there's nothing to trace a branch from at this
-    // node, so the button falls back to whatever output node was last
-    // selected on the canvas instead.
-    const connected = node.inputs?.[0]?.link != null;
-    let startNode = node;
+function refreshButton(node) {
+    const button = node.__mbRunButton;
+    if (!button) return;
+    const label = buttonLabel(node);
+    const busy = running.has(node);
+    if (button.label === label && button.disabled === busy) return;
+    button.label = label;
+    button.disabled = busy;
+    node.setDirtyCanvas(true, true);
+}
 
-    if (!connected) {
-        if (!lastSelectedOutputNode?.graph) {
-            notify("warn", "Nothing to run", "Connect an input, or select an output node on the canvas first.");
-            return;
-        }
-        startNode = lastSelectedOutputNode;
-    }
-
-    const always = window.LiteGraph?.ALWAYS ?? 0;
-    const outputIds = [];
-    for (const id of connectedComponent(startNode)) {
-        const branchNode = startNode.graph.getNodeById(id);
-        // Same filter the native "Queue Selected Output Nodes" command uses:
-        // only live output nodes are valid execution roots.
-        if (branchNode?.constructor?.nodeData?.output_node && branchNode.mode === always) {
-            outputIds.push(id);
-        }
-    }
-
-    if (!outputIds.length) {
-        notify(
-            "warn",
-            "Nothing to run",
-            connected ? "This node is muted or bypassed." : "The selected output node is muted or bypassed."
-        );
+async function runBranch(node) {
+    if (!node.graph || running.has(node)) return;
+    if (node.inputs?.[0]?.link == null) {
+        notify("warn", "Nothing to run", "Connect an input to Branch Runner first.");
         return;
     }
+    if (node.mode !== LiteGraph.ALWAYS) {
+        notify("warn", "Nothing to run", "This Branch Runner is muted or bypassed.");
+        return;
+    }
+    running.add(node);
+    refreshButton(node);
+    const runs = node.properties.mbRuns ?? 1;
+    await app.queuePrompt(0, runs, { queueNodeIds: [node.id] });
+    // A rejected prompt (validation error) never reaches the queue, so no
+    // status update would clear the button.
+    const queue = await api.getQueue();
+    if (!queue.Running.length && !queue.Pending.length) {
+        running.delete(node);
+        refreshButton(node);
+    }
+}
 
-    app.queuePrompt(0, 1, { queueNodeIds: outputIds });
+// The queue reports how many prompts are left; once it is empty every
+// Branch Runner's runs are done.
+function onStatus({ detail }) {
+    if (detail?.exec_info?.queue_remaining || !running.size) return;
+    const done = [...running];
+    running.clear();
+    done.forEach(refreshButton);
+}
+
+function overButton(node, pos) {
+    const button = node.__mbRunButton;
+    if (button?.y == null) return false;
+    const height = button.computedHeight ?? LiteGraph.NODE_WIDGET_HEIGHT;
+    return pos[1] >= button.y && pos[1] <= button.y + height && pos[0] >= 0 && pos[0] <= node.size[0];
+}
+
+function setHovered(node) {
+    if (hovered === node) return;
+    hovered = node;
+    app.canvas.setDirty(true, true);
+}
+
+// Canvas foreground is drawn in graph space, so node rects can be stroked as is.
+function drawBranchOutline(ctx) {
+    if (!hovered?.graph || hovered.graph !== app.canvas.graph || hovered.inputs?.[0]?.link == null) return;
+    const titleHeight = LiteGraph.NODE_TITLE_HEIGHT;
+    ctx.save();
+    ctx.strokeStyle = accentColor();
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    for (const id of branchOf(hovered)) {
+        const node = hovered.graph.getNodeById(id);
+        if (!node) continue;
+        const [x, y] = node.pos;
+        const [w, h] = node.flags?.collapsed ? [node._collapsed_width ?? node.size[0], 0] : node.size;
+        ctx.beginPath();
+        ctx.roundRect(x - 4, y - titleHeight - 4, w + 8, h + titleHeight + 8, 10);
+        ctx.stroke();
+    }
+    ctx.restore();
+}
+
+function addRunsWidget(node) {
+    // A loaded workflow overwrites this with the saved value during configure.
+    node.properties.mbRuns ??= app.extensionManager?.setting?.get(RUNS_DEFAULT_ID) ?? 1;
+    const widget = node.addWidget("number", "runs", node.properties.mbRuns, (value) => {
+        node.properties.mbRuns = Math.max(1, Math.min(100, Math.round(value)));
+    }, { min: 1, max: 100, step: 10, precision: 0 });
+    // Kept in node.properties: never sent to Python, never shifts widget values.
+    widget.serialize = false;
+    widget.options.serialize = false;
+    return widget;
 }
 
 app.registerExtension({
     name: "MBNodes.BranchRunner",
 
+    settings: [
+        {
+            id: RUNS_DEFAULT_ID,
+            category: ["MB", "Node defaults", "Branch Runner runs"],
+            name: "Branch Runner: runs",
+            tooltip: "runs value on newly added Branch Runner (MB) nodes.",
+            type: "number",
+            attrs: { min: 1, max: 100, step: 1 },
+            defaultValue: 1,
+        },
+    ],
+
+    commands: [
+        {
+            id: COMMAND_ID,
+            label: "Run selected Branch Runner",
+            function: () => {
+                const selected = Object.values(app.canvas.selected_nodes ?? {})
+                    .filter((node) => node.comfyClass === NODE_ID);
+                selected.forEach(runBranch);
+            },
+        },
+    ],
+    keybindings: [{ combo: { alt: true, key: "Enter" }, commandId: COMMAND_ID }],
+
     async setup() {
-        installSelectionTracking();
+        api.addEventListener("status", onStatus);
+        const prevDraw = app.canvas.onDrawForeground;
+        app.canvas.onDrawForeground = function (ctx, area) {
+            prevDraw?.apply(this, arguments);
+            drawBranchOutline(ctx);
+        };
     },
 
     async nodeCreated(node) {
-        if (node.comfyClass !== "MBBranchRunner") return;
-        addButton(node, "Run Branch", () => runBranch(node));
+        if (node.comfyClass !== NODE_ID) return;
+        node.__mbRunButton = addButton(node, "Run Branch", () => runBranch(node));
+        const runs = addRunsWidget(node);
+
+        const prevConfigure = node.onConfigure;
+        node.onConfigure = function () {
+            const r = prevConfigure?.apply(this, arguments);
+            runs.value = node.properties.mbRuns ?? 1;
+            return r;
+        };
+
+        // Upstream edits elsewhere in the graph don't notify this node, so the
+        // count is refreshed as it draws.
+        const prevDraw = node.onDrawForeground;
+        node.onDrawForeground = function () {
+            const r = prevDraw?.apply(this, arguments);
+            refreshButton(node);
+            return r;
+        };
+
+        const prevMove = node.onMouseMove;
+        node.onMouseMove = function (event, pos) {
+            const r = prevMove?.apply(this, arguments);
+            setHovered(overButton(node, pos) ? node : null);
+            return r;
+        };
+        const prevLeave = node.onMouseLeave;
+        node.onMouseLeave = function () {
+            const r = prevLeave?.apply(this, arguments);
+            if (hovered === node) setHovered(null);
+            return r;
+        };
+
+        const prevRemoved = node.onRemoved;
+        node.onRemoved = function () {
+            running.delete(node);
+            if (hovered === node) setHovered(null);
+            return prevRemoved?.apply(this, arguments);
+        };
     },
 });

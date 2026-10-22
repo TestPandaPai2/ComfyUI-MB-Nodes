@@ -33,11 +33,27 @@ function updateBadge() {
     ensureBadge().textContent = `${count} node${count === 1 ? "" : "s"}`;
 }
 
+function showBadge(on) {
+    ensureBadge().style.display = on === false ? "none" : "";
+}
+
 app.registerExtension({
     name: "MBNodes.NodeCountBadge",
 
+    settings: [
+        {
+            id: "MBNodes.Feature.NodeCount",
+            category: ["MB", "Features", "Node count badge"],
+            name: "Node count badge",
+            tooltip: "Live node count in the bottom-right corner of the canvas.",
+            type: "boolean",
+            defaultValue: true,
+            onChange: showBadge,
+        },
+    ],
+
     async setup() {
-        ensureBadge();
+        showBadge(app.extensionManager?.setting?.get("MBNodes.Feature.NodeCount"));
         updateBadge();
 
         const graph = app.graph;

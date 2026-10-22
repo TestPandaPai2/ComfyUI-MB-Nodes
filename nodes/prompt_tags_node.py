@@ -6,6 +6,7 @@ below, expansion happens when the graph runs."""
 import json
 import logging
 import os
+import random
 import re
 
 from comfy_api.latest import io
@@ -14,7 +15,8 @@ PACK_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TAGS_FILE = os.path.join(PACK_ROOT, "PromptTags.json")
 
 TAG_NAME = re.compile(r"^[A-Za-z0-9_-]+$")
-TAG_REF = re.compile(r"@([A-Za-z0-9_-]+)")
+# @name, optionally weighted as @name:1.2
+TAG_REF = re.compile(r"@([A-Za-z0-9_-]+)(?::(\d+(?:\.\d+)?))?")
 MAX_DEPTH = 16
 
 
@@ -40,15 +42,50 @@ def write_tags(tags):
 
 
 def expand(text, tags, chain=()):
-    """Replace @name with its saved prompt, recursively. Unknown names and
-    references back into the current chain (a tag that includes itself) stay
-    as typed."""
+    """Replace @name with its saved prompt, recursively; @name:1.2 becomes
+    (prompt:1.2). Unknown names and references back into the current chain
+    (a tag that includes itself) stay as typed."""
     def sub(match):
-        name = match.group(1)
+        name, weight = match.groups()
         if name not in tags or name in chain or len(chain) >= MAX_DEPTH:
             return match.group(0)
-        return expand(tags[name], tags, chain + (name,))
+        expanded = expand(tags[name], tags, chain + (name,))
+        return f"({expanded.strip(' ,')}:{weight})" if weight else expanded
     return TAG_REF.sub(sub, text)
+
+
+# Innermost {a|b|c} group: no braces inside, at least one "|". Braces without
+# a "|" (JSON, literal text) are left alone.
+CHOICE = re.compile(r"\{([^{}]*\|[^{}]*)\}")
+
+
+def resolve_choices(text, seed):
+    """Pick one option from every {a|b|c}, innermost groups first so nested
+    choices work. The same seed always gives the same picks."""
+    rng = random.Random(seed)
+    while True:
+        picked = CHOICE.sub(lambda m: rng.choice(m.group(1).split("|")), text)
+        if picked == text:
+            return picked
+        text = picked
+
+
+def render(text, dynamic_prompts, seed):
+    """What the node outputs: tags expanded, choices picked, then tidied."""
+    text = expand(text, load_tags())
+    if dynamic_prompts:
+        text = resolve_choices(text, seed)
+    return tidy(text)
+
+
+def tidy(text):
+    """Clean up what splicing tags in leaves behind: runs of spaces, empty
+    comma slots, spaces before commas, commas at line ends. Line breaks stay."""
+    text = re.sub(r"[ \t]+", " ", text)
+    text = re.sub(r" ?,(?: ?,)+", ",", text)
+    text = re.sub(r" +,", ",", text)
+    text = re.sub(r"^[ ,]+|[ ,]+$", "", text, flags=re.M)
+    return text.strip()
 
 
 class MBPromptTags(io.ComfyNode):
@@ -71,18 +108,33 @@ class MBPromptTags(io.ComfyNode):
                     socketless=True,
                     tooltip="Name the Save Tag button stores the prompt under. Use it as @name.",
                 ),
+                io.Boolean.Input(
+                    "dynamic_prompts",
+                    default=False,
+                    tooltip="Pick one option from each {a|b|c} (nested allowed), after @tags expand, so choices inside saved tags work too.",
+                ),
+                # Starts fixed: a seed that changes every run would re-run
+                # everything downstream even with dynamic prompts off.
+                io.Int.Input(
+                    "seed",
+                    default=0,
+                    min=0,
+                    max=0xFFFFFFFFFFFFFFFF,
+                    control_after_generate=io.ControlAfterGenerate.fixed,
+                    tooltip="Same seed, same picks. Set the control below to randomize for a new pick every run.",
+                ),
             ],
             outputs=[io.String.Output("text")],
         )
 
     @classmethod
-    def fingerprint_inputs(cls, text, tag_name):
+    def fingerprint_inputs(cls, text, tag_name, dynamic_prompts=False, seed=0):
         # A tag edited elsewhere changes the output without changing the inputs.
-        return expand(text, load_tags())
+        return render(text, dynamic_prompts, seed)
 
     @classmethod
-    def execute(cls, text, tag_name) -> io.NodeOutput:
-        return io.NodeOutput(expand(text, load_tags()))
+    def execute(cls, text, tag_name, dynamic_prompts=False, seed=0) -> io.NodeOutput:
+        return io.NodeOutput(render(text, dynamic_prompts, seed))
 
 
 NODES = [MBPromptTags]
@@ -113,12 +165,28 @@ try:
         write_tags(tags)
         return web.json_response({"name": name, "tags": tags})
 
-    @PromptServer.instance.routes.post("/mbnodes/prompt_tags/replace")
-    async def _mbnodes_prompt_tags_replace(request):
-        tags = (await request.json()).get("tags") or {}
-        bad = [k for k, v in tags.items() if not TAG_NAME.match(k) or not isinstance(v, str)]
+    # The Tag manager sends only what it changed, applied to the file as it is
+    # now, so tags saved elsewhere while the dialog was open are kept.
+    # Order: deletes, then renames, then new or edited text.
+    @PromptServer.instance.routes.post("/mbnodes/prompt_tags/apply")
+    async def _mbnodes_prompt_tags_apply(request):
+        data = await request.json()
+        delete = data.get("delete") or []
+        rename = data.get("rename") or {}
+        changed = data.get("set") or {}
+        names = [*rename.values(), *changed.keys()]
+        bad = [n for n in names if not isinstance(n, str) or not TAG_NAME.match(n)]
+        bad += [k for k, v in changed.items() if not isinstance(v, str)]
         if bad:
             return web.json_response({"error": f"Invalid tag: {bad[0]}"}, status=400)
+
+        tags = load_tags()
+        for name in delete:
+            tags.pop(name, None)
+        for old, new in rename.items():
+            if old in tags:
+                tags[new] = tags.pop(old)
+        tags.update(changed)
         write_tags(tags)
         return web.json_response({"tags": tags})
 
