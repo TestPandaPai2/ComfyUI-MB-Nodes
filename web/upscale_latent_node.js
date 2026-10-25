@@ -89,7 +89,8 @@ function inputSize(node, seen = new Set()) {
     const slot = node.inputs?.findIndex((i) => i.name === "samples") ?? -1;
     const link = slot >= 0 ? node.getInputLink(slot) : null;
     const origin = link && node.graph?.getNodeById(link.origin_id);
-    if (origin?.comfyClass === "MBUpscaleLatent") {
+    if (!origin) return node.__mbLastSize ?? null;
+    if (origin.comfyClass === "MBUpscaleLatent") {
         const size = inputSize(origin, seen);
         return size && outputSize(origin, size);
     }

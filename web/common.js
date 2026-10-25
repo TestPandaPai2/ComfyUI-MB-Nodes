@@ -35,6 +35,11 @@ export function setWidgetVisible(node, name, visible) {
     w.hidden = hidden;
     if (!w.options) w.options = {};
     w.options.hidden = hidden;
+    // The canvas puts a widget's input socket at the widget's y, and a hidden
+    // widget is never laid out, so its socket sat at the top of the node and
+    // showed up there on hover. Park it off the node unless a wire uses it;
+    // showing the widget again lays it out at a real y.
+    if (hidden && node.getSlotFromWidget?.(w)?.link == null) w.y = -10000;
     return true;
 }
 
