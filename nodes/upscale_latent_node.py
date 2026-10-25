@@ -43,10 +43,12 @@ class MBUpscaleLatent(io.ComfyNode):
 
     @classmethod
     def execute(cls, samples, multiplier, upscale_method) -> io.NodeOutput:
-        if multiplier == 1.0:
-            return io.NodeOutput(samples)
-
         tensor = samples["samples"]
+        # Input latent [width, height], for the node's size readout.
+        ui = {"mb_size": [tensor.shape[-1], tensor.shape[-2]]}
+        if multiplier == 1.0:
+            return io.NodeOutput(samples, ui=ui)
+
         width = max(1, round(tensor.shape[-1] * multiplier))
         height = max(1, round(tensor.shape[-2] * multiplier))
 
@@ -54,7 +56,7 @@ class MBUpscaleLatent(io.ComfyNode):
         out["samples"] = comfy.utils.common_upscale(
             tensor, width, height, upscale_method, "disabled"
         )
-        return io.NodeOutput(out)
+        return io.NodeOutput(out, ui=ui)
 
 
 NODES = [MBUpscaleLatent]

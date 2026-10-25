@@ -20,7 +20,7 @@ Splits text into lines, outputs one picked by a seed widget (wraps to the line c
 Live read-only preview of incoming text, passed through as output. Runnable standalone.
 
 ### Resolution (MB)
-Aspect ratio + resolution presets, multiples of 64, portrait toggle. Outputs width, height, empty latent, batch size.
+Aspect ratio and resolution presets (multiples of 64) picked from button grids, landscape/portrait buttons, a batch stepper, and a to-scale preview showing final size, megapixels and latent size. Sizes near 1 MP are marked with a dot. Outputs width, height, empty latent, batch size.
 
 ### Slider (MB)
 Just a slider. Its single output takes the type (INT or FLOAT), step and, when the span is under 1,000,000, the range and current value of the input it is connected to. Right-click → ⚙ Slider Settings sets min, max and step.
@@ -77,7 +77,7 @@ Pads an image for outpainting or framing and outputs an `outpaint_mask` (1 on th
 Rotates an image 90, 180 or 270 degrees. The three toggles behave like radio buttons, and `clockwise` flips the direction (ignored by 180).
 
 ### Upscale Latent (MB)
-Scales a latent by a multiplier from a row of clickable buttons (customizable via right-click settings).
+Scales a latent by a multiplier from a grid of clickable buttons (customizable via right-click → MB Settings), or any value via **Custom…**. The upscale method is a button row too. A readout shows input → output latent size and approximate pixels, taken from the upstream width/height or the last run.
 
 ### Sampler (MB)
 KSampler + VAE decode in one node, with model/positive/negative/vae pass-through for chaining stages. Live sampling preview included. `decode_image` toggles the VAE decode (skipped gracefully if no vae is connected); `tiled_vae_decoding` swaps in tiled decode for large images.
@@ -95,7 +95,7 @@ Category + style dropdowns over the bundled Krea2 prompt-styles table (286 style
 Multi-lane reroute. Each lane passes its input straight through to the matching output; a fresh empty lane appears as you connect more wires (up to 20), and each socket takes the colour/type of what plugs in. Each lane is labelled with its type, or a name you set by double-clicking its output. A wire dropped on the node body goes to the first free lane. Right-click → `Tidy lanes` closes gaps and orders lanes by where their wires come from; `Compact` hides the title bar (otherwise it shows the lane count). One tidy node to carry many wires across the graph instead of a pile of single reroute dots.
 
 ### WiFi Send (MB) / WiFi Receive (MB)
-Route 66 without the wire. **WiFi Send** takes up to 20 lanes under a `channel` name (lanes grow as you connect; double-click a lane to name it). **WiFi Receive** picks a channel from the senders at the same graph level and outputs the same lanes, with the same types, colours and names, updating live. Both are frontend-only: when you queue, receiver outputs resolve straight to whatever feeds the sender, so the server sees plain links. Selecting either draws dashed ghost wires between a sender and its receivers; nodes on a channel share a title colour; right-click → **Go to sender** / **Go to receiver**. Two senders on one channel are flagged "duplicate channel", and a receiver with no sender shows "no signal"; either blocks the queue with a message naming the channel. Subgraphs are separate: a receiver only hears senders in its own graph.
+Route 66 without the wire. **WiFi Send** takes up to 20 lanes under a `channel` name (lanes grow as you connect; double-click a lane to name it). **WiFi Receive** picks a channel from senders anywhere in the workflow (root graph or any subgraph) and outputs the same lanes, with the same types, colours and names, updating live. Both are frontend-only: when you queue, receiver outputs resolve straight to whatever feeds the sender, so the server sees plain links. Selecting either draws dashed ghost wires between a sender and its receivers on the same level; nodes on a channel share a title colour; right-click → **Go to sender** / **Go to receiver** (opens the subgraph if needed). Two senders on one channel, or a sender inside a subgraph placed more than once, are flagged "duplicate channel", and a receiver with no sender shows "no signal"; either blocks the queue with a message naming the channel.
 
 ### Control Panel (MB)
 Up to 16 controls (slider, switch, dropdown, seed, text) in one node. Each control is blank until you wire its output to something — it then adopts that input's shape (drag-slider, toggle, filtered dropdown, seed with randomize/reroll, or text) and reverts to blank on disconnect. Right-click for settings: add/remove/rename controls, slider ranges, switch labels, dropdown option filtering, and node colour.

@@ -2,11 +2,11 @@ import { app } from "../../scripts/app.js";
 import { accentColor, getWidget, resizeToContent } from "./common.js";
 
 // WiFi Send (MB) / WiFi Receive (MB): Route 66 without the wire. A sender
-// takes lanes under a channel name; every receiver on that channel, at the
-// same graph level, outputs the same lanes. Both are frontend-only virtual
-// nodes: when the prompt is built, a receiver's output i resolves through
-// getInputLink(i) to whatever feeds the sender's lane i, so the server only
-// ever sees direct links.
+// takes lanes under a channel name; every receiver on that channel, in the
+// root graph or any subgraph, outputs the same lanes. Both are frontend-only
+// virtual nodes: when the prompt is built, a receiver's output i resolves
+// through resolveVirtualOutput(i) to the sender's lane i and on to whatever
+// feeds it, so the server only ever sees direct links.
 
 const SEND = "MBWiFiSend";
 const RECEIVE = "MBWiFiReceive";
@@ -18,16 +18,31 @@ const BAD = "#e5484d";
 const CHANNEL_COLORS = ["#3f5f8a", "#5a3f8a", "#8a3f6b", "#8a5a3f", "#5f7a3f", "#3f8a6b", "#3f7a8a", "#7a3f3f", "#8a7a3f", "#4f4f70"];
 
 const nodesOf = (graph) => graph?.nodes ?? graph?._nodes ?? [];
+const allGraphs = () => (app.graph ? [app.graph, ...(app.graph.subgraphs?.values() ?? [])] : []);
+const allNodes = () => allGraphs().flatMap(nodesOf);
 const channelOf = (node) => String(getWidget(node, "channel")?.value ?? "").trim();
-const sendersOn = (graph, channel) => nodesOf(graph).filter((n) => n.type === SEND && channelOf(n) === channel);
-const receiversOf = (sender) => nodesOf(sender.graph).filter((n) => n.type === RECEIVE && channelOf(n) === channelOf(sender));
 const laneNames = (sender) => (sender.properties.mbLaneNames ??= {});
+
+// How many times a graph runs: once for the root, once per placed instance
+// for a subgraph (nested instances multiply, unplaced ones never run).
+function copiesOf(graph, seen = new Set()) {
+    if (!graph || graph === app.graph) return 1;
+    if (seen.has(graph)) return 0;
+    seen.add(graph);
+    return allNodes()
+        .filter((n) => n.isSubgraphNode?.() && n.subgraph === graph)
+        .reduce((sum, n) => sum + copiesOf(n.graph, new Set(seen)), 0);
+}
+
+const sendersOn = (channel) => allNodes().filter((n) => n.type === SEND && channelOf(n) === channel && copiesOf(n.graph) > 0);
+const isDuplicate = (channel) => sendersOn(channel).reduce((sum, n) => sum + copiesOf(n.graph), 0) > 1;
+const receiversOf = (sender) => allNodes().filter((n) => n.type === RECEIVE && channelOf(n) === channelOf(sender));
 
 // "ok" with the sender, or why there is no signal.
 function signalOf(receiver) {
     const channel = channelOf(receiver);
-    const senders = channel ? sendersOn(receiver.graph, channel) : [];
-    if (senders.length > 1) return { state: "duplicate" };
+    const senders = channel ? sendersOn(channel) : [];
+    if (isDuplicate(channel)) return { state: "duplicate" };
     if (!senders.length) return { state: "none" };
     return { state: "ok", sender: senders[0] };
 }
@@ -94,7 +109,7 @@ function syncSender(sender) {
 function syncReceiver(receiver) {
     const combo = getWidget(receiver, "channel");
     if (combo) {
-        const channels = [...new Set(nodesOf(receiver.graph).filter((n) => n.type === SEND).map(channelOf).filter(Boolean))].sort();
+        const channels = [...new Set(allNodes().filter((n) => n.type === SEND).map(channelOf).filter(Boolean))].sort();
         combo.options.values = channels;
         // A fresh receiver tunes in to the first channel there is.
         if (!combo.value && channels.length) combo.value = channels[0];
@@ -121,14 +136,17 @@ function syncReceiver(receiver) {
     resizeToContent(receiver);
 }
 
-function syncGraph(graph) {
-    if (!graph || graph.mbWifiSyncing) return;
-    graph.mbWifiSyncing = true;
+let syncing = false;
+
+function syncAll() {
+    if (syncing) return;
+    syncing = true;
     try {
-        nodesOf(graph).filter((n) => n.type === SEND).forEach(syncSender);
-        nodesOf(graph).filter((n) => n.type === RECEIVE).forEach(syncReceiver);
+        const nodes = allNodes();
+        nodes.filter((n) => n.type === SEND).forEach(syncSender);
+        nodes.filter((n) => n.type === RECEIVE).forEach(syncReceiver);
     } finally {
-        graph.mbWifiSyncing = false;
+        syncing = false;
     }
     app.canvas?.setDirty(true, true);
 }
@@ -146,6 +164,7 @@ function drawStatus(node, ctx, text, color) {
 }
 
 function goTo(node) {
+    if (node.graph !== app.canvas.graph) app.canvas.setGraph(node.graph);
     app.canvas.centerOnNode(node);
     app.canvas.selectNode(node);
 }
@@ -172,8 +191,9 @@ function drawGhostWires(ctx) {
     ctx.lineWidth = 2;
     ctx.setLineDash([8, 6]);
     for (const sender of senders) {
+        if (sender.graph !== graph) continue;
         const from = [sender.pos[0] + sender.size[0], sender.pos[1] + sender.size[1] / 2];
-        for (const receiver of receiversOf(sender)) {
+        for (const receiver of receiversOf(sender).filter((r) => r.graph === graph)) {
             ctx.beginPath();
             ctx.moveTo(...from);
             ctx.lineTo(receiver.pos[0], receiver.pos[1] + receiver.size[1] / 2);
@@ -196,26 +216,24 @@ app.registerExtension({
                 super(title);
                 this.isVirtualNode = true; // never part of the prompt
                 this.properties ??= {};
-                this.addWidget("text", "channel", "channel_1", () => syncGraph(this.graph));
+                this.addWidget("text", "channel", "channel_1", syncAll);
                 this.addInput("lane_0", ANY);
             }
 
             onConnectionsChange() {
-                if (!app.configuringGraph) syncGraph(this.graph);
+                if (!app.configuringGraph) syncAll();
             }
 
             onConfigure() {
-                setTimeout(() => syncGraph(this.graph), 0);
+                setTimeout(syncAll, 0);
             }
 
             onAdded() {
-                setTimeout(() => syncGraph(this.graph), 0);
+                setTimeout(syncAll, 0);
             }
 
             onRemoved() {
-                // The node leaves its graph right after this, so hold on to it.
-                const graph = this.graph;
-                setTimeout(() => syncGraph(graph), 0);
+                setTimeout(syncAll, 0);
             }
 
             onInputDblClick(slot, event) {
@@ -224,19 +242,19 @@ app.registerExtension({
                     const name = String(value ?? "").trim();
                     if (name) names[slot] = name;
                     else delete names[slot];
-                    syncGraph(this.graph);
+                    syncAll();
                 }, event);
             }
 
             applyToGraph() {
                 const channel = channelOf(this);
-                if (sendersOn(this.graph, channel).length > 1) {
-                    throw new Error(`WiFi channel "${channel}" has more than one WiFi Send (MB). Rename one of them.`);
+                if (isDuplicate(channel)) {
+                    throw new Error(`WiFi channel "${channel}" has more than one WiFi Send (MB), or its sender sits in a subgraph placed more than once. Rename one of them.`);
                 }
             }
 
             onDrawForeground(ctx) {
-                if (sendersOn(this.graph, channelOf(this)).length > 1) {
+                if (isDuplicate(channelOf(this))) {
                     drawStatus(this, ctx, "duplicate channel", BAD);
                 } else {
                     const n = receiversOf(this).length;
@@ -264,33 +282,33 @@ app.registerExtension({
                 super(title);
                 this.isVirtualNode = true; // never part of the prompt
                 this.properties ??= {};
-                this.addWidget("combo", "channel", "", () => syncGraph(this.graph), { values: [] });
+                this.addWidget("combo", "channel", "", syncAll, { values: [] });
             }
 
-            // Output i of this node is lane i of the sender: hand back the link
-            // feeding that lane and the prompt builder follows it upstream.
-            getInputLink(slot) {
+            // Output i of this node is lane i of the sender, wherever it is: the
+            // prompt builder follows the sender's input link upstream from there.
+            resolveVirtualOutput(slot) {
                 const { sender } = signalOf(this);
-                return sender ? sender.getInputLink(slot) : null;
+                return sender ? { node: sender, slot } : undefined;
             }
 
             applyToGraph() {
                 const { state } = signalOf(this);
                 const used = this.outputs.some((_, i) => this.isOutputConnected(i));
                 if (state === "duplicate") {
-                    throw new Error(`WiFi channel "${channelOf(this)}" has more than one WiFi Send (MB). Rename one of them.`);
+                    throw new Error(`WiFi channel "${channelOf(this)}" has more than one WiFi Send (MB), or its sender sits in a subgraph placed more than once. Rename one of them.`);
                 }
                 if (state === "none" && used) {
-                    throw new Error(`WiFi Receive (MB) #${this.id}: no WiFi Send (MB) on channel "${channelOf(this)}" at this level.`);
+                    throw new Error(`WiFi Receive (MB) #${this.id}: no WiFi Send (MB) on channel "${channelOf(this)}".`);
                 }
             }
 
             onConfigure() {
-                setTimeout(() => syncGraph(this.graph), 0);
+                setTimeout(syncAll, 0);
             }
 
             onAdded() {
-                setTimeout(() => syncGraph(this.graph), 0);
+                setTimeout(syncAll, 0);
             }
 
             onDrawForeground(ctx) {
