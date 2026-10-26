@@ -13,6 +13,7 @@ from typing_extensions import override
 
 from comfy_api.latest import ComfyExtension, io
 
+from .nodes.accessories_selector_node import NODES as _accessories_selector
 from .nodes.body_mod_prompt_node import NODES as _body_mod_prompt
 from .nodes.branch_runner_node import NODES as _branch_runner
 from .nodes.combine_text_node import NODES as _combine_text
@@ -135,6 +136,7 @@ NODES: list[type[io.ComfyNode]] = [
     *_pose_selector,
     *_simple_standing_poses,
     *_wardrobe_selector,
+    *_accessories_selector,
 ]
 
 

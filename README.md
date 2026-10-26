@@ -133,6 +133,9 @@ Dropdown of 43 art styles (Cinematic Realism, Watercolor, Anime, Claymation, ...
 ### Woman's Wardrobe Selector (MB)
 Outfit description from a chosen or seeded-random category and style, including Pants, Shorts and Jeans. Extra outputs: `topwear` and `bottomwear` (empty for one-piece outfits; Gymwear sets split into both). `mix_outfit` pairs a random top with a random bottom.
 
+### Accessories Selector (MB)
+One dropdown per accessory, each set to none, random (from the seed) or a style, and every picked piece says where it's worn. Slots: `waist_chain`, `necklace`. `prompt` joins the picked pieces; each slot also has its own output, and `styles` lists the picks. `metal` adds one gold, silver, rose gold or seeded-random finish to the whole set, or keeps the descriptions as written.
+
 ### Category outputs
 Every randomizer and selector also outputs the picked names on their own: `category`, plus `style` on nodes with a style inside the category.
 
@@ -159,7 +162,10 @@ Open ComfyUI's settings dialog and pick the **MB** panel.
 Pack version, node count and a link to this README.
 
 ### Features
-On/off switches, all on by default and applied live: **Node count badge**, **Restart button**, **Palette switcher**, **Replace Node menu**, **Clipboard paste** (the button on Load Image (MB)).
+On/off switches, all on by default and applied live: **Node count badge**, **Restart button**, **Palette switcher**, **Replace Node menu**, **Clipboard paste** (the button on Load Image (MB)), **Notify on finish**.
+
+### Notify on finish
+Plays a sound after every finished prompt and a lower one when a prompt fails; cancelling stays silent. **Volume** sets the loudness. **Success sound** and **Error sound** each use a built-in chime, or an mp3 attached with **Choose mp3** (stored in your ComfyUI user data); **Reset** goes back to the chime and **Test** plays it.
 
 ### Node defaults
 Starting values for newly added nodes; saved workflows keep their own: **Branch Runner: runs** (1–100), **Get Lines: start mode** (Auto or Fixed 1–32), **Load Image Crop: aspect**.
