@@ -7,6 +7,19 @@ MIN_MULTIPLIER = 0.05
 MAX_MULTIPLIER = 8.0
 
 
+def upscale(samples, multiplier, upscale_method):
+    """Scale a LATENT dict's width and height; shared with Sampler (MB)'s second pass."""
+    if multiplier == 1.0:
+        return samples
+    tensor = samples["samples"]
+    width = max(1, round(tensor.shape[-1] * multiplier))
+    height = max(1, round(tensor.shape[-2] * multiplier))
+
+    out = {key: value for key, value in samples.items() if key != "noise_mask"}
+    out["samples"] = comfy.utils.common_upscale(tensor, width, height, upscale_method, "disabled")
+    return out
+
+
 class MBUpscaleLatent(io.ComfyNode):
     """Scale a latent by a multiplier picked from a button grid. The grid's
     entries live in the frontend (MB Settings adds more); the backend only ever
@@ -46,17 +59,7 @@ class MBUpscaleLatent(io.ComfyNode):
         tensor = samples["samples"]
         # Input latent [width, height], for the node's size readout.
         ui = {"mb_size": [tensor.shape[-1], tensor.shape[-2]]}
-        if multiplier == 1.0:
-            return io.NodeOutput(samples, ui=ui)
-
-        width = max(1, round(tensor.shape[-1] * multiplier))
-        height = max(1, round(tensor.shape[-2] * multiplier))
-
-        out = {key: value for key, value in samples.items() if key != "noise_mask"}
-        out["samples"] = comfy.utils.common_upscale(
-            tensor, width, height, upscale_method, "disabled"
-        )
-        return io.NodeOutput(out, ui=ui)
+        return io.NodeOutput(upscale(samples, multiplier, upscale_method), ui=ui)
 
 
 NODES = [MBUpscaleLatent]
