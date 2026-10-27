@@ -796,6 +796,163 @@ Adhesive Panties: She wears adhesive panties, a self-adhering fabric piece with 
 Nipple Covers: She wears soft silicone nipple covers that discreetly cover the nipples, worn with or without a bra.
 Open-Crotch Panties: She wears open-crotch lace panties with a sheer floral lace body, a scalloped waistband, and an open gusset design, a lingerie-style piece with a delicate, decorative finish.
 Pearl String Panties: She wears pearl string panties with a thin elastic waistband and a single strand of smooth faux pearls running down the center in place of a fabric panel, a decorative, jewelry-inspired lingerie piece.
+
+BIKINIS
+
+Triangle Bikini: She wears a classic triangle bikini with two soft triangular cups on a halter tie and a matching side-tie bottom, simple, adjustable, and timeless.
+Halter Neck Bikini: She wears a halter neck bikini with straps that tie behind her neck, supportive triangle cups, and a tie-side bottom.
+Underwire Bikini: She wears an underwire bikini with structured, wired cups for lift and support, adjustable shoulder straps, and a classic bottom.
+Bandeau Bikini: She wears a strapless bandeau bikini with a straight band of fabric across the chest and a sleek, moderate-coverage bottom.
+Push-Up Bikini: She wears a push-up bikini with lightly padded, angled cups that lift and shape, paired with a tie-side bottom.
+Strapless Bikini: She wears a strapless bikini with a twisted front band, a firm grip edge to stay in place, and a simple scoop bottom.
+Cross-Front Bikini: She wears a cross-front bikini with fabric panels crossing over at the bust and a mid-rise bottom.
+High-Neck Bikini: She wears a high-neck bikini with a crop-top style top that reaches up to the collarbone, sporty and supportive.
+Scoop Neck Bikini: She wears a scoop neck bikini with a rounded, sporty neckline, wide straps, and a full-coverage bottom.
+Square Neck Bikini: She wears a square neck bikini with a straight horizontal neckline, wide straps, and a modern, structured look.
+V-Neck Bikini: She wears a V-neck bikini with a deep V-shaped neckline and a tie-side bottom, lengthening and flattering.
+One-Shoulder Bikini: She wears a one-shoulder bikini with a single asymmetrical strap and a matching bottom with ring hardware at the hips.
+Double-Strap One-Shoulder Bikini: She wears a one-shoulder bikini with two parallel straps over a single shoulder and a sleek high-cut bottom.
+Cut-Out Bikini: She wears a cut-out bikini with open geometric gaps in the top and bottom that add a modern, strappy look.
+Keyhole Bikini: She wears a keyhole bikini with a small teardrop opening at the center of the top and halter straps.
+Ring Detail Bikini: She wears a ring detail bikini with metal O-rings joining the top at the center and the bottom at the hips.
+Bandeau Metal Ring Bikini: She wears a bandeau bikini with a decorative metal ring at the center front and a tie-side bottom.
+O-Ring Cheeky Bikini: She wears a textured bikini with O-ring connectors on the top and a cheeky tie-side bottom.
+O-Ring Lace-Up Bikini: She wears a strapless bikini with a central O-ring and lace-up detail, paired with a smooth high-cut bottom.
+Tie-Side Bikini: She wears a tie-side bikini with bow ties at each hip that adjust the fit of the bottom.
+String Bikini: She wears a string bikini with small triangle cups on thin string ties and a minimal string bottom.
+Micro Bikini: She wears a micro bikini with very small triangle cups and a minimal-coverage bottom on thin strings.
+Brazilian Bikini: She wears a Brazilian bikini with a scrunched or narrow-cut back and a triangle halter top.
+Cheeky Bikini: She wears a cheeky bikini with a moderate-coverage back cut between a full bottom and a thong.
+Thong Bikini: She wears a thong bikini with a narrow back and a matching top, made for minimal tan lines.
+Starfish Thong Bikini: She wears an underwire bikini decorated with a small starfish charm at the center, paired with a high-cut thong bottom.
+Ruched Bikini: She wears a ruched bikini with gathered fabric along the top and bottom that creates soft, flattering texture.
+Ruffle Bikini: She wears a ruffle bikini with frilled ruffle trim along the top and bottom edges, sweet and playful.
+Frill Bikini: She wears a frill bikini with soft ruffles layered across the cups and waistband, girly and cute.
+Lace Ruffles Bikini: She wears a striped triangle bikini trimmed with lace ruffles and tiny bows along the edges.
+Ruffle Halter Bandeau Bikini: She wears a ruched bandeau top with ruffled edges and a halter tie, paired with a ruffle-trimmed bottom.
+Off-Shoulder Bikini: She wears an off-shoulder bikini with a ruffled flounce top sitting below the shoulders and a ruffled bottom.
+Belted Bikini: She wears a belted bikini with a buckle belt across the top or high-waisted bottom for a structured, retro look.
+Sporty Bikini: She wears a sporty bikini with a scoop crop top, contrast stripe band, and a full bottom, made for activity.
+Sports Bra Bikini: She wears a sports bra bikini with a supportive racer-style crop top and a matching full-coverage bottom.
+Racerback Bikini: She wears a racerback bikini with straps meeting between the shoulder blades and a sporty full bottom.
+Crossback Bikini: She wears a crossback bikini with straps crossing in an X across the back and a classic bottom.
+Longline Bikini: She wears a longline bikini with a top that extends down toward the ribs and a mid-rise bottom.
+High-Waisted Bikini: She wears a high-waisted bikini with a bottom rising to the navel, often trimmed with buttons, and a supportive top.
+Low-Waisted Bikini: She wears a low-waisted bikini with a bottom sitting low on the hips and a simple triangle top.
+Skirted Bikini: She wears a skirted bikini with a flared swim skirt attached to the bottom and a supportive top.
+Halter Tie Bikini: She wears a halter tie bikini with a printed triangle top tied behind the neck and a tie-side bottom.
+Bow Halter Bikini: She wears a floral bow halter bikini with bows on the halter ties and contrast-color trim and side ties.
+Reversible Bikini: She wears a reversible bikini with a different color or print on each side, wearable either way.
+Panel Bikini: She wears a panel bikini with contrasting color panels stitched into the top and bottom.
+Color Block Bikini: She wears a color block bikini with bold contrasting color sections and contrasting tie strings.
+Contrast Trim Bikini: She wears a triangle bikini with contrasting colored binding along the edges and ties.
+Neon Bikini: She wears a neon bikini in a vivid, bright, glowing shade with a triangle top and tie-side bottom.
+Metallic Bikini: She wears a metallic bikini in a shiny, foil-like fabric that catches the light.
+Crochet Bikini: She wears a crochet bikini handmade from knitted yarn with an open-weave pattern, boho and beachy.
+Crochet Bow Bikini: She wears a crochet triangle bikini with small contrast bows at the center and tie-side bottom.
+Crochet-Trim Bikini: She wears a solid bikini edged with colorful hand-crocheted trim along the top and bottom edges.
+Fishnet Shell Bikini: She wears a fishnet-textured halter bikini with small seashell charms dangling from the ties.
+Printed Bikini: She wears a printed bikini covered in an all-over pattern such as florals, tiles, or abstract prints.
+Paisley Bikini: She wears a paisley print bikini with intricate swirling patterns and tie-side details.
+Tassel Bikini: She wears a triangle bikini with beaded tassels hanging from the halter ties and side ties.
+Animal Print Bikini: She wears an animal print bikini in a leopard or zebra pattern with halter straps and tie-side bottoms.
+Striped Bikini: She wears a striped bikini with horizontal or vertical stripes and a sporty top.
+Mesh Bikini: She wears a mesh bikini with sheer mesh layered over lined panels for a modern, airy look.
+Portrait Neckline Bikini: She wears a portrait neckline bikini with a wide off-shoulder ruffled band and a matching ruffled bottom.
+Knotted Bikini: She wears a knotted bikini with a twist-knot detail at the center of the top and a simple bottom.
+Bralette Bikini: She wears a bralette bikini with a soft, unstructured top and a high-waisted bottom.
+Wrap Bikini: She wears a wrap bikini with long ties that wrap around the torso and a tie-side bottom.
+Crop Bikini: She wears a crop bikini with a longline tank-like top and a full-coverage bottom.
+Tie-Front Bikini: She wears a tie-front bikini with a bow or knot tied at the center of the top and a classic bottom.
+Contoured Bikini: She wears a contoured bikini with molded, shaped cups and a smocked waistband bottom.
+Crinkle Bikini: She wears a crinkle bikini in textured, crinkled fabric with a V-neck top and a high-cut bottom.
+Balconette Bikini: She wears a balconette bikini with horizontal underwire cups and wide-set straps, paired with a high-waisted bottom.
+Cross Strap Bikini: She wears a cross strap bikini with straps that wrap and crisscross around the torso and waist.
+Strappy Side Bikini: She wears a bikini with a crisscross triangle top and a bottom with multiple lace-up strings at the hips.
+Chain-Trim Bikini: She wears a bandeau bikini with decorative metal chain trim and side ties on the bottom.
+Starfish Wide Strap Bikini: She wears a textured bikini with wide straps, a small starfish ring at the center, and a high-cut bottom.
+V-Wired Bikini: She wears a V-wired bikini with V-shaped underwire cups, contrast binding, and a tie-side bottom.
+3D Rose Bikini: She wears a bikini decorated with sculpted 3D fabric roses on the straps and bottom.
+Ruched Lace Bandeau Bikini: She wears a ruched bandeau bikini in a soft floral lace print with a high-cut bottom.
+Bow Bandeau Bikini: She wears a bow bandeau bikini with fabric knotted into a large bow at the center front.
+
+TANKINIS
+
+Tankini: She wears a tankini with a fitted tank-style top that covers the stomach and a separate bikini bottom.
+Floral Tankini: She wears a floral tankini with a flowy printed tank top and a matching bottom, fresh and casual.
+
+ONE-PIECE SWIMSUITS
+
+Classic One-Piece: She wears a classic one-piece swimsuit with a scoop neckline and a full-coverage, simple silhouette.
+Monokini: She wears a monokini, a one-piece swimsuit with large cut-outs at the waist that connect the top and bottom.
+Halter One-Piece: She wears a halter one-piece with straps tied behind the neck and a sleek, open back.
+High-Cut One-Piece: She wears a high-cut one-piece with legholes cut high on the hips for a leg-lengthening look.
+Sporty One-Piece: She wears a sporty one-piece with a scoop neck, contrast stripes, and a supportive athletic cut.
+Retro One-Piece: She wears a retro one-piece with a sweetheart neckline, a belted waist, and vintage polka dots.
+Mesh One-Piece: She wears a mesh one-piece with sheer mesh panels across the torso or neckline.
+Backless One-Piece: She wears a backless one-piece with a fully open back held by thin straps.
+Zipper One-Piece: She wears a zipper one-piece with a front zip running from the neckline down the torso, sporty and sleek.
+Plunge One-Piece: She wears a plunge one-piece with a deep V-neckline and ruched front panels.
+Asymmetric Cut-Out One-Piece: She wears a one-shoulder one-piece with double straps and a dramatic cut-out across the waist.
+Cross-Back One-Piece: She wears a one-piece with thin straps that cross over the back and a smooth front.
+Square Neck One-Piece: She wears a square neck one-piece with thin straps and a simple, minimal cut.
+Tank One-Piece: She wears a tank one-piece with wide straps, a scoop neck, and a classic athletic shape.
+Ruched One-Piece: She wears a ruched one-piece with gathered fabric down the front and a halter or bandeau neckline.
+Textured One-Piece: She wears a textured one-piece in wavy ribbed fabric with a V-neckline.
+Halter Keyhole One-Piece: She wears a halter one-piece with a keyhole opening at the chest and a plunging neckline.
+Lace-Up One-Piece: She wears a lace-up one-piece with a keyhole front crossed by laces.
+Cut-Out Swimsuit: She wears a cut-out swimsuit with a halter neck and open side panels connected by a center ring.
+Twist Underwire One-Piece: She wears a one-piece with structured underwire cups and a twisted cut-out at the waist.
+Chain Monokini: She wears a chain monokini with metal chain details connecting the top and bottom.
+Swim Dress: She wears a swim dress with a ruched bodice and an attached flared skirt over built-in swim shorts.
+Long-Sleeve Swimsuit: She wears a long-sleeve printed swimsuit with full sleeves and a one-piece body.
+
+RETRO & CLASSIC
+
+Vintage Two-Piece: She wears a vintage two-piece with a supportive bustier top and high-waisted polka-dot bottoms.
+Pin-Up One-Piece: She wears a pin-up one-piece with a sweetheart neckline, halter straps, and a classic 1950s shape.
+Polka Dot One-Piece: She wears a polka dot one-piece with a sweetheart neckline and a retro fit.
+Sailor One-Piece: She wears a sailor one-piece with a nautical collar, a bow, and navy-inspired details.
+Striped Retro Bikini: She wears a striped retro bikini with high-waisted bottoms and a supportive top.
+Belted One-Piece: She wears a belted one-piece with a buckle belt cinching the waist, chic and polished.
+
+SPORTY & ACTIVITY
+
+Rash Guard (Long Sleeve): She wears a long-sleeve rash guard with a high collar and front zip, offering sun protection and coverage.
+Rash Guard (Short Sleeve): She wears a short-sleeve rash guard with a fitted body and a sporty swim bottom.
+Rash Guard Set: She wears a rash guard set with a zip-up long-sleeve top and drawstring swim shorts.
+Full Wetsuit: She wears a full neoprene wetsuit covering arms and legs, sleek and athletic for surfing and diving.
+Shorty Wetsuit: She wears a shorty wetsuit with short sleeves and short legs in thick neoprene.
+Fitness Swimwear: She wears fitness swimwear with a supportive racerback one-piece for lap swimming.
+Tank and Swim Shorts: She wears a sporty swim tank top with matching swim shorts, relaxed and active.
+Zip-Up Swim Jacket: She wears a zip-up swim jacket with long sleeves over a swimsuit, casual and sporty.
+Swim Pants: She wears full-length swim pants with side stripes, modest and practical.
+
+RESORT & COVER-UPS
+
+Wrap Dress Cover-Up: She wears a light wrap dress cover-up tied over her swimsuit, flowy and relaxed.
+Sheer Cover-Up: She wears a sheer cover-up shirt layered over her swimsuit, light and airy.
+Romper Cover-Up: She wears a romper cover-up with short legs over her swimsuit, casual and cute.
+Sarong: She wears a sarong wrapped around her hips over a bikini, elegant and beachy.
+Long Cover-Up: She wears a long cardigan-style cover-up draped over her swimsuit, chic and flowing.
+
+JAPANESE / KIMONO SWIMWEAR
+
+Yukata Swimsuit: She wears a yukata-inspired swimsuit with wrapped lapels and an obi sash, elegant and traditional.
+Modern Kimono Swimsuit: She wears a modern kimono swimsuit with a short wrapped top, floral prints, and an obi belt.
+Samurai-Inspired Swimsuit: She wears a samurai-inspired swimsuit with armor-like panels and wrapped details.
+Shrine Maiden Swimsuit: She wears a shrine maiden swimsuit with white wide sleeves and a red pleated skirt.
+Floral Kimono Swimsuit: She wears a floral kimono swimsuit with bold flower prints and wrapped sleeves.
+Casual Kimono Swimsuit: She wears a casual kimono swimsuit with a light open kimono layered over a bikini.
+
+SCI-FI / FANTASY SWIMWEAR
+
+Water Element Swimsuit: She wears a water element swimsuit with flowing wave-like patterns and aquatic trims.
+LED Swimsuit: She wears an LED swimsuit with glowing light strips along the seams, futuristic and sleek.
+Armor Swimsuit: She wears an armor swimsuit with metallic plate details over the chest and hips.
+Tactical Swimsuit: She wears a tactical swimsuit with straps, buckles, and utility pouches.
+Space Swimsuit: She wears a space swimsuit with sleek panels, glossy fabric, and futuristic accents.
+Dragon Armor Swimsuit: She wears a dragon armor swimsuit with scale textures and horn-like ornaments.
 """)
 
 
@@ -808,6 +965,9 @@ SLOTS = {
     "Summer Dresses": "full", "Jumpsuits": "full", "Jerseys": "top", "Kurtis": "top",
     "Gymwear": "set", "Pants": "bottom", "Shorts": "bottom", "Cardigans": "top", "Jackets": "top", "Jeans": "bottom",
     "Burqa": "full", "Shalwars": "bottom", "Underwear": "bottom",
+    "Bikinis": "full", "Tankinis": "full", "One-Piece Swimsuits": "full", "Retro & Classic": "full",
+    "Sporty & Activity": "full", "Resort & Cover-Ups": "full", "Japanese / Kimono Swimwear": "full",
+    "Sci-Fi / Fantasy Swimwear": "full",
 }
 TOP_CATEGORIES = [name for name, slot in SLOTS.items() if slot == "top"]
 BOTTOM_CATEGORIES = [name for name, slot in SLOTS.items() if slot == "bottom"]
