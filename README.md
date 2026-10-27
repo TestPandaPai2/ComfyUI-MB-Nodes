@@ -49,6 +49,9 @@ Vectorizes images into color SVG with vtracer. Presets: Accurate (photo), Poster
 ### Film Grain (MB)
 Adds film grain to images or video frames. Presets: Fine 35mm, Kodak Portra 400, Tri-X 400, 16mm, Super 8, or Custom to use the sliders for intensity, grain size, color amount and luminance response (grain strongest in midtones). Each frame in a batch gets its own grain; the seed keeps results repeatable.
 
+### Load Video (MB)
+Loads a video from the input folder and outputs its frames, audio, fps, length in seconds, the VIDEO and image info. `start_frame` skips the first frames, `frame_cap` limits how many are output (0 = all), and `force_fps` resamples to a new frame rate by dropping or repeating frames (0 = source rate). Only the selected stretch is decoded, and the audio is trimmed to match.
+
 ### SaveMP4 (MB)
 Encodes an image batch to h264 mp4 with optional muxed audio; `trim_to_audio` and `preview_only` included.
 
@@ -80,7 +83,7 @@ Rotates an image 90, 180 or 270 degrees. The three toggles behave like radio but
 Scales a latent by a multiplier from a grid of clickable buttons (customizable via right-click → MB Settings), or any value via **Custom…**. The upscale method is a button row too. A readout shows input → output latent size and approximate pixels, taken from the upstream width/height or the last run.
 
 ### Sampler (MB)
-KSampler + VAE decode in one node, with model/positive/negative/vae pass-through for chaining stages. Live sampling preview included. `decode_image` toggles the VAE decode (skipped gracefully if no vae is connected); `tiled_vae_decoding` swaps in tiled decode for large images.
+KSampler with an optional hires second pass. Live sampling preview included. Set `second_pass` to **on** to upscale the pass-1 latent by `upscale_by` (`upscale_method`, same methods as Upscale Latent) and sample it again at `denoise_2` with the same cfg, sampler and scheduler. `steps_2` at 0 reuses the pass-1 steps; `seed_2` picks the pass-1 seed, +1, or a random one drawn from it. Outputs `latent` and `latent_pass1` (the same latent when the second pass is off).
 
 ### Branch Runner (MB)
 A no-op sink with a **Run Branch** button that queues only this node and everything feeding it (via ComfyUI's partial execution). The button shows how many nodes that is, and hovering it outlines them on the canvas. `runs` (1–100) queues the branch that many times; the button reads `Running…` until the queue drains. **Alt+Enter** runs the selected Branch Runners. Left unwired it does nothing and doesn't block a normal Queue.
@@ -102,6 +105,9 @@ Up to 16 controls (slider, switch, dropdown, seed, text) in one node. Each contr
 
 ### Load Models Combo (MB)
 Load Diffusion Model + Load CLIP + Load VAE combined into one node. Outputs MODEL, CLIP, and VAE. Clicking the model, CLIP or VAE dropdown opens a grouped menu: starred files (★), the last 5 picked (🕒), **Search all…** (the stock filterable list), then files grouped by subfolder; the arrows still step through the list. Right-click the node to star or unstar the current files. **Presets** saves and applies the whole set (model, dtype, CLIP, CLIP type/device, VAE). A file the workflow points at but that isn't on disk is outlined red, with "missing file" in the title bar. Favorites, recents and presets are kept in your ComfyUI user settings.
+
+### LoRA Stack (MB)
+Applies any number of LoRAs to MODEL, and to CLIP when one is connected (leave CLIP empty for model-only LoRAs). **+ Add LoRA** picks a file and adds a row: ⋮⋮ handle (drag to reorder), on/off pill, file name (click to change), and strength as ◀ 1.00 ▶ (arrows step 0.05, drag to scrub, click to type). The header toggles every row and shows how many are on. Right-click a row to move, duplicate or remove it. Outputs the patched model and clip, the enabled LoRAs' trigger words (from the `.civitai.info` / `.metadata.json` sidecar, else the safetensors header) joined by `separator`, and a `name @ strength` line per LoRA. `online_lookup` asks civitai.com by SHA256 when nothing local has trigger words; `allow_hashing` lets it hash the file first. A row whose file isn't on disk is outlined red.
 
 ### Wildcard Select (MB)
 Picks one item out of a `.txt` in ComfyUI's `wildcards` folder and wraps it in a prompt weight. `seed` is a KSampler-style widget mapped onto the item count, `weight` is a 0–5 slider, and `weight_format` decides whether the parentheses appear at weight 1.0 (`auto`), always, or never. `prefix` and `suffix` are added outside the weight on `string`; `raw` stays the bare item. Blank lines and `#` comments are skipped; `bypass` outputs an empty string.
@@ -126,6 +132,9 @@ Dropdown of 43 art styles (Cinematic Realism, Watercolor, Anime, Claymation, ...
 
 ### Woman's Wardrobe Selector (MB)
 Outfit description from a chosen or seeded-random category and style, including Pants, Shorts and Jeans. Extra outputs: `topwear` and `bottomwear` (empty for one-piece outfits; Gymwear sets split into both). `mix_outfit` pairs a random top with a random bottom.
+
+### Accessories Selector (MB)
+One dropdown per accessory, each set to none, random (from the seed) or a style, and every picked piece says where it's worn. Slots: `waist_chain`, `necklace`. `prompt` joins the picked pieces; each slot also has its own output, and `styles` lists the picks. `metal` adds one gold, silver, rose gold or seeded-random finish to the whole set, or keeps the descriptions as written.
 
 ### Category outputs
 Every randomizer and selector also outputs the picked names on their own: `category`, plus `style` on nodes with a style inside the category.
@@ -153,7 +162,10 @@ Open ComfyUI's settings dialog and pick the **MB** panel.
 Pack version, node count and a link to this README.
 
 ### Features
-On/off switches, all on by default and applied live: **Node count badge**, **Restart button**, **Palette switcher**, **Replace Node menu**, **Clipboard paste** (the button on Load Image (MB)).
+On/off switches, all on by default and applied live: **Node count badge**, **Restart button**, **Palette switcher**, **Replace Node menu**, **Clipboard paste** (the button on Load Image (MB)), **Notify on finish**.
+
+### Notify on finish
+Plays a sound after every finished prompt and a lower one when a prompt fails; cancelling stays silent. **Volume** sets the loudness. **Success sound** and **Error sound** each use a built-in chime, or an mp3 attached with **Choose mp3** (stored in your ComfyUI user data); **Reset** goes back to the chime and **Test** plays it.
 
 ### Node defaults
 Starting values for newly added nodes; saved workflows keep their own: **Branch Runner: runs** (1–100), **Get Lines: start mode** (Auto or Fixed 1–32), **Load Image Crop: aspect**.

@@ -13,6 +13,7 @@ from typing_extensions import override
 
 from comfy_api.latest import ComfyExtension, io
 
+from .nodes.accessories_selector_node import NODES as _accessories_selector
 from .nodes.body_mod_prompt_node import NODES as _body_mod_prompt
 from .nodes.branch_runner_node import NODES as _branch_runner
 from .nodes.combine_text_node import NODES as _combine_text
@@ -31,6 +32,7 @@ from .nodes.load_image_crop_area_node import NODES as _load_image_crop_area
 from .nodes.load_image_node import NODES as _load_image
 from .nodes.load_video_node import NODES as _load_video
 from .nodes.makeup_mod_prompt_node import NODES as _makeup_mod_prompt
+from .nodes.lora_stack_node import NODES as _lora_stack
 from .nodes.model_combo_node import NODES as _model_combo
 from .nodes.pad_image_node import NODES as _pad_image
 from .nodes.preview_anything_node import NODES as _preview_anything
@@ -84,6 +86,7 @@ NODES: list[type[io.ComfyNode]] = [
     *_load_video,
     *_load_folder,
     *_model_combo,
+    *_lora_stack,
     *_save_image,
     *_compress_image,
     *_image_to_svg,
@@ -133,6 +136,7 @@ NODES: list[type[io.ComfyNode]] = [
     *_pose_selector,
     *_simple_standing_poses,
     *_wardrobe_selector,
+    *_accessories_selector,
 ]
 
 
