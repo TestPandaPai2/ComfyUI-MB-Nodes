@@ -13,9 +13,11 @@ import node_helpers
 from comfy_api.latest import io
 
 from . import image_info
+from .pad_image_node import _rgb
 
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif", ".tif", ".tiff", ".jfif", ".avif"}
 THUMB_SIZE = 192  # long side of the preview images handed to the frontend
+RESIZE_MODES = ["list", "crop", "pad", "stretch"]
 
 
 def _natural_key(name):
@@ -63,9 +65,31 @@ def _load_rgb(path):
     return torch.from_numpy(array)[None,]
 
 
+def _fit(tensor, width, height, mode, color):
+    """Bring one [1, H, W, C] image to width x height so the batch stacks."""
+    src_h, src_w = tensor.shape[1], tensor.shape[2]
+    if (src_w, src_h) == (width, height):
+        return tensor
+    # common_upscale works on NCHW, the IMAGE type is NHWC.
+    samples = tensor.movedim(-1, 1)
+    if mode == "pad":
+        scale = min(width / src_w, height / src_h)
+        fit_w, fit_h = max(1, round(src_w * scale)), max(1, round(src_h * scale))
+        samples = comfy.utils.common_upscale(samples, fit_w, fit_h, "lanczos", "disabled").clamp(0.0, 1.0)
+        canvas = torch.tensor(color, dtype=samples.dtype, device=samples.device).view(1, 3, 1, 1).repeat(1, 1, height, width)
+        top, left = (height - fit_h) // 2, (width - fit_w) // 2
+        canvas[:, :, top:top + fit_h, left:left + fit_w] = samples
+        return canvas.movedim(1, -1)
+    # "center" crops to the target aspect before scaling, so nothing is distorted.
+    crop = "center" if mode == "crop" else "disabled"
+    samples = comfy.utils.common_upscale(samples, width, height, "lanczos", crop)
+    return samples.movedim(1, -1).clamp(0.0, 1.0)
+
+
 class MBLoadImagesFromFolder(io.ComfyNode):
-    """Load every image in a folder, or a hand-picked subset of it. Images that
-    do not match the first one's size are resized to it so the batch stacks."""
+    """Load every image in a folder, or a hand-picked subset of it. In list mode
+    each image keeps its own size; the other modes bring every image to the
+    largest one's size so they stack into one batch."""
 
     @classmethod
     def define_schema(cls) -> io.Schema:
@@ -94,15 +118,26 @@ class MBLoadImagesFromFolder(io.ComfyNode):
                     multiline=True,
                     tooltip="File names to load, one per line. Managed by the preview grid.",
                 ),
+                io.Combo.Input(
+                    "resize_mode",
+                    options=RESIZE_MODES,
+                    default="list",
+                    tooltip="list: every image at its own size, downstream nodes run once per image. "
+                            "crop / pad / stretch: one batch at the largest image's size, by center crop, "
+                            "letterbox or distortion.",
+                ),
+                io.Color.Input("pad_color", default="#000000", tooltip="Border colour in pad mode."),
             ],
             outputs=[
-                io.Image.Output("images"),
-                image_info.ImageInfo.Output("image_info"),
+                # Lists in every mode: list mode emits one entry per image, the
+                # batch modes a single batch, which downstream reads as usual.
+                io.Image.Output("images", is_output_list=True),
+                image_info.ImageInfo.Output("image_info", is_output_list=True),
             ],
         )
 
     @classmethod
-    def validate_inputs(cls, folder, select_all, selection) -> bool | str:
+    def validate_inputs(cls, folder, select_all, selection, resize_mode, pad_color) -> bool | str:
         if not folder:
             return "No folder set."
         if not os.path.isdir(folder):
@@ -110,7 +145,7 @@ class MBLoadImagesFromFolder(io.ComfyNode):
         return True
 
     @classmethod
-    def fingerprint_inputs(cls, folder, select_all, selection) -> str:
+    def fingerprint_inputs(cls, folder, select_all, selection, resize_mode, pad_color) -> str:
         hasher = hashlib.sha256()
         hasher.update(f"{folder}|{select_all}|{selection}".encode("utf-8"))
         # Names plus mtimes: re-runs pick up edited or replaced files without
@@ -124,7 +159,7 @@ class MBLoadImagesFromFolder(io.ComfyNode):
         return hasher.hexdigest()
 
     @classmethod
-    def execute(cls, folder, select_all, selection) -> io.NodeOutput:
+    def execute(cls, folder, select_all, selection, resize_mode, pad_color) -> io.NodeOutput:
         names = chosen_files(folder, select_all, selection)
         if not names:
             raise ValueError(
@@ -133,25 +168,19 @@ class MBLoadImagesFromFolder(io.ComfyNode):
                 "No images selected. Pick some in the preview or switch to 'all'."
             )
 
-        images = []
-        target = None  # (width, height) of the first image
-        for name in names:
-            tensor = _load_rgb(os.path.join(folder, name))
-            height, width = tensor.shape[1], tensor.shape[2]
-            if target is None:
-                target = (width, height)
-            elif (width, height) != target:
-                # common_upscale works on NCHW, the IMAGE type is NHWC.
-                samples = tensor.movedim(-1, 1)
-                samples = comfy.utils.common_upscale(samples, target[0], target[1], "lanczos", "disabled")
-                tensor = samples.movedim(1, -1).clamp(0.0, 1.0)
-            images.append(tensor)
+        images = [_load_rgb(os.path.join(folder, name)) for name in names]
+        if resize_mode == "list":
+            infos = [image_info.make(image, None, name) for image, name in zip(images, names)]
+            return io.NodeOutput(images, infos)
 
-        batch = torch.cat(images, dim=0)
+        largest = max(images, key=lambda t: t.shape[1] * t.shape[2])
+        height, width = largest.shape[1], largest.shape[2]
+        color = _rgb(pad_color)
+        batch = torch.cat([_fit(image, width, height, resize_mode, color) for image in images], dim=0)
         # One name per loaded file; `filename` is the first, matching the batch
         # order the images arrive in.
         return io.NodeOutput(
-            batch, image_info.make(batch, None, names[0], filenames=names)
+            [batch], [image_info.make(batch, None, names[0], filenames=names)]
         )
 
 
@@ -218,6 +247,14 @@ try:
         if not os.path.isfile(path):
             return web.Response(status=404)
 
+        # The thumbnail only changes when the file does, so the browser's cached
+        # copy is confirmed without re-encoding it.
+        stat = os.stat(path)
+        etag = f'"{stat.st_mtime_ns:x}-{stat.st_size:x}-{THUMB_SIZE}"'
+        headers = {"Cache-Control": "no-cache", "ETag": etag}
+        if request.headers.get("If-None-Match") == etag:
+            return web.Response(status=304, headers=headers)
+
         try:
             img = node_helpers.pillow(Image.open, path)
             img = node_helpers.pillow(ImageOps.exif_transpose, img).convert("RGB")
@@ -230,7 +267,7 @@ try:
         return web.Response(
             body=buffer.getvalue(),
             content_type="image/jpeg",
-            headers={"Cache-Control": "no-cache"},
+            headers=headers,
         )
 except Exception:  # server missing (unit runs) or routes already registered
     pass

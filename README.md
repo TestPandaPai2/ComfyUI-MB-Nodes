@@ -28,6 +28,9 @@ Just a slider. Its single output takes the type (INT or FLOAT), step and, when t
 ### Load Image (MB)
 Picks or uploads an image, with a preview and optional megapixel-target resize. **📋 Paste from clipboard** saves whatever you last copied into the input folder and selects it.
 
+### Load Images from Folder (MB)
+Loads every image in a folder (picked with **Browse…** or typed) or only the ones clicked in the thumbnail grid. All / None / Invert, shift-click ranges, ⟳ to rescan; clicking a tile in `all` mode switches to custom. `resize_mode`: `list` keeps each image at its own size (downstream runs once per image); `crop`, `pad` (with `pad_color`) and `stretch` bring every image to the largest one's size as one batch.
+
 ### Load Image Mini (MB)
 Compact Load Image with a custom face: toolbar (upload/paste/settings), arrow + thumbnail file picker, preview, and two size cards (input/output). The full resize engine — max megapixels, longest side, scale by, fit inside, crop to fill, match ratio, plus snap/resample/upscale and a per-node accent — lives in the ⚙ gear. Outputs image and image_info only.
 
