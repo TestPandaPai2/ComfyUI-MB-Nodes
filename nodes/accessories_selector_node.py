@@ -275,10 +275,64 @@ Face Chain: She wears a face chain, fine strands that drape from her temples acr
 Headpiece Body Chain: She wears a headpiece body chain, a fine chain crown linked by strands that fall behind her ears to drape over her shoulders, ethereal and goddess-like.
 Collar Cape Chain: She wears a collar cape chain, a wide collar with rows of fine chain that fall over her shoulders and upper back like a shimmering capelet.
 Wing Back Chain: She wears a wing back chain, fine chains shaped into the outline of wings across her shoulder blades, dreamy and fantasy-inspired.
+
+NOSE RINGS
+
+Diamond Nose Stud: She wears a diamond nose stud, a single tiny brilliant-cut diamond set flush on the side of her nostril, catching a pinpoint of light, minimal and elegant.
+Flower Nose Stud: She wears a flower nose stud, a tiny gold flower with petal-set stones and a center gem resting on the side of her nostril, dainty and feminine.
+Laung: She wears a laung, a tiny clove-shaped gold nose pin with a small stone at its head set on the side of her nostril, simple, traditional, and Punjabi.
+Plain Nose Hoop: She wears a plain nose hoop, a thin, smooth metal ring that hugs the edge of her nostril, clean and effortless.
+Twisted Nose Hoop: She wears a twisted nose hoop, a slim ring of twisted metal wire that hugs the edge of her nostril, catching the light along its spiral.
+Beaded Nose Hoop: She wears a beaded nose hoop, a thin ring lined with tiny metal beads that hugs the edge of her nostril, textured and boho.
+Septum Ring: She wears a septum ring, a slim horseshoe ring through the center of her nose with small ball ends resting just above her upper lip, edgy and cool.
+Crystal Septum Clicker: She wears a crystal septum clicker, a hinged ring through the center of her nose lined with a row of tiny sparkling crystals, glamorous and edgy.
+Septum Pincher: She wears a septum pincher, a crescent-shaped tapered piece through the center of her nose with its pointed ends curving outward, bold and tribal.
+Beaded Septum Ring: She wears a beaded septum ring, a ring through the center of her nose set with a row of tiny pearls, soft and pretty.
+Bridal Nath: She wears a bridal nath, a large gold nose ring on her nostril set with kundan stones and pearls, its fine chain sweeping across her cheek and hooking into her hair behind the ear, regal and bridal.
+Maharashtrian Nath: She wears a Maharashtrian nath, a cashew-shaped nose ring covered in small pearls with a pink and white stone at the center, sitting over her nostril, graceful and Marathi.
+Tehri Nath: She wears a Tehri nath, a very large, wide gold nose ring from Garhwal with ornate enamel and stone work, its heavy chain looping to her ear, grand and Pahadi.
+Kundan Nath: She wears a kundan nath, a medium gold nose ring set with glass gems in gold foil and edged with pearl drops, hanging from her nostril with a chain to her ear, festive and regal.
+Polki Nath: She wears a polki nath, a gold nose ring set with uncut diamonds and finished with emerald and pearl beads, with a fine chain to her ear, opulent and heirloom.
+Pearl Nath: She wears a pearl nath, a delicate gold hoop strung with small white pearls and a single red bead at the center, hanging from her nostril, soft and classic.
+Bulaq: She wears a bulaq, a small ornate pendant hanging from the center of her nose and resting just above her upper lip, set with tiny stones and pearls, traditional and striking.
+Nolok: She wears a nolok, a tiny stone-studded drop hanging from the center of her nose over her lip in the Bengali bridal style, delicate and traditional.
+Mini Nathni: She wears a mini nathni, a small gold nose ring on her nostril with a single tiny dangling drop, light, pretty, and everyday.
+Paisley Nath: She wears a paisley nath, a gold nose ring shaped like a curved paisley set with small stones and edged with seed pearls, hanging from her nostril, ornate and festive.
+Double Mookuthi: She wears a double mookuthi, two matching gold nose studs set with small red stones, one on each nostril, traditional and South Indian.
+Kemp Mookuthi: She wears a kemp mookuthi, a cluster nose stud with red and green kemp stones set in gold on the side of her nostril, classic and Tamil.
+Oxidised Nose Ring: She wears an oxidised nose ring, a darkened silver hoop with an etched tribal pattern and tiny dangling beads, earthy and boho.
+Banjara Nose Ring: She wears a Banjara nose ring, a large silver ring hung with tiny coins and colored beads, resting against her cheek, bold and nomadic.
+Drop Nose Pin: She wears a drop nose pin, a small stone stud on the side of her nostril with a single tiny gem dangling just below it, sweet and delicate.
+Ruby Nose Stud: She wears a ruby nose stud, a single small deep red ruby set on the side of her nostril, rich and romantic.
+Emerald Nose Stud: She wears an emerald nose stud, a single small green emerald set on the side of her nostril, lush and regal.
+Opal Nose Stud: She wears an opal nose stud, a tiny iridescent opal set on the side of her nostril, flashing soft rainbow colors, dreamy and ethereal.
+Star Nose Stud: She wears a star nose stud, a tiny star-shaped stud on the side of her nostril, playful and celestial.
+Heart Nose Stud: She wears a heart nose stud, a tiny heart-shaped stud on the side of her nostril, cute and flirty.
+Moon Nose Stud: She wears a moon nose stud, a tiny crescent moon on the side of her nostril, dainty and mystical.
+Butterfly Nose Stud: She wears a butterfly nose stud, a tiny jeweled butterfly on the side of her nostril, whimsical and Y2K-inspired.
+Pearl Nose Stud: She wears a pearl nose stud, a single tiny round pearl on the side of her nostril, soft and classic.
+Double Nose Hoops: She wears double nose hoops, two thin rings side by side on the same nostril, edgy and stylish.
+Hoop And Stud Combo: She wears a hoop and stud combo, a thin ring on the edge of her nostril with a tiny gem stud just above it, modern and layered.
+High Nostril Stud: She wears a high nostril stud, a tiny gem set high on the curve of her nostril near the bridge of her nose, subtle and unexpected.
+Bridge Piercing: She wears a bridge piercing, a small horizontal barbell across the bridge of her nose between her eyes, with a tiny ball at each end, bold and alternative.
+Nose To Ear Chain: She wears a nose to ear chain, a small stud on her nostril linked by a fine chain across her cheek to her earring, modern and daring.
+Nose Cuff: She wears a nose cuff, a slim clip-on ring that hugs the edge of her nostril without a piercing, easy and playful.
+Pave Nose Hoop: She wears a pave nose hoop, a thin ring set all around with tiny sparkling stones that hugs the edge of her nostril, glamorous.
+Seamless Nose Ring: She wears a seamless nose ring, an ultra-thin ring with no visible join that circles the edge of her nostril, sleek and minimal.
+Captive Bead Ring: She wears a captive bead ring on her nostril, a slim hoop holding a single small round bead at the front, classic and playful.
+Charm Nose Hoop: She wears a charm nose hoop, a thin ring on her nostril with a tiny dangling charm, cute and personal.
+Kundan Nose Pin: She wears a kundan nose pin, a small cluster of glass gems set in gold foil on the side of her nostril, festive and traditional.
+Meenakari Nath: She wears a meenakari nath, a gold nose ring painted with bright red and green enamel florals and finished with pearl drops, colorful and Rajasthani.
+Ghungroo Nath: She wears a ghungroo nath, a gold nose ring hung with tiny bells that chime faintly as she moves, playful and dance-inspired.
+Peacock Nath: She wears a peacock nath, a gold nose ring shaped like a peacock with a fanned enamel tail in blue and green, hanging from her nostril, vibrant and folk-inspired.
+Floral Nath: She wears a floral nath, a gold nose ring decorated with a cluster of tiny stone-set flowers and pearls, hanging from her nostril, romantic and bridal.
+Crescent Nath: She wears a crescent nath, a crescent moon-shaped gold nose ring set with small stones and edged with tiny pearls, hanging from her nostril, graceful and celestial.
+Petite Diamond Nath: She wears a petite diamond nath, a small, delicate hoop set with tiny diamonds and a single pearl drop on her nostril, modern bridal and understated.
+Gemstone Nose Hoop: She wears a gemstone nose hoop, a thin ring on the edge of her nostril set with a single small colored gemstone at the front, bright and charming.
 """)
 
 # Input name for each category's slot.
-SLOTS = {"Waist Chains": "waist_chain", "Necklaces": "necklace", "Bracelets": "bracelet", "Jhumkas": "jhumka", "Body Jewelry": "body_jewelry"}
+SLOTS = {"Waist Chains": "waist_chain", "Necklaces": "necklace", "Bracelets": "bracelet", "Jhumkas": "jhumka", "Body Jewelry": "body_jewelry", "Nose Rings": "nose_ring"}
 NONE, RANDOM = "none", "random"
 METALS = ["gold", "silver", "rose gold"]
 METAL_OPTIONS = ["as written", *METALS, RANDOM]
@@ -292,7 +346,7 @@ class MBAccessoriesSelector(io.ComfyNode):
             display_name="Accessories Selector (MB)",
             category="MBNodes",
             description="Output an accessory description from a chosen or random category and style.",
-            search_aliases=["accessories", "jewelry", "waist chain", "belly chain", "body chain", "necklace", "bracelet", "bangle", "jhumka", "earrings", "random prompt"],
+            search_aliases=["accessories", "jewelry", "waist chain", "belly chain", "body chain", "necklace", "bracelet", "bangle", "jhumka", "earrings", "nose ring", "nath", "random prompt"],
             inputs=[
                 *(
                     io.Combo.Input(SLOTS[name], options=[NONE, RANDOM, *items], default=NONE,
