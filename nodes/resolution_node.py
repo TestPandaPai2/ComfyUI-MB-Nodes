@@ -12,17 +12,21 @@ RATIOS = [
     ("4:3 (Standard)", 4 / 3),
     ("9:16 (Portrait Widescreen)", 9 / 16),
     ("16:9 (Widescreen)", 16 / 9),
+    ("9:21 (Portrait Ultrawide)", 9 / 21),
     ("21:9 (Ultrawide)", 21 / 9),
     ("9:19 (Tall Phone)", 9 / 19),
+    ("19:9 (Wide Phone)", 19 / 9),
     ("1:2 (Tall)", 1 / 2),
+    ("2:1 (Wide)", 2 / 1),
     ("1:3 (Extra Tall)", 1 / 3),
+    ("3:1 (Extra Wide)", 3 / 1),
 ]
 
-STEPS = 7           # options offered per ratio
+STEPS = 9           # options offered per ratio
 SNAP = 64           # every dimension is a multiple of this
-MAX_SIDE = 1920     # Full HD long side
+MAX_SIDE = 4096
 MIN_AREA = 0.26e6   # 512 x 512
-MAX_AREA = 1920 * 1088
+MAX_AREA = 4 * 1024 * 1024  # 2048 x 2048
 RATIO_TOLERANCE = 0.02  # max |ln(actual / nominal)| after snapping
 
 
@@ -43,7 +47,7 @@ def _candidates(ratio):
         else:
             width, height = _snap(long_side * ratio), long_side
         area = width * height
-        if not (MIN_AREA * 0.94 <= area <= MAX_AREA * 1.02):
+        if not (MIN_AREA * 0.94 <= area <= MAX_AREA):
             continue
         if abs(math.log((width / height) / ratio)) > RATIO_TOLERANCE:
             continue
@@ -116,7 +120,7 @@ class MBResolution(io.ComfyNode):
                     default=False,
                     label_on="portrait",
                     label_off="landscape",
-                    tooltip="Swap width and height.",
+                    tooltip="Output orientation. The grid keeps it in step with the ratio; wired in, it forces the size to that orientation.",
                 ),
                 io.Int.Input("batch_size", default=1, min=1, max=4096),
             ],
@@ -131,7 +135,7 @@ class MBResolution(io.ComfyNode):
     @classmethod
     def execute(cls, aspect_ratio, resolution, portrait, batch_size) -> io.NodeOutput:
         width, height = (int(part) for part in resolution.split(" x "))
-        if portrait:
+        if width != height and (height > width) != portrait:
             width, height = height, width
 
         latent = torch.zeros([batch_size, 4, height // 8, width // 8])

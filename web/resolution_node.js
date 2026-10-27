@@ -18,7 +18,6 @@ const ONE_MP = 1024 * 1024;
 const ONE_MP_TOLERANCE = 0.12; // |ln(area / 1 MP)| that still gets the dot
 const OK_DOT = "#5dcaa5";
 
-const RATIO_COLS = 4;
 const RES_COLS = 3;
 const MARGIN = 12;
 const GAP = 4;
@@ -28,9 +27,9 @@ const RES_H = 32;
 const PREVIEW_H = 52;
 
 // Keep the resolution combo showing only the sizes that belong to the active
-// ratio. Selection is preserved by index so stepping through ratios keeps a
-// comparable size rather than snapping back to the smallest.
-function applyRatio(node, ratio, keepValue) {
+// ratio. A size the ratio doesn't offer becomes its closest one by pixel count,
+// so switching ratios (or loading an older table) keeps a comparable size.
+function applyRatio(node, ratio) {
     const ratioWidget = getWidget(node, "aspect_ratio");
     const resWidget = getWidget(node, "resolution");
     if (!ratioWidget || !resWidget) return;
@@ -38,13 +37,16 @@ function applyRatio(node, ratio, keepValue) {
     const labels = DATA.table[ratio];
     if (!labels) return;
 
-    const prevIndex = resWidget.options?.values?.indexOf(resWidget.value) ?? -1;
     ratioWidget.value = ratio;
+    // Orientation follows the ratio: the sizes listed are already oriented.
+    const portrait = getWidget(node, "portrait");
+    if (portrait) portrait.value = DATA.values[ratio] < 1;
     resWidget.options = { ...(resWidget.options ?? {}), values: labels };
 
-    if (!(keepValue && labels.includes(resWidget.value))) {
-        const index = prevIndex >= 0 ? Math.min(prevIndex, labels.length - 1) : 3;
-        resWidget.value = labels[Math.min(index, labels.length - 1)];
+    if (!labels.includes(resWidget.value)) {
+        const area = parseSize(resWidget.value).reduce((a, b) => a * b) || ONE_MP;
+        const distance = (label) => Math.abs(Math.log(parseSize(label).reduce((a, b) => a * b) / area));
+        resWidget.value = labels.reduce((best, label) => (distance(label) < distance(best) ? label : best));
     }
     refit(node);
 }
@@ -62,15 +64,11 @@ function setValue(node, name, value) {
 const isLinked = (node, name) => node.inputs?.some((i) => i.name === name && i.link != null);
 
 const parseSize = (label) => String(label).split(" x ").map(Number);
-const ratioLabel = (name) => name.split(" (")[0];
 const megapixels = (w, h) => (w * h) / 1e6;
 const nearOneMP = (w, h) => Math.abs(Math.log((w * h) / ONE_MP)) <= ONE_MP_TOLERANCE;
 
-// Final [width, height], after the portrait swap.
-function finalSize(node, label) {
-    const [w, h] = parseSize(label ?? getWidget(node, "resolution")?.value);
-    return getWidget(node, "portrait")?.value ? [h, w] : [w, h];
-}
+// The same ratio turned the other way (3:4 <-> 4:3); 1:1 is its own mirror.
+const mirrorRatio = (ratio) => DATA.ratios.find((name) => Math.abs(DATA.values[name] * DATA.values[ratio] - 1) < 1e-6);
 
 // Every clickable cell plus where the labels and preview go, top to bottom:
 // ratios, orientation, resolutions, preview, batch. Laid out against the width
@@ -92,7 +90,7 @@ function layout(node, width, top) {
     let y = top;
     labels.push({ text: "Aspect ratio", y });
     y += LABEL_H;
-    y = grid(DATA.ratios, RATIO_COLS, CELL_H, y, (value) => ({ kind: "ratio", value }));
+    y = grid([null], 1, CELL_H, y, () => ({ kind: "ratio" }));
     y = grid([false, true], 2, CELL_H, y, (value) => ({ kind: "portrait", value }));
 
     labels.push({ text: "Resolution", y, dot: true });
@@ -139,10 +137,10 @@ function drawCell(ctx, cell, { selected, dimmed, hover }) {
 }
 
 function drawGrid(ctx, node, widget, y) {
-    const { cells, labels, preview } = layout(node, widget.width, y);
+    const { cells, labels, preview } = layout(node, widget.drawWidth, y);
     const ratio = getWidget(node, "aspect_ratio")?.value;
     const resolution = getWidget(node, "resolution")?.value;
-    const portrait = !!getWidget(node, "portrait")?.value;
+    const portrait = DATA.values[ratio] < 1;
     const batch = Number(getWidget(node, "batch_size")?.value) || 1;
     const square = DATA.values[ratio] === 1;
     const portraitLinked = isLinked(node, "portrait");
@@ -180,12 +178,12 @@ function drawGrid(ctx, node, widget, y) {
         ctx.font = "11px Arial";
 
         if (cell.kind === "ratio") {
-            drawCell(ctx, cell, { selected: cell.value === ratio, hover });
-            const text = ratioLabel(cell.value);
-            const textW = ctx.measureText(text).width;
-            const iconX = x + w / 2 - textW / 2 - 4;
-            ctx.strokeRect(...shapeRect(DATA.values[cell.value], 10, iconX, cy + h / 2));
-            ctx.fillText(text, iconX + 9 + textW / 2, cy + h / 2);
+            drawCell(ctx, cell, { selected: false, hover });
+            ctx.textAlign = "left";
+            ctx.strokeRect(...shapeRect(DATA.values[ratio], 10, x + 14, cy + h / 2));
+            ctx.fillText(ratio ?? "", x + 26, cy + h / 2);
+            ctx.textAlign = "right";
+            ctx.fillText("▾", x + w - 10, cy + h / 2);
         } else if (cell.kind === "portrait") {
             const dimmed = square || portraitLinked;
             drawCell(ctx, cell, { selected: cell.value === portrait && !dimmed, dimmed, hover });
@@ -196,7 +194,7 @@ function drawGrid(ctx, node, widget, y) {
             ctx.fillText(text, iconX + 10 + textW / 2, cy + h / 2);
         } else if (cell.kind === "resolution") {
             drawCell(ctx, cell, { selected: cell.value === resolution, hover });
-            const [fw, fh] = finalSize(node, cell.value);
+            const [fw, fh] = parseSize(cell.value);
             ctx.font = "12px Arial";
             ctx.fillText(`${fw}×${fh}`, x + w / 2, cy + h / 2 - 6);
             ctx.font = "10px Arial";
@@ -221,7 +219,7 @@ function drawGrid(ctx, node, widget, y) {
 
     // Preview: the final frame drawn to scale, then its numbers.
     const [px, py, , ph] = preview;
-    const [fw, fh] = finalSize(node);
+    const [fw, fh] = parseSize(resolution);
     ctx.globalAlpha = 1;
     if (fw && fh) {
         const box = ph - 8;
@@ -242,11 +240,17 @@ function drawGrid(ctx, node, widget, y) {
 }
 
 function click(node, cell, event) {
-    if (cell.kind === "ratio") setValue(node, "aspect_ratio", cell.value);
+    if (cell.kind === "ratio") {
+        new LiteGraph.ContextMenu(DATA.ratios, {
+            event,
+            callback: (value) => setValue(node, "aspect_ratio", value),
+        });
+    }
     else if (cell.kind === "resolution") setValue(node, "resolution", cell.value);
     else if (cell.kind === "portrait") {
-        if (DATA.values[getWidget(node, "aspect_ratio")?.value] !== 1 && !isLinked(node, "portrait")) {
-            setValue(node, "portrait", cell.value);
+        const ratio = getWidget(node, "aspect_ratio")?.value;
+        if (DATA.values[ratio] !== 1 && !isLinked(node, "portrait") && cell.value !== DATA.values[ratio] < 1) {
+            setValue(node, "aspect_ratio", mirrorRatio(ratio));
         }
     } else if (!isLinked(node, "batch_size")) {
         const batch = Number(getWidget(node, "batch_size")?.value) || 1;
@@ -264,10 +268,11 @@ function makeGridWidget(node) {
     return {
         type: "mb_resolution_grid",
         name: "resolution_grid",
-        // y and width are recorded by draw() and reused by mouse() for hit tests,
-        // so the two agree in either renderer.
+        // y and drawWidth are recorded by draw() and reused by mouse() for hit tests,
+        // so the two agree in either renderer. Not "width": the canvas renderer
+        // draws with widget.width when set, pinning the grid at an old node width.
         y: 0,
-        width: 0,
+        drawWidth: 0,
         // The serializer checks widget.serialize, not options.serialize.
         serialize: false,
         options: { serialize: false },
@@ -284,13 +289,13 @@ function makeGridWidget(node) {
 
         draw(ctx, drawNode, widgetWidth, y) {
             this.y = y;
-            this.width = widgetWidth || node.size[0];
+            this.drawWidth = widgetWidth || node.size[0];
             drawGrid(ctx, drawNode, this, y);
         },
 
         mouse(event, pos, mouseNode) {
             if (event.type !== "pointerdown" && event.type !== "mousedown") return false;
-            const width = this.width || mouseNode.size[0];
+            const width = this.drawWidth || mouseNode.size[0];
             // The canvas renderer gives pos relative to the node (rows start at
             // the widget's y); Nodes 2.0 hands the widget its own canvas (rows
             // start at 0). Both are tested; the widget only gets clicks that
@@ -325,7 +330,7 @@ function wireNode(node) {
     const prev = ratio.callback;
     ratio.callback = function (value, ...rest) {
         const r = prev?.apply(this, [value, ...rest]);
-        applyRatio(node, value ?? this.value, false);
+        applyRatio(node, value ?? this.value);
         return r;
     };
 
@@ -376,7 +381,11 @@ function applyTable(node) {
     if (!DATA.ratios.length) return;
     repairValues(node);
     VALUE_WIDGETS.forEach((name) => setWidgetVisible(node, name, false));
-    applyRatio(node, getWidget(node, "aspect_ratio")?.value ?? DATA.ratios[0], true);
+    const ratio = getWidget(node, "aspect_ratio")?.value ?? DATA.ratios[0];
+    // Older workflows flipped a landscape ratio with portrait on (16:9 + portrait);
+    // load those as the mirror ratio, whose sizes are the same ones turned.
+    const flipped = DATA.values[ratio] !== 1 && !!getWidget(node, "portrait")?.value !== DATA.values[ratio] < 1;
+    applyRatio(node, flipped ? mirrorRatio(ratio) : ratio);
 }
 
 app.registerExtension({

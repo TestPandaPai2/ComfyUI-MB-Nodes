@@ -20,7 +20,7 @@ Splits text into lines, outputs one picked by a seed widget (wraps to the line c
 Live read-only preview of incoming text, passed through as output. Runnable standalone.
 
 ### Resolution (MB)
-Aspect ratio and resolution presets (multiples of 64) picked from button grids, landscape/portrait buttons, a batch stepper, and a to-scale preview showing final size, megapixels and latent size. Sizes near 1 MP are marked with a dot. Outputs width, height, empty latent, batch size.
+Aspect ratio dropdown and resolution preset buttons (multiples of 64, up to 4 MP), landscape/portrait buttons that switch to the mirrored ratio (picking a ratio sets them too), a batch stepper, and a to-scale preview showing final size, megapixels and latent size. Sizes near 1 MP are marked with a dot. Outputs width, height, empty latent, batch size.
 
 ### Slider (MB)
 Just a slider. Its single output takes the type (INT or FLOAT), step and, when the span is under 1,000,000, the range and current value of the input it is connected to. Right-click → ⚙ Slider Settings sets min, max and step.
@@ -89,7 +89,7 @@ A no-op sink with a **Run Branch** button that queues only this node and everyth
 Accepts any input type. Image/mask/audio/video get a real live preview on the node; everything else shows its text repr. Passes the value through unchanged. Runnable standalone.
 
 ### Krea2 Styles (MB)
-Category + style dropdowns over the bundled Krea2 prompt-styles table (286 styles, 15 categories). Outputs `"StyleName: Prompt"`. `randomize` picks a random style within the selected category only; `bypass` outputs an empty string.
+Category + style dropdowns over the bundled Krea2 prompt-styles table (1506 styles, 16 categories). Outputs `"StyleName: Prompt"`. `randomize` picks a random style within the selected category only; `bypass` outputs an empty string.
 
 ### Route 66 (MB)
 Multi-lane reroute. Each lane passes its input straight through to the matching output; a fresh empty lane appears as you connect more wires (up to 20), and each socket takes the colour/type of what plugs in. Each lane is labelled with its type, or a name you set by double-clicking its output. A wire dropped on the node body goes to the first free lane. Right-click → `Tidy lanes` closes gaps and orders lanes by where their wires come from; `Compact` hides the title bar (otherwise it shows the lane count). One tidy node to carry many wires across the graph instead of a pile of single reroute dots.

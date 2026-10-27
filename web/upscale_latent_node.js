@@ -143,10 +143,11 @@ function makeGridWidget(node) {
     return {
         type: "mb_multiplier_grid",
         name: "multiplier_grid",
-        // y and width are recorded by draw() and reused by mouse() for hit tests,
-        // so the two agree in either renderer.
+        // y and drawWidth are recorded by draw() and reused by mouse() for hit tests,
+        // so the two agree in either renderer. Not "width": the canvas renderer
+        // draws with widget.width when set, pinning the grid at an old node width.
         y: 0,
-        width: 0,
+        drawWidth: 0,
         // The serializer checks widget.serialize, not options.serialize.
         serialize: false,
         options: { serialize: false },
@@ -166,7 +167,7 @@ function makeGridWidget(node) {
 
         draw(ctx, drawNode, widgetWidth, y) {
             this.y = y;
-            this.width = widgetWidth || node.size[0];
+            this.drawWidth = widgetWidth || node.size[0];
             const multiplier = Number(getWidget(drawNode, "multiplier")?.value);
             const method = getWidget(drawNode, "upscale_method")?.value;
             const custom = !multipliers(drawNode).some((v) => sameValue(v, multiplier));
@@ -175,7 +176,7 @@ function makeGridWidget(node) {
             const mouse = app.canvas.node_over === drawNode && app.canvas.graph_mouse
                 ? [app.canvas.graph_mouse[0] - drawNode.pos[0], app.canvas.graph_mouse[1] - drawNode.pos[1]]
                 : null;
-            const { cells, readoutY } = layout(drawNode, this.width, y);
+            const { cells, readoutY } = layout(drawNode, this.drawWidth, y);
 
             ctx.save();
             ctx.textAlign = "center";
@@ -211,13 +212,13 @@ function makeGridWidget(node) {
             ctx.font = "11px Arial";
             ctx.globalAlpha = 0.7;
             ctx.fillStyle = LiteGraph.WIDGET_TEXT_COLOR;
-            ctx.fillText(readout(drawNode), this.width / 2, readoutY + READOUT_H / 2);
+            ctx.fillText(readout(drawNode), this.drawWidth / 2, readoutY + READOUT_H / 2);
             ctx.restore();
         },
 
         mouse(event, pos, mouseNode) {
             if (event.type !== "pointerdown" && event.type !== "mousedown") return false;
-            const width = this.width || mouseNode.size[0];
+            const width = this.drawWidth || mouseNode.size[0];
 
             // The two renderers measure pos differently: the canvas one gives it
             // relative to the node, so the rows start at the widget's y, while
