@@ -137,7 +137,7 @@ Dropdown of 43 art styles (Cinematic Realism, Watercolor, Anime, Claymation, ...
 Outfit description from a chosen or seeded-random category and style, including Pants, Shorts, Jeans and swimwear (bikinis, one-pieces, cover-ups and more). Extra outputs: `topwear` and `bottomwear` (empty for one-piece outfits; Gymwear sets split into both). `mix_outfit` pairs a random top with a random bottom.
 
 ### Accessories Selector (MB)
-One dropdown per accessory, each set to none, random (from the seed) or a style, and every picked piece says where it's worn. Slots: `waist_chain`, `necklace`. `prompt` joins the picked pieces; each slot also has its own output, and `styles` lists the picks. `metal` adds one gold, silver, rose gold or seeded-random finish to the whole set, or keeps the descriptions as written.
+One dropdown per accessory, each set to none, random (from the seed) or a style, and every picked piece says where it's worn. Slots: `waist_chain`, `necklace`, `bracelet`, `body_jewelry`, 50 styles each, and `jhumka` with 51. `remove_prefix` drops the leading "She wears" from every piece. `prompt` joins the picked pieces; each slot also has its own output, and `styles` lists the picks. `metal` adds one gold, silver, rose gold or seeded-random finish to the whole set, or keeps the descriptions as written.
 
 ### Category outputs
 Every randomizer and selector also outputs the picked names on their own: `category`, plus `style` on nodes with a style inside the category.
