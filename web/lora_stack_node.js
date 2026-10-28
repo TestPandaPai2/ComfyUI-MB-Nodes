@@ -1,8 +1,9 @@
 // LoRA Stack (MB): rows drawn on the canvas like stock widgets, saved as JSON
 // in the hidden `loras` widget (Autogrow can only grow sockets, not rows).
 // - Header: toggle all on/off, and how many rows are on.
-// - Row: ⋮⋮ drag handle to reorder, on/off pill, file name (click to pick),
-//   strength as ◀ 1.00 ▶ (arrows step, drag to scrub, click to type).
+// - Row: ⋮⋮ drag handle to reorder, on/off pill, file name ▾ (click for a
+//   searchable list), ⓘ trigger words (tick which go out, add your own),
+//   strength as ◀ 1.00 ▶ over a fill bar (arrows step, drag to scrub, click to type).
 // - Right-click a row: move up / down, duplicate, remove.
 // A row whose file isn't on disk is drawn red, with "missing file" in the
 // title bar, like Load Models Combo.
@@ -10,6 +11,7 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 import { accentColor, getWidget, resizeToContent, setWidgetVisible } from "./common.js";
+import { openDialog } from "./dialog.js";
 
 const NODE_ID = "MBLoraStack";
 const ROW_H = 22;
@@ -19,6 +21,10 @@ const PILL_W = 26;
 const PILL_H = 12;
 const STRENGTH_W = 84;
 const ARROW_W = 16;
+const INFO_W = 18;
+const CARET_W = 12;
+const FILL_MAX = 2; // strength that fills the bar
+const NEGATIVE_COLOR = "#5b8def";
 const STEP = 0.05;
 const DRAG_STEP = 0.01;
 const MIN_STRENGTH = -10;
@@ -54,32 +60,212 @@ function save(node) {
     node.setDirtyCanvas(true, true);
 }
 
+const PICKER_CSS = `
+.mb-lora-picker { position: fixed; z-index: 10000; width: 320px; max-height: 360px; display: flex; flex-direction: column;
+    background: var(--comfy-menu-bg); border-radius: 10px; box-shadow: 0 12px 32px rgba(0,0,0,0.5); overflow: hidden;
+    font: 12.5px system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--input-text); }
+.mb-lora-picker input { margin: 8px; padding: 5px 10px; border-radius: 7px; border: 1px solid transparent; outline: none;
+    background: var(--comfy-input-bg); color: var(--input-text); }
+.mb-lora-picker input:focus { border-color: var(--mb-accent, #d4537e); }
+.mb-lora-picker-list { overflow-y: auto; padding: 0 4px 6px; }
+.mb-lora-picker-item { padding: 4px 8px; border-radius: 6px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mb-lora-picker-item:hover, .mb-lora-picker-item.mb-active { background: var(--border-color); }
+.mb-lora-trigger { cursor: pointer; }
+.mb-lora-trigger span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.mb-lora-trigger input[type="checkbox"] { accent-color: var(--mb-accent, #d4537e); margin: 0; flex: none; }
+.mb-lora-custom-tag { color: var(--descrip-text); font-size: 11px; }
+`;
+
+function ensurePickerStyle() {
+    if (document.getElementById("mb-lora-picker-style")) return;
+    const style = document.createElement("style");
+    style.id = "mb-lora-picker-style";
+    style.textContent = PICKER_CSS;
+    document.head.appendChild(style);
+}
+
+// Searchable file list at the pointer: type to filter, arrows + Enter to pick.
 function pickLora(event, callback) {
     if (!loraFiles.length) return;
-    new LiteGraph.ContextMenu(loraFiles, {
-        event,
-        scale: menuScale(),
-        className: "dark",
-        callback: (value) => callback(typeof value === "string" ? value : value?.content),
+    ensurePickerStyle();
+    document.querySelector(".mb-lora-picker")?.remove();
+
+    const box = document.createElement("div");
+    box.className = "mb-lora-picker";
+    const search = document.createElement("input");
+    search.placeholder = "Search LoRAs…";
+    const list = document.createElement("div");
+    list.className = "mb-lora-picker-list";
+    box.append(search, list);
+    document.body.appendChild(box);
+    box.style.left = `${Math.min(event.clientX, window.innerWidth - 330)}px`;
+    box.style.top = `${Math.min(event.clientY, window.innerHeight - 370)}px`;
+
+    let matches = [];
+    let active = 0;
+    const close = () => {
+        window.removeEventListener("pointerdown", outside, true);
+        box.remove();
+    };
+    const choose = (value) => {
+        close();
+        callback(value);
+    };
+    const render = () => {
+        const terms = search.value.toLowerCase().split(/\s+/).filter(Boolean);
+        matches = loraFiles.filter((f) => terms.every((t) => f.toLowerCase().includes(t)));
+        active = Math.min(active, Math.max(0, matches.length - 1));
+        list.replaceChildren(...matches.map((file, i) => {
+            const item = document.createElement("div");
+            item.className = "mb-lora-picker-item" + (i === active ? " mb-active" : "");
+            item.textContent = file;
+            item.title = file;
+            item.addEventListener("click", () => choose(file));
+            return item;
+        }));
+        list.children[active]?.scrollIntoView({ block: "nearest" });
+    };
+    const outside = (e) => {
+        if (!box.contains(e.target)) close();
+    };
+
+    search.addEventListener("input", () => {
+        active = 0;
+        render();
+    });
+    search.addEventListener("keydown", (e) => {
+        e.stopPropagation();
+        if (e.key === "Escape") close();
+        else if (e.key === "Enter" && matches[active]) choose(matches[active]);
+        else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+            e.preventDefault();
+            active = Math.max(0, Math.min(matches.length - 1, active + (e.key === "ArrowDown" ? 1 : -1)));
+            render();
+        }
+    });
+    window.addEventListener("pointerdown", outside, true);
+    render();
+    search.focus();
+}
+
+async function openTriggers(node, row) {
+    const response = await api.fetchApi(`/mbnodes/lora_triggers?${new URLSearchParams({ lora: row.lora })}`);
+    if (!response.ok) return;
+    const data = await response.json();
+    let custom = [...data.custom];
+    const selected = new Set(row.triggers ?? [...data.triggers, ...data.custom]);
+    ensurePickerStyle();
+
+    let list;
+    const render = () => {
+        const words = [...data.triggers, ...custom.filter((w) => !data.triggers.includes(w))];
+        if (!words.length) {
+            const empty = document.createElement("div");
+            empty.className = "mb-dialog-hint";
+            empty.style.margin = "0";
+            empty.textContent = "No trigger words found. Add your own below.";
+            list.replaceChildren(empty);
+            return;
+        }
+        list.replaceChildren(...words.map((word) => {
+            const item = document.createElement("label");
+            item.className = "mb-dialog-item mb-lora-trigger";
+            const box = document.createElement("input");
+            box.type = "checkbox";
+            box.checked = selected.has(word);
+            box.addEventListener("change", () => (box.checked ? selected.add(word) : selected.delete(word)));
+            const text = document.createElement("span");
+            text.textContent = word;
+            item.append(box, text);
+            if (custom.includes(word) && !data.triggers.includes(word)) {
+                const tag = document.createElement("span");
+                tag.className = "mb-lora-custom-tag";
+                tag.style.flex = "none";
+                tag.textContent = "custom";
+                const remove = document.createElement("button");
+                remove.className = "mb-dialog-remove";
+                remove.textContent = "×";
+                remove.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    custom = custom.filter((w) => w !== word);
+                    selected.delete(word);
+                    render();
+                });
+                item.append(tag, remove);
+            }
+            return item;
+        }));
+    };
+
+    openDialog({
+        title: basename(row.lora),
+        width: 380,
+        render(body) {
+            list = document.createElement("div");
+            list.className = "mb-dialog-list";
+
+            const add = document.createElement("div");
+            add.className = "mb-dialog-item";
+            const input = document.createElement("input");
+            input.placeholder = "Add a trigger (commas add several)";
+            const button = document.createElement("button");
+            button.className = "mb-dialog-button";
+            button.textContent = "Add";
+            const addWords = () => {
+                for (const word of input.value.split(",").map((w) => w.trim()).filter(Boolean)) {
+                    if (!custom.includes(word) && !data.triggers.includes(word)) custom.push(word);
+                    selected.add(word);
+                }
+                input.value = "";
+                render();
+            };
+            button.addEventListener("click", addWords);
+            input.addEventListener("keydown", (e) => {
+                if (e.key !== "Enter") return;
+                e.stopPropagation(); // Enter adds here instead of applying the dialog
+                addWords();
+            });
+            add.append(input, button);
+
+            body.append(list, add);
+            render();
+        },
+        onApply() {
+            const words = new Set([...data.triggers, ...custom]);
+            row.triggers = [...selected].filter((w) => words.has(w));
+            save(node);
+            if (custom.join("\n") !== data.custom.join("\n")) {
+                api.fetchApi("/mbnodes/lora_triggers", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ lora: row.lora, custom }),
+                });
+            }
+        },
     });
 }
 
 // Follows the pointer outside the node until release; dx is in canvas units.
+// Listens on window in the capture phase: the canvas stops pointerup from
+// bubbling, which left the drag running after release.
 function trackPointer(event, onMove, onUp) {
     const startX = event.clientX;
     let moved = false;
     const move = (e) => {
+        if (e.buttons === 0) return up(e);
         const dx = (e.clientX - startX) / app.canvas.ds.scale;
         if (Math.abs(dx) > 3) moved = true;
-        onMove?.(e, dx);
+        if (moved) onMove?.(e, dx);
     };
     const up = (e) => {
-        document.removeEventListener("pointermove", move);
-        document.removeEventListener("pointerup", up);
+        window.removeEventListener("pointermove", move, true);
+        window.removeEventListener("pointerup", up, true);
+        window.removeEventListener("pointercancel", up, true);
         onUp?.(e, moved);
     };
-    document.addEventListener("pointermove", move);
-    document.addEventListener("pointerup", up);
+    window.addEventListener("pointermove", move, true);
+    window.addEventListener("pointerup", up, true);
+    window.addEventListener("pointercancel", up, true);
 }
 
 // --------------------------------------------------------------- drawing
@@ -165,19 +351,21 @@ function headerWidget(node) {
 function rowWidget(node, index) {
     const widget = baseWidget("mb_lora_row", `lora_${index}`);
     widget.mbRowIndex = index;
+    Object.defineProperty(widget, "tooltip", { get: () => node.__mbRows[index]?.lora || undefined });
 
     // x ranges of the parts, from the widget width.
     const layout = (width) => {
         const strengthX = width - MARGIN - STRENGTH_W;
+        const infoX = strengthX - 4 - INFO_W;
         const pillX = MARGIN + HANDLE_W + 4;
         const nameX = pillX + PILL_W + 8;
-        return { pillX, nameX, nameW: strengthX - 6 - nameX, strengthX };
+        return { pillX, nameX, nameW: infoX - 4 - CARET_W - nameX, infoX, strengthX };
     };
 
     widget.draw = function (ctx, drawNode, widgetWidth, y) {
         const width = widgetWidth || drawNode.size[0];
         const row = node.__mbRows[index];
-        const { pillX, nameX, nameW, strengthX } = layout(width);
+        const { pillX, nameX, nameW, infoX, strengthX } = layout(width);
         const missing = isMissing(row);
         const on = row.on !== false;
         const cy = y + ROW_H / 2;
@@ -200,9 +388,38 @@ function rowWidget(node, index) {
         ctx.globalAlpha = on ? 1 : 0.45;
         ctx.textAlign = "left";
         ctx.fillStyle = missing ? MISSING_COLOR : LiteGraph.WIDGET_TEXT_COLOR;
-        ctx.fillText(ellipsize(ctx, row.lora ? basename(row.lora) : "(pick a LoRA)", nameW), nameX, cy);
+        const label = ellipsize(ctx, row.lora ? basename(row.lora) : "(pick a LoRA)", nameW);
+        ctx.fillText(label, nameX, cy);
+        const caretX = nameX + ctx.measureText(label).width + 4;
+        ctx.fillStyle = LiteGraph.WIDGET_SECONDARY_TEXT_COLOR ?? "#999";
+        ctx.font = "9px Arial";
+        ctx.fillText("▾", caretX, cy);
+        ctx.font = "12px Arial";
 
-        // strength: ◀ value ▶
+        // trigger words
+        if (row.lora) {
+            ctx.strokeStyle = LiteGraph.WIDGET_SECONDARY_TEXT_COLOR ?? "#999";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(infoX + INFO_W / 2, cy, 6.5, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.font = "bold 10px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("i", infoX + INFO_W / 2, cy + 0.5);
+            ctx.font = "12px Arial";
+        }
+
+        // strength: fill bar, then ◀ value ▶
+        const strength = Number(row.strength ?? 1);
+        const fill = Math.min(1, Math.abs(strength) / FILL_MAX) * (STRENGTH_W - 4);
+        if (fill > 0) {
+            ctx.fillStyle = strength < 0 ? NEGATIVE_COLOR : accentColor();
+            ctx.globalAlpha *= 0.3;
+            ctx.beginPath();
+            ctx.roundRect(strengthX + 2, y + 3, fill, ROW_H - 6, (ROW_H - 6) / 2);
+            ctx.fill();
+            ctx.globalAlpha = on ? 1 : 0.45;
+        }
         ctx.fillStyle = LiteGraph.WIDGET_SECONDARY_TEXT_COLOR ?? "#999";
         ctx.textAlign = "center";
         ctx.fillText("◀", strengthX + ARROW_W / 2, cy);
@@ -227,7 +444,7 @@ function rowWidget(node, index) {
     widget.mouse = function (event, pos) {
         if (!isDown(event) || event.button === 2) return false;
         const row = node.__mbRows[index];
-        const { pillX, nameX, strengthX } = layout(this.mbWidth || node.size[0]);
+        const { pillX, nameX, infoX, strengthX } = layout(this.mbWidth || node.size[0]);
         const x = pos[0];
 
         if (x < pillX) {
@@ -235,12 +452,15 @@ function rowWidget(node, index) {
         } else if (x < nameX) {
             row.on = row.on === false;
             save(node);
-        } else if (x < strengthX) {
+        } else if (x < infoX) {
             pickLora(event, (value) => {
-                if (!value) return;
+                if (!value || value === row.lora) return;
                 row.lora = value;
+                delete row.triggers; // picks belonged to the old file
                 save(node);
             });
+        } else if (x < strengthX) {
+            if (row.lora && !isMissing(row)) openTriggers(node, row);
         } else if (x < strengthX + ARROW_W) {
             row.strength = clamp((row.strength ?? 1) - STEP);
             save(node);
