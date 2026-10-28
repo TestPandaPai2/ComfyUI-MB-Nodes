@@ -1,4 +1,4 @@
-"""MB Nodes — a V3 (comfy_api.latest) node pack.
+"""MB Nodes â€” a V3 (comfy_api.latest) node pack.
 
 The pack is loaded through the V3 entrypoint, so ComfyUI reads the schema each
 node declares in define_schema() rather than a NODE_CLASS_MAPPINGS dict.
@@ -28,6 +28,7 @@ from .nodes.image_info import NODES as _image_info
 from .nodes.krea_styles_node import NODES as _krea_styles
 from .nodes.lighting_enhance_prompt_node import NODES as _lighting_enhance_prompt
 from .nodes.load_folder_node import NODES as _load_folder
+from .nodes.load_prompts_file_node import NODES as _load_prompts_file
 from .nodes.load_image_crop_area_node import NODES as _load_image_crop_area
 from .nodes.load_image_node import NODES as _load_image
 from .nodes.load_video_node import NODES as _load_video
@@ -98,6 +99,7 @@ NODES: list[type[io.ComfyNode]] = [
     *_system_prompt,
     *_prompt_expander,
     *_get_lines,
+    *_load_prompts_file,
     *_combine_text,
     *_replace_text_advanced,
     *_word_remover,
