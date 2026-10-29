@@ -18,6 +18,12 @@ const CANVAS_H = 600;
 const VIEW_MARGIN = 24;
 const EMPTY_BG = "#18181a";
 const HANDLE_FILL = "#ffffff";
+const MIN_ZOOM = 0.2;
+const MAX_ZOOM = 20;
+const SNAP_OPTIONS = ["off", "8", "16", "32", "64"];
+// [left share, top share] of the padding for each anchor cell, row by row.
+const ANCHORS = [[0, 0], [0.5, 0], [1, 0], [0, 0.5], [0.5, 0.5], [1, 0.5], [0, 1], [0.5, 1], [1, 1]];
+const ARROWS = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
 
 function getPad(node) {
     const pad = {};
@@ -55,6 +61,16 @@ function lockRatio(pad, imgW, imgH, ratio, axis) {
     return { left, right, top, bottom };
 }
 
+// Slides the image inside a canvas of the same size: padding moves from one
+// side to the opposite one.
+function shifted(base, dx, dy) {
+    const w = base.left + base.right;
+    const h = base.top + base.bottom;
+    const left = Math.min(w, Math.max(0, Math.round(base.left + dx)));
+    const top = Math.min(h, Math.max(0, Math.round(base.top + dy)));
+    return { left, right: w - left, top, bottom: h - top };
+}
+
 function lockValue(choice, imgW, imgH) {
     if (choice === "source") return imgW / imgH;
     return FIXED_RATIOS[choice] ?? null;
@@ -90,20 +106,58 @@ function showDialog(node, image) {
 
     let canvas;
     let readout;
+    let sizeW;
+    let sizeH;
+    let snap;
     let view = null;
     let drag = null;
+    let zoom = 1;
+    let panX = 0;
+    let panY = 0;
 
     // Room for half the image again on every side, or the current pad if that
-    // is bigger. Frozen while dragging so the view does not zoom under the cursor.
+    // is bigger, centred on the padded canvas, then the user's zoom and pan on
+    // top. Frozen while resizing or moving so the view does not shift under the cursor.
     function fitView() {
+        const outW = imgW + pad.left + pad.right;
+        const outH = imgH + pad.top + pad.bottom;
         const spanW = Math.max(imgW * 2, imgW + 2 * Math.max(pad.left, pad.right));
         const spanH = Math.max(imgH * 2, imgH + 2 * Math.max(pad.top, pad.bottom));
-        const scale = Math.min((CANVAS_W - VIEW_MARGIN * 2) / spanW, (CANVAS_H - VIEW_MARGIN * 2) / spanH);
+        const scale = Math.min((CANVAS_W - VIEW_MARGIN * 2) / spanW, (CANVAS_H - VIEW_MARGIN * 2) / spanH) * zoom;
         view = {
             scale,
-            x: (CANVAS_W - imgW * scale) / 2,
-            y: (CANVAS_H - imgH * scale) / 2,
+            x: (CANVAS_W - outW * scale) / 2 + pad.left * scale + panX,
+            y: (CANVAS_H - outH * scale) / 2 + pad.top * scale + panY,
         };
+    }
+
+    // Keeps the point under the cursor still while zooming.
+    function zoomAt(px, py, factor) {
+        const ux = (px - view.x) / view.scale;
+        const uy = (py - view.y) / view.scale;
+        zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom * factor));
+        fitView();
+        panX += px - (view.x + ux * view.scale);
+        panY += py - (view.y + uy * view.scale);
+        draw();
+    }
+
+    function inside(px, py) {
+        const box = outer();
+        return px >= box.x && px <= box.x + box.w && py >= box.y && py <= box.y + box.h;
+    }
+
+    // Typed canvas size, rounded up to the snap and never smaller than the
+    // image. The padding is split keeping the current anchor.
+    function setSize(axis) {
+        const step = Number(snap.value) || 1;
+        const fit = (value, min) => Math.ceil(Math.max(Number(value) || 0, min) / step) * step;
+        const next = { ...pad };
+        if (axis === "x") [next.left, next.right] = share(fit(sizeW.value, imgW) - imgW, pad.left, pad.right);
+        else [next.top, next.bottom] = share(fit(sizeH.value, imgH) - imgH, pad.top, pad.bottom);
+        const ratio = lockValue(choice, imgW, imgH);
+        pad = ratio ? lockRatio(next, imgW, imgH, ratio, axis) : next;
+        draw();
     }
 
     function outer() {
@@ -169,7 +223,7 @@ function showDialog(node, image) {
     }
 
     function draw() {
-        if (!drag) fitView();
+        if (!drag || drag.mode === "pan") fitView();
         const ctx = canvas.getContext("2d");
         const dpr = window.devicePixelRatio || 1;
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -196,7 +250,9 @@ function showDialog(node, image) {
 
         const outW = imgW + pad.left + pad.right;
         const outH = imgH + pad.top + pad.bottom;
-        readout.textContent = `${outW} x ${outH}  ·  L ${pad.left}  T ${pad.top}  R ${pad.right}  B ${pad.bottom}`;
+        readout.textContent = `L ${pad.left}  T ${pad.top}  R ${pad.right}  B ${pad.bottom}  ·  ${Math.round(zoom * 100)}%`;
+        if (document.activeElement !== sizeW) sizeW.value = outW;
+        if (document.activeElement !== sizeH) sizeH.value = outH;
     }
 
     function hitHandle(px, py) {
@@ -310,10 +366,87 @@ function showDialog(node, image) {
             row.append(left, reset);
             body.appendChild(row);
 
+            const sizeInput = (axis) => {
+                const input = document.createElement("input");
+                input.type = "number";
+                input.min = "1";
+                input.className = "mb-dialog-number";
+                input.style.marginLeft = "0";
+                input.addEventListener("change", () => setSize(axis));
+                input.addEventListener("keydown", (event) => {
+                    event.stopPropagation();
+                    if (event.key === "Enter") input.blur();
+                });
+                return input;
+            };
+            sizeW = sizeInput("x");
+            sizeH = sizeInput("y");
+
+            snap = document.createElement("select");
+            snap.className = "mb-dialog-select";
+            for (const option of SNAP_OPTIONS) {
+                const item = document.createElement("option");
+                item.value = option;
+                item.textContent = option;
+                snap.appendChild(item);
+            }
+            snap.value = node.properties?.mbPadSnap ?? "off";
+            snap.addEventListener("change", () => {
+                setSize("x");
+                if (!lockValue(choice, imgW, imgH)) setSize("y");
+            });
+
+            const anchors = document.createElement("div");
+            anchors.style.cssText = "display:grid;grid-template-columns:repeat(3,16px);gap:2px";
+            for (const [fx, fy] of ANCHORS) {
+                const cell = document.createElement("button");
+                cell.className = "mb-dialog-button";
+                cell.style.cssText = "width:16px;height:16px;padding:0;min-width:0";
+                cell.title = "Place the image here";
+                cell.addEventListener("click", () => {
+                    const w = pad.left + pad.right;
+                    const h = pad.top + pad.bottom;
+                    pad = shifted(pad, Math.round(w * fx) - pad.left, Math.round(h * fy) - pad.top);
+                    draw();
+                });
+                anchors.appendChild(cell);
+            }
+
+            const viewButton = (label, title, onClick) => {
+                const button = document.createElement("button");
+                button.className = "mb-dialog-button";
+                button.textContent = label;
+                button.title = title;
+                button.addEventListener("click", onClick);
+                return button;
+            };
+            const zoomCenter = (factor) => zoomAt(CANVAS_W / 2, CANVAS_H / 2, factor);
+            const views = document.createElement("div");
+            views.className = "mb-dialog-field";
+            views.append(
+                viewButton("−", "Zoom out", () => zoomCenter(1 / 1.25)),
+                viewButton("+", "Zoom in", () => zoomCenter(1.25)),
+                viewButton("Fit", "Reset zoom and pan", () => {
+                    zoom = 1;
+                    panX = 0;
+                    panY = 0;
+                    draw();
+                }),
+            );
+
+            const controls = document.createElement("div");
+            controls.className = "mb-dialog-field";
+            controls.style.justifyContent = "space-between";
+            const sizeFields = document.createElement("div");
+            sizeFields.className = "mb-dialog-field";
+            sizeFields.append(field("size", sizeW), field("x", sizeH), field("snap", snap), field("anchor", anchors));
+            controls.append(sizeFields, views);
+            body.appendChild(controls);
+
             const hint = document.createElement("div");
             hint.className = "mb-dialog-hint";
             hint.style.margin = "0";
-            hint.textContent = "Drag any edge or corner of the red box outward to pad that side.";
+            hint.textContent = "Drag an edge or corner to pad that side, drag inside to move the image (arrow keys nudge, Shift ×10), drag outside or middle-drag to pan, wheel to zoom.";
             body.appendChild(hint);
 
             const pointAt = (event) => {
@@ -324,28 +457,73 @@ function showDialog(node, image) {
                 ];
             };
 
+            canvas.tabIndex = 0;
+            canvas.style.outline = "none";
+
             canvas.addEventListener("pointerdown", (event) => {
                 const [px, py] = pointAt(event);
-                const mode = hitHandle(px, py);
-                if (!mode) return;
+                const mode = event.button === 1 ? "pan" : hitHandle(px, py) ?? (inside(px, py) ? "move" : "pan");
+                event.preventDefault();
+                canvas.focus();
                 canvas.setPointerCapture(event.pointerId);
-                drag = mode;
+                drag = { mode, x0: px, y0: py, pad0: { ...pad }, view0: { ...view }, panX0: panX, panY0: panY };
+                if (mode === "pan") canvas.style.cursor = "grabbing";
+            });
+            // Stops the browser's middle-click autoscroll.
+            canvas.addEventListener("mousedown", (event) => {
+                if (event.button === 1) event.preventDefault();
             });
 
             canvas.addEventListener("pointermove", (event) => {
                 const [px, py] = pointAt(event);
+                if (drag?.mode === "pan") {
+                    panX = drag.panX0 + px - drag.x0;
+                    panY = drag.panY0 + py - drag.y0;
+                    draw();
+                    return;
+                }
+                if (drag?.mode === "move") {
+                    const s = drag.view0.scale;
+                    pad = shifted(drag.pad0, (px - drag.x0) / s, (py - drag.y0) / s);
+                    // The canvas holds still and the image follows the cursor.
+                    view = {
+                        scale: s,
+                        x: drag.view0.x + (pad.left - drag.pad0.left) * s,
+                        y: drag.view0.y + (pad.top - drag.pad0.top) * s,
+                    };
+                    draw();
+                    return;
+                }
                 if (drag) {
-                    dragTo(drag, px, py);
+                    dragTo(drag.mode, px, py);
                     return;
                 }
                 const mode = hitHandle(px, py);
-                canvas.style.cursor = mode ? `${mode}-resize` : "default";
+                canvas.style.cursor = mode ? `${mode}-resize` : inside(px, py) ? "move" : "grab";
+            });
+
+            canvas.addEventListener("wheel", (event) => {
+                event.preventDefault();
+                if (drag) return;
+                const [px, py] = pointAt(event);
+                zoomAt(px, py, event.deltaY < 0 ? 1.15 : 1 / 1.15);
+            }, { passive: false });
+
+            canvas.addEventListener("keydown", (event) => {
+                const arrow = ARROWS[event.key];
+                if (!arrow || drag) return;
+                event.preventDefault();
+                event.stopPropagation();
+                const step = event.shiftKey ? 10 : 1;
+                pad = shifted(pad, arrow[0] * step, arrow[1] * step);
+                draw();
             });
 
             const end = (event) => {
                 if (!drag) return;
                 drag = null;
                 canvas.releasePointerCapture?.(event.pointerId);
+                canvas.style.cursor = "default";
                 draw();
             };
             canvas.addEventListener("pointerup", end);
@@ -361,6 +539,7 @@ function showDialog(node, image) {
             const colorWidget = getWidget(node, "color");
             if (colorWidget) colorWidget.value = color;
             node.properties.mbPadLock = choice;
+            node.properties.mbPadSnap = snap.value;
             node.setDirtyCanvas(true, true);
         },
     });

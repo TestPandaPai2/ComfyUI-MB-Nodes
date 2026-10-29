@@ -123,6 +123,12 @@ class MBResolution(io.ComfyNode):
                     tooltip="Output orientation. The grid keeps it in step with the ratio; wired in, it forces the size to that orientation.",
                 ),
                 io.Int.Input("batch_size", default=1, min=1, max=4096),
+                io.Combo.Input(
+                    "multiple_of",
+                    options=["8", "16", "32", "64", "128"],
+                    default="64",
+                    tooltip="Round width and height to the nearest multiple of this.",
+                ),
             ],
             outputs=[
                 io.Int.Output("width"),
@@ -133,10 +139,12 @@ class MBResolution(io.ComfyNode):
         )
 
     @classmethod
-    def execute(cls, aspect_ratio, resolution, portrait, batch_size) -> io.NodeOutput:
+    def execute(cls, aspect_ratio, resolution, portrait, batch_size, multiple_of) -> io.NodeOutput:
         width, height = (int(part) for part in resolution.split(" x "))
         if width != height and (height > width) != portrait:
             width, height = height, width
+        step = int(multiple_of)
+        width, height = (max(step, round(side / step) * step) for side in (width, height))
 
         latent = torch.zeros([batch_size, 4, height // 8, width // 8])
         return io.NodeOutput(width, height, {"samples": latent}, batch_size)
