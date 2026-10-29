@@ -1,56 +1,34 @@
-"""Replace Text Advanced (MB): run any number of find/replace pairs over one
-text, in order. The pair rows are drawn by web/replace_text_advanced_node.js,
-which grows a new empty row whenever the last one is filled, and stores the
-pairs as JSON in the hidden `pairs` widget. Each row widget also has a socket;
-a linked `find_N` / `replace_N` arrives as an extra input and wins over the
-typed value of row N."""
-
-import json
-import re
+"""Replace Text Advanced (MB): run up to 10 find/replace pairs over one text,
+in order. Each pair slot is a regular widget that can also be linked."""
 
 from comfy_api.latest import io
 
-ROW_INPUT = re.compile(r"(find|replace)_(\d+)")
+SLOTS = 10
 
 
 class MBReplaceTextAdvanced(io.ComfyNode):
     @classmethod
     def define_schema(cls) -> io.Schema:
+        inputs = [io.String.Input("text", force_input=True, tooltip="The text to edit.")]
+        for n in range(1, SLOTS + 1):
+            inputs.append(io.String.Input(f"find_{n}", default="", display_name=f"Text To Replace {n}"))
+            inputs.append(io.String.Input(f"replace_{n}", default="", display_name=f"Replaced Text {n}"))
         return io.Schema(
             node_id="MBReplaceTextAdvanced",
             display_name="Replace Text Advanced",
             category="MBNodes",
-            description=(
-                "Replace text using any number of Text To Replace / Replaced Text pairs, "
-                "applied top to bottom. Filling the last pair adds a new one."
-            ),
+            description=f"Replace text using up to {SLOTS} Text To Replace / Replaced Text pairs, applied top to bottom.",
             search_aliases=["replace text", "find and replace", "substitute", "text replace"],
-            # Linked row sockets (find_N / replace_N) are added by the frontend.
-            accept_all_inputs=True,
-            inputs=[
-                io.String.Input("text", multiline=True, tooltip="The text to edit."),
-                # JSON list of {"find", "replace"}, written by the pair rows on
-                # the node and hidden from the widget list by the frontend.
-                io.String.Input("pairs", default="[]", socketless=True),
-            ],
+            inputs=inputs,
             outputs=[io.String.Output("text")],
         )
 
     @classmethod
-    def execute(cls, text, pairs, **linked) -> io.NodeOutput:
-        rows = [{"find": p.get("find", ""), "replace": p.get("replace", "")} for p in json.loads(pairs or "[]")]
-        for name, value in linked.items():
-            match = ROW_INPUT.fullmatch(name)
-            if not match or value is None:
-                continue
-            index = int(match.group(2)) - 1
-            while len(rows) <= index:
-                rows.append({"find": "", "replace": ""})
-            rows[index][match.group(1)] = value
-
-        for row in rows:
-            if row["find"]:
-                text = text.replace(row["find"], row["replace"])
+    def execute(cls, text, **slots) -> io.NodeOutput:
+        for n in range(1, SLOTS + 1):
+            find = slots.get(f"find_{n}", "")
+            if find:
+                text = text.replace(find, slots.get(f"replace_{n}", ""))
         return io.NodeOutput(text)
 
 
