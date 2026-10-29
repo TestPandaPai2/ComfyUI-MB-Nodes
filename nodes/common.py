@@ -11,21 +11,28 @@ def split_lines(block):
     return [line.strip() for line in block.strip().splitlines() if line.strip()]
 
 
-COLORS = [
-    "black", "white", "ivory", "pearl white", "champagne", "nude", "beige", "tan", "camel",
-    "chocolate brown", "rust", "blush pink", "baby pink", "hot pink", "rani pink",
-    "fuchsia", "magenta", "red", "crimson", "ruby red", "burgundy", "maroon", "wine",
-    "coral", "peach", "orange", "marigold orange", "saffron", "mustard yellow",
-    "lemon yellow", "sage green", "mint green", "olive green", "emerald green",
-    "bottle green", "teal", "turquoise", "sky blue", "peacock blue", "cobalt", "royal blue",
-    "navy blue", "lavender", "lilac", "purple", "royal purple", "plum", "gold", "silver",
-    "rose gold", "bronze", "charcoal grey", "heather grey", "off-white", "cream", "taupe",
-    "mocha", "espresso", "cognac", "caramel", "terracotta", "brick red", "cherry red",
-    "scarlet", "raspberry", "cranberry", "oxblood", "dusty rose", "mauve", "salmon pink",
-    "bubblegum pink", "apricot", "tangerine", "burnt orange", "amber", "honey",
-    "canary yellow", "butter yellow", "pistachio green", "lime green", "chartreuse",
-    "forest green", "hunter green", "jade", "seafoam green", "khaki", "aqua", "cyan",
-    "powder blue", "baby blue", "cornflower blue", "steel blue", "denim blue",
-    "sapphire blue", "midnight blue", "indigo", "periwinkle", "violet", "amethyst",
-    "orchid", "eggplant", "copper", "pewter", "gunmetal grey", "slate grey", "dove grey",
+# Each family holds clearly different shades; near-identical names are merged.
+COLOR_FAMILIES = {
+    "Neutrals": ["black", "white", "ivory", "cream", "beige", "sand", "taupe", "khaki"],
+    "Browns": ["chocolate brown", "camel", "caramel", "cognac", "rust", "terracotta"],
+    "Pinks": ["blush pink", "baby pink", "hot pink", "rani pink", "dusty rose", "bubblegum pink", "fuchsia", "magenta"],
+    "Reds": ["red", "cherry red", "scarlet", "brick red", "burgundy", "raspberry"],
+    "Oranges": ["coral", "peach", "apricot", "tangerine", "burnt orange", "saffron"],
+    "Yellows": ["lemon yellow", "butter yellow", "canary yellow", "mustard yellow", "marigold", "honey"],
+    "Greens": ["mint green", "sage green", "lime green", "olive green", "emerald green", "forest green", "pistachio green", "chartreuse"],
+    "Blue-Greens": ["teal", "turquoise", "aqua", "seafoam green", "jade"],
+    "Blues": ["baby blue", "sky blue", "cornflower blue", "denim blue", "cobalt", "royal blue", "navy blue", "peacock blue"],
+    "Purples": ["lavender", "lilac", "periwinkle", "violet", "orchid", "royal purple", "plum", "eggplant"],
+    "Greys": ["dove grey", "heather grey", "slate grey", "charcoal grey"],
+}
+COLORS = [color for shades in COLOR_FAMILIES.values() for color in shades]
+NEUTRALS = COLOR_FAMILIES["Neutrals"]
+
+METALLICS = ["gold", "silver", "rose gold", "bronze", "copper", "pewter", "gunmetal", "champagne gold"]
+
+PATTERNS = [
+    "polka dot", "pinstripe", "striped", "floral print", "gingham", "plaid", "tartan",
+    "houndstooth", "leopard print", "zebra print", "snakeskin print", "paisley", "tie-dye",
+    "chevron", "herringbone", "checkered", "abstract print", "geometric print", "tropical print",
+    "camouflage", "argyle", "damask", "toile", "ditsy floral", "color block", "ombre",
 ]

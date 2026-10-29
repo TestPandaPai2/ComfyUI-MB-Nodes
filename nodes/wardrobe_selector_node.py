@@ -7,7 +7,7 @@ import re
 
 from comfy_api.latest import io
 
-from .common import COLORS, MAX_SEED, weighted
+from .common import COLORS, MAX_SEED, METALLICS, NEUTRALS, PATTERNS, weighted
 
 
 def _sections(block):
@@ -1113,7 +1113,7 @@ def _pieces(category, style):
 
 
 def _colored(text, color):
-    """Slot the color in after "She wears", fixing the a/an article."""
+    """Slot the color (and/or pattern) in after "She wears", fixing the a/an article."""
     def sub(m):
         if not m.group(1):
             return f"She wears {color} "
@@ -1143,7 +1143,9 @@ class MBWardrobeSelector(io.ComfyNode):
                 io.Boolean.Input("random_category", default=False, tooltip="Pick the category from the seed. Also randomizes the style."),
                 io.Boolean.Input("random_style", default=False, tooltip="Pick the style within the category from the seed."),
                 io.Boolean.Input("random_color", default=False, tooltip="Put a seeded-random color before the outfit."),
-                io.Boolean.Input("mix_outfit", default=False, tooltip="Ignore the category and pair a seeded-random top with a seeded-random bottom."),
+                io.Boolean.Input("random_metallic", default=False, tooltip="Use a seeded-random metallic (gold, silver, ...) in place of the color."),
+                io.Boolean.Input("random_pattern", default=False, tooltip="Put a seeded-random pattern (polka dot, plaid, ...) before the outfit, after any color."),
+                io.Boolean.Input("mix_outfit", default=False, tooltip="Ignore the category and pair a seeded-random top with a seeded-random bottom. With a color, one piece gets a neutral and the pattern goes on the other."),
                 io.Int.Input("seed", default=0, min=0, max=MAX_SEED, control_after_generate=True),
                 io.Float.Input("weight", default=1.0, min=0.0, max=2.0, step=0.05, display_mode=io.NumberDisplay.slider, tooltip="Prompt weight. At 1.0 the text is output as-is, otherwise as (text:weight)."),
             ],
@@ -1157,24 +1159,36 @@ class MBWardrobeSelector(io.ComfyNode):
         )
 
     @classmethod
-    def execute(cls, category, random_category, random_style, random_color, mix_outfit, seed, weight) -> io.NodeOutput:
+    def execute(cls, category, random_category, random_style, random_color, random_metallic, random_pattern, mix_outfit, seed, weight) -> io.NodeOutput:
         rng = random.Random(seed)
+
+        def descriptor():
+            color = rng.choice(METALLICS) if random_metallic else rng.choice(COLORS) if random_color else ""
+            return " ".join(filter(None, [color, rng.choice(PATTERNS) if random_pattern else ""]))
+
         if mix_outfit:
             top_name = rng.choice(TOP_CATEGORIES)
             top_style = rng.choice(list(WARDROBE[top_name]))
             bottom_name = rng.choice(BOTTOM_CATEGORIES)
             bottom_style = rng.choice(list(WARDROBE[bottom_name]))
             top, bottom = WARDROBE[top_name][top_style], WARDROBE[bottom_name][bottom_style]
-            if random_color:
-                top, bottom = _colored(top, rng.choice(COLORS)), _colored(bottom, rng.choice(COLORS))
+            # Neutral + accent: one piece gets a plain neutral, the other the color and pattern.
+            accent = descriptor()
+            plain = rng.choice(NEUTRALS) if random_color or random_metallic else ""
+            if rng.random() < 0.5:
+                accent, plain = plain, accent
+            if accent:
+                top = _colored(top, accent)
+            if plain:
+                bottom = _colored(bottom, plain)
             return io.NodeOutput(weighted(f"{top} {bottom}", weight), f"{top_name} / {bottom_name}", f"{top_style} / {bottom_style}", weighted(top, weight), weighted(bottom, weight))
 
         name = rng.choice(list(WARDROBE)) if random_category else category["category"]
         items = WARDROBE[name]
         style = rng.choice(list(items)) if random_category or random_style else category["style"]
         text, (top, bottom) = items[style], _pieces(name, style)
-        if random_color:
-            color = rng.choice(COLORS)
+        color = descriptor()
+        if color:
             text, top, bottom = (_colored(t, color) if t else "" for t in (text, top, bottom))
         return io.NodeOutput(weighted(text, weight), name, style, weighted(top, weight), weighted(bottom, weight))
 
