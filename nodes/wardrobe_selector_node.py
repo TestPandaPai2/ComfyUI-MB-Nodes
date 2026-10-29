@@ -522,6 +522,59 @@ Gathered Neck Kurti: She wears a kurti with a neckline gathered on a drawstring,
 Pleated Neck Kurti: She wears a kurti with fine knife pleats radiating from a round neckline, and a flowing straight body.
 Deep V-Neck Kurti: She wears a kurti with a plunging V-neckline, a fitted bodice, and long flared sleeves.
 
+DUPATTAS
+
+Chiffon One-Shoulder: She wears a sheer chiffon dupatta pinned at her left shoulder, the length falling in soft folds down her back and the front edge floating by her arm.
+Georgette Both Shoulders: She wears a light georgette dupatta laid across both shoulders, the two ends hanging evenly down her front to her knees.
+Banarasi Over Head: She wears a Banarasi silk dupatta with a heavy woven zari border draped over her head, framing her face and falling over both shoulders.
+Organza U-Drape: She wears a crisp organza dupatta draped in a U across her neck, both ends tossed back over her shoulders to fall behind her.
+Net Cape Drape: She wears an embroidered net dupatta draped like a cape, pinned at both shoulders and flowing down her back to the floor.
+Phulkari Over One Shoulder: She wears a vibrant Phulkari dupatta densely embroidered with geometric silk-thread flowers, thrown over one shoulder with the end hanging to her hip.
+Bandhani Head Veil: She wears a tie-dyed Bandhani dupatta dotted with tiny resist-dye circles, pulled loosely over her head with the edge resting on her forehead.
+Leheriya Crossed Chest: She wears a Leheriya dupatta with diagonal wave stripes, crossed over her chest with each end thrown back over the opposite shoulder.
+Chikankari Elbow Drape: She wears a soft Chikankari dupatta with delicate shadow-work thread embroidery, resting low behind her back and looped over both elbows.
+Kalamkari Side Drape: She wears a hand-painted Kalamkari dupatta with mythological motifs, draped from one shoulder diagonally across her body to the opposite hip.
+Ajrak Neck Wrap: She wears a block-printed Ajrak dupatta with intricate geometric patterns, wrapped once around her neck with both ends hanging down her back.
+Gota Patti Bridal Veil: She wears a gota patti dupatta edged with shimmering ribbon-work borders, draped over her head as a bridal veil and pinned to her hair.
+Mirror Work Waist Tuck: She wears a mirror-work dupatta studded with small round mirrors, draped over one shoulder with the other end tucked into her waist.
+Velvet Shawl Drape: She wears a plush velvet dupatta with an embroidered border, draped around both shoulders like a shawl and held closed at her chest.
+Pashmina Wrap: She wears a fine Pashmina dupatta with paisley sozni embroidery, wrapped snugly around her shoulders with one end flung over her shoulder.
+Tissue Over Arms: She wears a shimmering tissue dupatta draped loosely across her back and over both forearms, catching the light as it falls.
+Crushed Cotton Casual: She wears a crinkled crushed-cotton dupatta casually tossed around her neck, the ends hanging unevenly down her front.
+Kota Doria Single Pleat: She wears a translucent Kota Doria dupatta with a checked weave, pleated narrowly and pinned at one shoulder, falling straight down her back.
+Sequin Party Drape: She wears an all-over sequin dupatta that glitters as she moves, draped over one arm and trailing behind her.
+Zardozi Heavy Border: She wears a dupatta with a wide hand-embroidered zardozi border of metallic thread and beads, draped over one shoulder and spread wide behind her.
+Kantha Stitch Shoulder Throw: She wears a Kantha-stitch dupatta covered in rows of running-stitch embroidery, thrown over both shoulders with the ends falling to her waist.
+Ikat Neck Loop: She wears an Ikat-woven dupatta with blurred geometric patterns, looped once around her neck like a scarf with the ends hanging in front.
+Patola Formal Drape: She wears a double-ikat Patola silk dupatta with crisp diamond motifs, pleated and pinned at her shoulder in a formal drape.
+Kanjeevaram Pallu Drape: She wears a Kanjeevaram silk dupatta with a contrast temple border, draped like a saree pallu from her waist over her shoulder.
+Bagh Print Cowl: She wears a Bagh hand-block-printed dupatta draped in a loose cowl around her neck and shoulders.
+Chanderi Butti Drape: She wears a sheer Chanderi dupatta scattered with small woven buttis, draped across both shoulders with one end longer than the other.
+Paithani Peacock Border: She wears a Paithani silk dupatta with woven peacock motifs on its border, draped over her left shoulder and spread across her back.
+Tussar Silk Side Pin: She wears a textured Tussar silk dupatta pinned at one shoulder, its raw-silk sheen falling down her side to her knee.
+Kashida Embroidered Head Cover: She wears a Kashmiri Kashida-embroidered dupatta draped over the back of her head, leaving her hairline visible.
+Lace-Edged Net Shoulders: She wears a sheer net dupatta finished with scalloped lace edges, draped evenly around both shoulders.
+Pom-Pom Trim Throw: She wears a playful dupatta trimmed with tassels and pom-poms along its edges, thrown over one shoulder so the trim swings at her hip.
+Tassel-End Belted: She wears a dupatta with beaded tassel ends, draped over one shoulder and cinched to her waist with a slim belt.
+Ruffle Edge Drape: She wears a georgette dupatta with ruffled frill edges, draped across her chest in a single sweep over one shoulder.
+Shibori Twist Wrap: She wears a Shibori-dyed dupatta with irregular resist-dye patterns, twisted loosely and wrapped around her neck.
+Mukaish Sparkle Veil: She wears a Mukaish-work dupatta dotted with tiny metal-wire sparkles, worn as a light veil over her head and shoulders.
+Pleated Waterfall: She wears a chiffon dupatta pleated finely at one shoulder so it falls in a cascading waterfall down her front.
+Double Dupatta Bridal: She wears two dupattas at once, one draped over her head as a veil and a second across her shoulders and arms.
+Cape-Style Pinned Back: She wears a sheer dupatta pinned at the back of both shoulders so it falls like a flowing cape behind her.
+Half-Saree Drape: She wears a dupatta draped half-saree style, tucked at the waist, wrapped across the torso and thrown over one shoulder.
+Gujarati Seedha Pallu Drape: She wears a dupatta draped Gujarati style, brought from behind over her right shoulder and spread across her front.
+Bengali Over-the-Head Pallu: She wears a dupatta draped Bengali style with a thick border, brought over her head and draped around her shoulders.
+Hijab-Style Head Wrap: She wears a soft dupatta wrapped around her head and neck hijab-style, framing her face neatly.
+Turban-Knot Head Drape: She wears a dupatta tied around her head with a twisted knot at the front, the tails falling over one shoulder.
+Necklace-Display Drape: She wears a dupatta draped wide off both shoulders and pinned at the upper arms, leaving her neckline and collarbones fully open.
+Arm-Draped Trailing: She wears a long dupatta held only over her bent forearms, the fabric trailing on the floor behind her.
+Knotted Front Drape: She wears a dupatta laid over both shoulders with the two ends knotted loosely at the center of her chest.
+Sling Across Body: She wears a dupatta slung diagonally across her body from one shoulder, the ends tied at her opposite hip.
+Wind-Blown Flutter: She wears a light chiffon dupatta caught by the wind, fluttering out behind her from one shoulder.
+Belted Waist Drape: She wears a dupatta draped over both shoulders and cinched at the waist with an embellished belt, the ends falling in front.
+Scarf-Style Necktie: She wears a narrow folded dupatta knotted at her throat like a scarf, the short ends falling down her chest.
+
 GYMWEAR
 
 Sports Bra & Leggings: She wears a matching sports bra and high-waisted leggings in a soft ribbed fabric, a sleek coordinated set for everyday workouts.
@@ -1053,7 +1106,7 @@ SLOTS = {
     "Gowns": "full", "Hoodies": "top", "Skirts": "bottom", "Bras": "top",
     "Bodycon Dresses": "full", "Crop Tops": "top", "Virgin Killer": "top",
     "Backless Dresses": "full", "Tops": "top", "Blouses": "top",
-    "Summer Dresses": "full", "Jumpsuits": "full", "Jerseys": "top", "Kurtis": "top",
+    "Summer Dresses": "full", "Jumpsuits": "full", "Jerseys": "top", "Kurtis": "top", "Dupattas": "top",
     "Gymwear": "set", "Pants": "bottom", "Shorts": "bottom", "Cardigans": "top", "Jackets": "top", "Jeans": "bottom",
     "Burqa": "full", "Shalwars": "bottom", "Underwear": "bottom",
     "Lingerie Sets": "full", "Bodysuits & Corsetry": "full", "Sleepwear & Nightwear": "full", "Lounge Shorts & Briefs": "bottom",
