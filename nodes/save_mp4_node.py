@@ -98,6 +98,12 @@ class MBSaveMP4(io.ComfyNode):
                     default="auto",
                     tooltip="Video codec. auto lets the container decide.",
                 ),
+                io.Combo.Input(
+                    "preset",
+                    options=["ultrafast", "superfast", "veryfast", "faster", "fast", "medium"],
+                    default="veryfast",
+                    tooltip="h264 encode speed. Faster = quicker save, bigger file. Ignored for av1.",
+                ),
                 io.String.Input("filename_prefix", default="MBNodes", socketless=True),
                 io.String.Input(
                     "output_folder",
@@ -124,7 +130,7 @@ class MBSaveMP4(io.ComfyNode):
 
     @classmethod
     def execute(
-        cls, images, fps, preview_only, format, codec, filename_prefix, output_folder, trim_to_audio, audio=None
+        cls, images, fps, preview_only, format, codec, preset, filename_prefix, output_folder, trim_to_audio, audio=None
     ) -> io.NodeOutput:
         if trim_to_audio:
             images, audio = _trim(images, audio, fps)
@@ -166,9 +172,10 @@ class MBSaveMP4(io.ComfyNode):
                 format=Types.VideoContainer(format_name),
                 codec=Types.VideoCodec(codec),
                 metadata=metadata,
+                preset=preset,
             )
 
-        return io.NodeOutput(video, ui=ui.PreviewVideo([_previewable(path)]))
+        return io.NodeOutput(video, ui={"mb_video": [_previewable(path)]})
 
 
 NODES = [MBSaveMP4]
