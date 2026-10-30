@@ -2,13 +2,18 @@ import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 import { getWidget, resizeToContent } from "./common.js";
 
-// { categories: [...], table: { category: [styleName, ...] } }, fetched once.
-let DATA = { categories: [], table: {} };
+const FAVORITES = "★ Favorites";
+
+// { categories: [...], table: { category: [styleName, ...] }, favorites: [...] }, fetched once.
+let DATA = { categories: [], table: {}, favorites: [] };
 
 const READY = api
     .fetchApi("/mbnodes/krea2_styles")
     .then((response) => response.json())
-    .then((data) => (DATA = data))
+    .then((data) => {
+        DATA = data;
+        DATA.table[FAVORITES] = data.favorites;
+    })
     .catch((e) => console.error("[MBNodes] krea2 styles fetch failed", e));
 
 // Keep the sub_style combo showing only the styles that belong to the active
@@ -20,7 +25,7 @@ function applyCategory(node, category, keepValue) {
     if (!catWidget || !styleWidget) return;
 
     const names = DATA.table[category];
-    if (!names) return;
+    if (!names?.length) return;
 
     const prevIndex = styleWidget.options?.values?.indexOf(styleWidget.value) ?? -1;
     catWidget.value = category;
@@ -45,6 +50,21 @@ function wireNode(node) {
     };
 }
 
+async function toggleFavorite(name) {
+    const response = await api.fetchApi("/mbnodes/krea2_styles/favorite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+    });
+    if (!response.ok) return;
+    DATA.table[FAVORITES] = (await response.json()).favorites;
+    for (const node of app.graph._nodes) {
+        if (node.comfyClass === "MBNodesKrea2Styles" && getWidget(node, "category")?.value === FAVORITES) {
+            applyCategory(node, FAVORITES, true);
+        }
+    }
+}
+
 function applyTable(node) {
     if (!DATA.categories.length) return;
     applyCategory(node, getWidget(node, "category")?.value ?? DATA.categories[0], true);
@@ -56,6 +76,21 @@ app.registerExtension({
 
     async setup() {
         await READY;
+    },
+
+    async beforeRegisterNodeDef(nodeType, nodeData) {
+        if (nodeData.name !== "MBNodesKrea2Styles") return;
+        const prev = nodeType.prototype.getExtraMenuOptions;
+        nodeType.prototype.getExtraMenuOptions = function (canvas, options) {
+            prev?.apply(this, arguments);
+            const name = getWidget(this, "sub_style")?.value;
+            if (!name) return;
+            const starred = DATA.table[FAVORITES]?.includes(name);
+            options.push(null, {
+                content: starred ? `☆ Remove "${name}" from favorites` : `★ Add "${name}" to favorites`,
+                callback: () => toggleFavorite(name),
+            });
+        };
     },
 
     nodeCreated(node) {

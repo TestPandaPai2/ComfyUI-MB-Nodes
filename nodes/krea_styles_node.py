@@ -2,10 +2,12 @@
 time so the pack ships one source of truth (the .md file) instead of a
 hand-transcribed dict that can drift from it."""
 
+import json
 import os
 import random
 import re
 
+import folder_paths
 from comfy_api.latest import io
 
 DATA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "krea2_styles.md")
@@ -59,8 +61,11 @@ try:
 except OSError:
     STYLES = {}
 
-CATEGORIES = list(STYLES.keys())
-DEFAULT_CATEGORY = CATEGORIES[0] if CATEGORIES else ""
+FAVORITES = "★ Favorites"
+FAVORITES_PATH = os.path.join(folder_paths.get_user_directory(), "krea2_favorites.json")
+
+CATEGORIES = [FAVORITES] + list(STYLES.keys())
+DEFAULT_CATEGORY = CATEGORIES[1] if len(CATEGORIES) > 1 else FAVORITES
 
 # The sub_style combo declares every style name across every category so
 # whatever the client has selected passes backend validation; the web
@@ -69,6 +74,21 @@ ALL_STYLES = list(dict.fromkeys(name for styles in STYLES.values() for name, _ i
 DEFAULT_STYLE = ALL_STYLES[0] if ALL_STYLES else ""
 
 _PROMPT_BY_NAME = {name: prompt for styles in STYLES.values() for name, prompt in styles}
+
+
+def _load_favorites():
+    """Favorite style names, dropping any no longer in the styles table."""
+    try:
+        with open(FAVORITES_PATH, "r", encoding="utf-8") as f:
+            names = json.load(f)
+    except (OSError, ValueError):
+        return []
+    return [n for n in names if n in _PROMPT_BY_NAME]
+
+
+def _save_favorites(names):
+    with open(FAVORITES_PATH, "w", encoding="utf-8") as f:
+        json.dump(names, f, ensure_ascii=False, indent=2)
 
 
 class MBKrea2Styles(io.ComfyNode):
@@ -118,7 +138,10 @@ class MBKrea2Styles(io.ComfyNode):
         if bypass:
             return io.NodeOutput("")
 
-        styles = STYLES.get(category, [])
+        if category == FAVORITES:
+            styles = [(n, _PROMPT_BY_NAME[n]) for n in _load_favorites()]
+        else:
+            styles = STYLES.get(category, [])
         if randomize and styles:
             name, prompt = random.choice(styles)
         else:
@@ -133,6 +156,8 @@ class MBKrea2Styles(io.ComfyNode):
     def fingerprint_inputs(cls, category, sub_style, randomize, bypass):
         if randomize:
             return random.random()
+        if category == FAVORITES:
+            return f"{category}|{sub_style}|{bypass}|{'|'.join(_load_favorites())}"
         return f"{category}|{sub_style}|{bypass}"
 
 
@@ -145,7 +170,21 @@ try:
         return web.json_response({
             "categories": CATEGORIES,
             "table": {cat: [name for name, _ in styles] for cat, styles in STYLES.items()},
+            "favorites": _load_favorites(),
         })
+
+    @PromptServer.instance.routes.post("/mbnodes/krea2_styles/favorite")
+    async def _mbnodes_krea2_favorite(request):
+        name = (await request.json()).get("name")
+        if name not in _PROMPT_BY_NAME:
+            return web.json_response({"error": "unknown style"}, status=400)
+        names = _load_favorites()
+        if name in names:
+            names.remove(name)
+        else:
+            names.append(name)
+        _save_favorites(names)
+        return web.json_response({"favorites": names})
 except Exception:  # server missing (unit runs) or route already registered
     pass
 
