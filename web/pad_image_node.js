@@ -12,7 +12,7 @@ const MAX_PAD = 8192;
 
 const LOCK_OPTIONS = ["free", "source", ...Object.keys(FIXED_RATIOS)];
 
-const DIALOG_WIDTH = 1000;
+const DIALOG_WIDTH = 1180;
 const CANVAS_W = 940;
 const CANVAS_H = 600;
 const VIEW_MARGIN = 24;
@@ -24,6 +24,69 @@ const SNAP_OPTIONS = ["off", "8", "16", "32", "64"];
 // [left share, top share] of the padding for each anchor cell, row by row.
 const ANCHORS = [[0, 0], [0.5, 0], [1, 0], [0, 0.5], [0.5, 0.5], [1, 0.5], [0, 1], [0.5, 1], [1, 1]];
 const ARROWS = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+const SIDE_LABELS = { left: "L", top: "T", right: "R", bottom: "B" };
+const EXTENDS = [["left", "←"], ["right", "→"], ["top", "↑"], ["bottom", "↓"]];
+const EXTEND_SHARE = 0.25;
+// Target canvas sizes; null means 1.5× the source.
+const PRESETS = { "1024×1024": [1024, 1024], "1344×768": [1344, 768], "768×1344": [768, 1344], "1920×1080": [1920, 1080], "source ×1.5": null };
+const HISTORY_LIMIT = 100;
+
+// Pad-dialog-only layout on top of the shared .mb-dialog-* styles.
+const STYLE_ID = "mb-pad-style";
+const STYLE = `
+.mb-pad-layout { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 12px; align-items: start; }
+.mb-pad-stage { position: relative; }
+.mb-pad-side { display: flex; flex-direction: column; gap: 10px; }
+.mb-pad-tabs { display: flex; gap: 4px; padding: 3px; border-radius: 9px; background: var(--comfy-input-bg); }
+.mb-pad-tab {
+    flex: 1; height: 26px; border: none; border-radius: 6px; background: transparent;
+    color: var(--descrip-text); font-size: 12px; cursor: pointer;
+}
+.mb-pad-tab:hover { color: var(--input-text); }
+.mb-pad-tab.mb-selected { background: var(--mb-a); color: #ffffff; }
+.mb-pad-pane { display: flex; flex-direction: column; gap: 10px; }
+.mb-pad-float {
+    position: absolute; display: flex; align-items: center; gap: 4px; padding: 4px;
+    border-radius: 9px; background: rgba(20, 20, 22, 0.78); backdrop-filter: blur(6px);
+}
+.mb-pad-top { top: 10px; left: 10px; }
+.mb-pad-bottom { bottom: 10px; right: 10px; }
+.mb-pad-readout { color: #c9c9cf; font-size: 11px; font-variant-numeric: tabular-nums; padding: 0 6px; }
+.mb-pad-tool {
+    min-width: 28px; height: 26px; padding: 0 8px; border: none; border-radius: 6px;
+    background: var(--comfy-input-bg); color: var(--input-text); font-size: 12.5px; cursor: pointer;
+}
+.mb-pad-float .mb-pad-tool { background: transparent; color: #e8e8ec; }
+.mb-pad-tool:hover, .mb-pad-float .mb-pad-tool:hover { background: var(--mb-a); color: #ffffff; }
+.mb-pad-section {
+    display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-radius: 10px;
+    background: var(--comfy-menu-secondary-bg); border: 1px solid var(--border-color);
+}
+.mb-pad-heading { font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--descrip-text); }
+.mb-pad-section .mb-dialog-field { justify-content: space-between; }
+.mb-pad-section .mb-dialog-number { width: 64px; margin-left: 0; }
+.mb-pad-section .mb-dialog-select { flex: 1; min-width: 0; max-width: 130px; }
+.mb-pad-cross { display: grid; grid-template-columns: repeat(3, auto); justify-content: center; align-items: center; gap: 4px; }
+.mb-pad-cross .mb-dialog-number { width: 58px; text-align: center; }
+.mb-pad-link { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: var(--descrip-text); cursor: pointer; }
+.mb-pad-link input { accent-color: var(--mb-a); margin: 0; }
+.mb-pad-anchors { display: grid; grid-template-columns: repeat(3, 14px); gap: 3px; padding: 4px; }
+.mb-pad-anchor {
+    width: 14px; height: 14px; padding: 0; border: none; border-radius: 3px;
+    background: var(--comfy-input-bg); cursor: pointer;
+}
+.mb-pad-anchor:hover { background: var(--border-color); }
+.mb-pad-anchor.mb-selected { background: var(--mb-a); }
+.mb-pad-swatch { width: 40px; height: 24px; padding: 0; border: 1px solid var(--border-color); border-radius: 6px; background: none; cursor: pointer; }
+`;
+
+function injectStyle() {
+    if (document.getElementById(STYLE_ID)) return;
+    const style = document.createElement("style");
+    style.id = STYLE_ID;
+    style.textContent = STYLE;
+    document.head.appendChild(style);
+}
 
 function getPad(node) {
     const pad = {};
@@ -101,7 +164,8 @@ function showDialog(node, image) {
     let pad = getPad(node);
     let color = getWidget(node, "color")?.value || "#000000";
     let choice = node.properties?.mbPadLock ?? "free";
-    const fillMode = getWidget(node, "fill_mode")?.value ?? "color";
+    const fillWidget = getWidget(node, "fill_mode");
+    let fillMode = fillWidget?.value ?? "color";
     const transparent = !!getWidget(node, "transparent")?.value;
 
     let canvas;
@@ -109,12 +173,41 @@ function showDialog(node, image) {
     let sizeW;
     let sizeH;
     let snap;
+    let lock;
+    const sideInputs = {};
+    const anchorCells = [];
     let view = null;
     let drag = null;
     let zoom = 1;
     let panX = 0;
     let panY = 0;
 
+    // Pad snapshots for Ctrl+Z / Ctrl+Y, kept only while the dialog is open.
+    const undoStack = [];
+    const redoStack = [];
+    let nudging = false;
+
+    // Call before every edit. Consecutive arrow nudges share one entry.
+    function remember(nudge = false) {
+        if (nudge && nudging) return;
+        nudging = nudge;
+        undoStack.push({ ...pad });
+        if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
+        redoStack.length = 0;
+    }
+
+    function stepHistory(from, to) {
+        if (!from.length) return;
+        to.push({ ...pad });
+        pad = from.pop();
+        nudging = false;
+        draw();
+    }
+
+    function applyLock(next, axis) {
+        const ratio = lockValue(choice, imgW, imgH);
+        return ratio ? lockRatio(next, imgW, imgH, ratio, axis) : next;
+    }
     // Room for half the image again on every side, or the current pad if that
     // is bigger, centred on the padded canvas, then the user's zoom and pan on
     // top. Frozen while resizing or moving so the view does not shift under the cursor.
@@ -155,8 +248,44 @@ function showDialog(node, image) {
         const next = { ...pad };
         if (axis === "x") [next.left, next.right] = share(fit(sizeW.value, imgW) - imgW, pad.left, pad.right);
         else [next.top, next.bottom] = share(fit(sizeH.value, imgH) - imgH, pad.top, pad.bottom);
-        const ratio = lockValue(choice, imgW, imgH);
-        pad = ratio ? lockRatio(next, imgW, imgH, ratio, axis) : next;
+        remember();
+        pad = applyLock(next, axis);
+        draw();
+    }
+
+    // Both axes at once from a preset; the lock goes to free since the preset
+    // fixes the ratio itself.
+    function setPreset(name) {
+        const step = Number(snap.value) || 1;
+        const fit = (value, min) => Math.ceil(Math.max(value, min) / step) * step;
+        const [w, h] = PRESETS[name] ?? [Math.round(imgW * 1.5), Math.round(imgH * 1.5)];
+        remember();
+        const [left, right] = share(fit(w, imgW) - imgW, pad.left, pad.right);
+        const [top, bottom] = share(fit(h, imgH) - imgH, pad.top, pad.bottom);
+        pad = { left, right, top, bottom };
+        choice = "free";
+        lock.value = choice;
+        draw();
+    }
+
+    // Grows one side by a share of the image, rounding the canvas up to the snap.
+    function extend(side) {
+        const horizontal = side === "left" || side === "right";
+        const step = Number(snap.value) || 1;
+        const next = { ...pad };
+        next[side] = clampPad(next[side] + (horizontal ? imgW : imgH) * EXTEND_SHARE);
+        const total = horizontal ? imgW + next.left + next.right : imgH + next.top + next.bottom;
+        next[side] = clampPad(next[side] + Math.ceil(total / step) * step - total);
+        remember();
+        pad = applyLock(next, horizontal ? "x" : "y");
+        draw();
+    }
+
+    function setSide(side, value, linked) {
+        const v = clampPad(Number(value) || 0);
+        const next = linked ? { left: v, top: v, right: v, bottom: v } : { ...pad, [side]: v };
+        remember();
+        pad = applyLock(next, side === "left" || side === "right" ? "x" : "y");
         draw();
     }
 
@@ -250,9 +379,17 @@ function showDialog(node, image) {
 
         const outW = imgW + pad.left + pad.right;
         const outH = imgH + pad.top + pad.bottom;
-        readout.textContent = `L ${pad.left}  T ${pad.top}  R ${pad.right}  B ${pad.bottom}  ·  ${Math.round(zoom * 100)}%`;
+        readout.textContent = `${imgW}×${imgH} → ${outW}×${outH}  ·  ${Math.round(zoom * 100)}%`;
         if (document.activeElement !== sizeW) sizeW.value = outW;
         if (document.activeElement !== sizeH) sizeH.value = outH;
+        for (const side of SIDES) {
+            if (document.activeElement !== sideInputs[side]) sideInputs[side].value = pad[side];
+        }
+        // An axis with no padding counts as centred.
+        const at = (share, before, total) => (total ? Math.abs(Math.round(total * share) - before) <= 1 : share === 0.5);
+        for (const [cell, fx, fy] of anchorCells) {
+            cell.classList.toggle("mb-selected", at(fx, pad.left, pad.left + pad.right) && at(fy, pad.top, pad.top + pad.bottom));
+        }
     }
 
     function hitHandle(px, py) {
@@ -308,125 +445,87 @@ function showDialog(node, image) {
         width: DIALOG_WIDTH,
         applyLabel: "Apply pad",
         render(body) {
-            canvas = document.createElement("canvas");
-            canvas.className = "mb-dialog-canvas";
-            const dpr = window.devicePixelRatio || 1;
-            canvas.width = CANVAS_W * dpr;
-            canvas.height = CANVAS_H * dpr;
-            canvas.style.aspectRatio = `${CANVAS_W} / ${CANVAS_H}`;
-            body.appendChild(canvas);
-
-            const row = document.createElement("div");
-            row.className = "mb-dialog-field";
-            row.style.justifyContent = "space-between";
-
-            const left = document.createElement("div");
-            left.className = "mb-dialog-field";
-
-            const lock = document.createElement("select");
-            lock.className = "mb-dialog-select";
-            for (const option of LOCK_OPTIONS) {
-                const item = document.createElement("option");
-                item.value = option;
-                item.textContent = option;
-                lock.appendChild(item);
-            }
-            lock.value = choice;
-            lock.addEventListener("change", () => {
-                choice = lock.value;
-                const ratio = lockValue(choice, imgW, imgH);
-                if (ratio) pad = lockRatio(pad, imgW, imgH, ratio, "x");
-                draw();
-            });
-
-            const picker = document.createElement("input");
-            picker.type = "color";
-            picker.value = /^#[0-9a-f]{6}$/i.test(color) ? color : "#000000";
-            picker.addEventListener("input", () => {
-                color = picker.value;
-                draw();
-            });
-
-            readout = document.createElement("span");
-            readout.className = "mb-dialog-hint";
-            readout.style.margin = "0";
-
-            left.append(field("aspect lock", lock), field("colour", picker), readout);
-
-            const reset = document.createElement("button");
-            reset.className = "mb-dialog-button";
-            reset.textContent = "Reset";
-            reset.addEventListener("click", () => {
-                pad = { left: 0, top: 0, right: 0, bottom: 0 };
-                const ratio = lockValue(choice, imgW, imgH);
-                if (ratio) pad = lockRatio(pad, imgW, imgH, ratio, "x");
-                draw();
-            });
-
-            row.append(left, reset);
-            body.appendChild(row);
-
-            const sizeInput = (axis) => {
+            injectStyle();
+            const select = (options, value, onChange) => {
+                const element = document.createElement("select");
+                element.className = "mb-dialog-select";
+                for (const option of options) {
+                    const item = document.createElement("option");
+                    item.value = option;
+                    item.textContent = option;
+                    element.appendChild(item);
+                }
+                element.value = value;
+                element.addEventListener("change", () => onChange(element));
+                return element;
+            };
+            const button = (label, title, onClick, className = "mb-pad-tool") => {
+                const element = document.createElement("button");
+                element.className = className;
+                element.textContent = label;
+                element.title = title;
+                element.addEventListener("click", onClick);
+                return element;
+            };
+            const numberInput = (min, onChange) => {
                 const input = document.createElement("input");
                 input.type = "number";
-                input.min = "1";
+                input.min = String(min);
                 input.className = "mb-dialog-number";
-                input.style.marginLeft = "0";
-                input.addEventListener("change", () => setSize(axis));
+                input.addEventListener("change", onChange);
                 input.addEventListener("keydown", (event) => {
                     event.stopPropagation();
                     if (event.key === "Enter") input.blur();
                 });
                 return input;
             };
-            sizeW = sizeInput("x");
-            sizeH = sizeInput("y");
-
-            snap = document.createElement("select");
-            snap.className = "mb-dialog-select";
-            for (const option of SNAP_OPTIONS) {
-                const item = document.createElement("option");
-                item.value = option;
-                item.textContent = option;
-                snap.appendChild(item);
-            }
-            snap.value = node.properties?.mbPadSnap ?? "off";
-            snap.addEventListener("change", () => {
-                setSize("x");
-                if (!lockValue(choice, imgW, imgH)) setSize("y");
-            });
-
-            const anchors = document.createElement("div");
-            anchors.style.cssText = "display:grid;grid-template-columns:repeat(3,16px);gap:2px";
-            for (const [fx, fy] of ANCHORS) {
-                const cell = document.createElement("button");
-                cell.className = "mb-dialog-button";
-                cell.style.cssText = "width:16px;height:16px;padding:0;min-width:0";
-                cell.title = "Place the image here";
-                cell.addEventListener("click", () => {
-                    const w = pad.left + pad.right;
-                    const h = pad.top + pad.bottom;
-                    pad = shifted(pad, Math.round(w * fx) - pad.left, Math.round(h * fy) - pad.top);
-                    draw();
-                });
-                anchors.appendChild(cell);
-            }
-
-            const viewButton = (label, title, onClick) => {
-                const button = document.createElement("button");
-                button.className = "mb-dialog-button";
-                button.textContent = label;
-                button.title = title;
-                button.addEventListener("click", onClick);
-                return button;
+            const section = (title, ...children) => {
+                const box = document.createElement("div");
+                box.className = "mb-pad-section";
+                const heading = document.createElement("div");
+                heading.className = "mb-pad-heading";
+                heading.textContent = title;
+                box.append(heading, ...children);
+                return box;
             };
+            // 3×3 grid with the given elements at their cell index.
+            const cross = (cells) => {
+                const grid = document.createElement("div");
+                grid.className = "mb-pad-cross";
+                for (let i = 0; i < 9; i++) grid.append(cells[i] ?? document.createElement("span"));
+                return grid;
+            };
+
+            canvas = document.createElement("canvas");
+            canvas.className = "mb-dialog-canvas";
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = CANVAS_W * dpr;
+            canvas.height = CANVAS_H * dpr;
+            canvas.style.aspectRatio = `${CANVAS_W} / ${CANVAS_H}`;
+
+            readout = document.createElement("span");
+            readout.className = "mb-pad-readout";
+
+            const history = document.createElement("div");
+            history.className = "mb-pad-float mb-pad-top";
+            history.append(
+                button("↶", "Undo (Ctrl+Z)", () => stepHistory(undoStack, redoStack)),
+                button("↷", "Redo (Ctrl+Y)", () => stepHistory(redoStack, undoStack)),
+                button("Reset", "Remove all padding", () => {
+                    remember();
+                    pad = applyLock({ left: 0, top: 0, right: 0, bottom: 0 }, "x");
+                    draw();
+                }),
+            );
+
             const zoomCenter = (factor) => zoomAt(CANVAS_W / 2, CANVAS_H / 2, factor);
             const views = document.createElement("div");
-            views.className = "mb-dialog-field";
+            views.className = "mb-pad-float mb-pad-bottom";
             views.append(
-                viewButton("−", "Zoom out", () => zoomCenter(1 / 1.25)),
-                viewButton("+", "Zoom in", () => zoomCenter(1.25)),
-                viewButton("Fit", "Reset zoom and pan", () => {
+                readout,
+                button("−", "Zoom out", () => zoomCenter(1 / 1.25)),
+                button("+", "Zoom in", () => zoomCenter(1.25)),
+                button("Fit", "Reset zoom and pan", () => {
                     zoom = 1;
                     panX = 0;
                     panY = 0;
@@ -434,20 +533,121 @@ function showDialog(node, image) {
                 }),
             );
 
-            const controls = document.createElement("div");
-            controls.className = "mb-dialog-field";
-            controls.style.justifyContent = "space-between";
-            const sizeFields = document.createElement("div");
-            sizeFields.className = "mb-dialog-field";
-            sizeFields.append(field("size", sizeW), field("x", sizeH), field("snap", snap), field("anchor", anchors));
-            controls.append(sizeFields, views);
-            body.appendChild(controls);
+            const stage = document.createElement("div");
+            stage.className = "mb-pad-stage";
+            stage.append(canvas, history, views);
+
+            const linkAll = document.createElement("input");
+            linkAll.type = "checkbox";
+            for (const side of SIDES) {
+                sideInputs[side] = numberInput(0, () => setSide(side, sideInputs[side].value, linkAll.checked));
+                sideInputs[side].max = String(MAX_PAD);
+                sideInputs[side].title = `${side} padding`;
+            }
+            const link = document.createElement("label");
+            link.className = "mb-pad-link";
+            link.title = "Set all four sides together";
+            link.append(linkAll, "link");
+            const padding = section("Padding (px)", cross({ 1: sideInputs.top, 3: sideInputs.left, 4: link, 5: sideInputs.right, 7: sideInputs.bottom }));
+
+            const anchors = document.createElement("div");
+            anchors.className = "mb-pad-anchors";
+            for (const [fx, fy] of ANCHORS) {
+                const cell = button("", "Place the image here", () => {
+                    const w = pad.left + pad.right;
+                    const h = pad.top + pad.bottom;
+                    remember();
+                    pad = shifted(pad, Math.round(w * fx) - pad.left, Math.round(h * fy) - pad.top);
+                    draw();
+                }, "mb-pad-anchor");
+                anchorCells.push([cell, fx, fy]);
+                anchors.appendChild(cell);
+            }
+            const arrows = {};
+            for (const [side, label] of EXTENDS) arrows[side] = button(label, `Extend ${side} by a quarter of the image`, () => extend(side));
+            const position = section("Extend +25% · anchor", cross({ 1: arrows.top, 3: arrows.left, 4: anchors, 5: arrows.right, 7: arrows.bottom }));
+
+            sizeW = numberInput(1, () => setSize("x"));
+            sizeH = numberInput(1, () => setSize("y"));
+            const size = document.createElement("div");
+            size.className = "mb-dialog-field";
+            const times = document.createElement("span");
+            times.textContent = "×";
+            size.append(sizeW, times, sizeH);
+
+            const presets = select(["preset…", ...Object.keys(PRESETS)], "preset…", () => {
+                setPreset(presets.value);
+                presets.value = "preset…";
+            });
+            snap = select(SNAP_OPTIONS, node.properties?.mbPadSnap ?? "off", () => {
+                setSize("x");
+                if (!lockValue(choice, imgW, imgH)) setSize("y");
+            });
+            lock = select(LOCK_OPTIONS, choice, () => {
+                choice = lock.value;
+                remember();
+                pad = applyLock(pad, "x");
+                draw();
+            });
+            const canvasSection = section("Canvas", field("preset", presets), field("snap", snap), field("aspect", lock));
+            const output = section("Output size", size);
+
+            const picker = document.createElement("input");
+            picker.type = "color";
+            picker.className = "mb-pad-swatch";
+            picker.value = /^#[0-9a-f]{6}$/i.test(color) ? color : "#000000";
+            picker.addEventListener("input", () => {
+                color = picker.value;
+                draw();
+            });
+            const colorField = field("colour", picker);
+            colorField.hidden = fillMode !== "color";
+            const fill = select(fillWidget?.options?.values ?? ["color"], fillMode, () => {
+                fillMode = fill.value;
+                colorField.hidden = fillMode !== "color";
+                draw();
+            });
+            const fillSection = section("Fill", field("mode", fill), colorField);
+
+            const tabs = document.createElement("div");
+            tabs.className = "mb-pad-tabs";
+            const pane = document.createElement("div");
+            pane.className = "mb-pad-pane";
+            const groups = { Pad: [padding, position], Canvas: [canvasSection], Fill: [fillSection] };
+            const showTab = (name) => {
+                for (const tab of tabs.children) tab.classList.toggle("mb-selected", tab.textContent === name);
+                pane.replaceChildren(...groups[name]);
+                node.properties.mbPadTab = name;
+            };
+            for (const name of Object.keys(groups)) tabs.appendChild(button(name, `${name} controls`, () => showTab(name), "mb-pad-tab"));
+            showTab(groups[node.properties?.mbPadTab] ? node.properties.mbPadTab : "Pad");
+
+            const side = document.createElement("div");
+            side.className = "mb-pad-side";
+            side.append(tabs, pane, output);
+
+            const layout = document.createElement("div");
+            layout.className = "mb-pad-layout";
+            layout.append(stage, side);
+            body.appendChild(layout);
 
             const hint = document.createElement("div");
             hint.className = "mb-dialog-hint";
             hint.style.margin = "0";
-            hint.textContent = "Drag an edge or corner to pad that side, drag inside to move the image (arrow keys nudge, Shift ×10), drag outside or middle-drag to pan, wheel to zoom.";
+            hint.textContent = "Drag edges to pad · drag inside to move (arrows nudge, Shift ×10) · drag outside to pan · wheel to zoom · Ctrl+Z / Ctrl+Y undo / redo";
             body.appendChild(hint);
+
+            // Kept inside the dialog so ComfyUI's graph undo does not fire.
+            body.addEventListener("keydown", (event) => {
+                if (!(event.ctrlKey || event.metaKey) || drag) return;
+                const key = event.key.toLowerCase();
+                const redo = key === "y" || (key === "z" && event.shiftKey);
+                if (key !== "z" && !redo) return;
+                event.preventDefault();
+                event.stopPropagation();
+                if (redo) stepHistory(redoStack, undoStack);
+                else stepHistory(undoStack, redoStack);
+            });
 
             const pointAt = (event) => {
                 const box = canvas.getBoundingClientRect();
@@ -466,6 +666,7 @@ function showDialog(node, image) {
                 event.preventDefault();
                 canvas.focus();
                 canvas.setPointerCapture(event.pointerId);
+                if (mode !== "pan") remember();
                 drag = { mode, x0: px, y0: py, pad0: { ...pad }, view0: { ...view }, panX0: panX, panY0: panY };
                 if (mode === "pan") canvas.style.cursor = "grabbing";
             });
@@ -515,6 +716,7 @@ function showDialog(node, image) {
                 event.preventDefault();
                 event.stopPropagation();
                 const step = event.shiftKey ? 10 : 1;
+                remember(true);
                 pad = shifted(pad, arrow[0] * step, arrow[1] * step);
                 draw();
             });
@@ -538,6 +740,7 @@ function showDialog(node, image) {
             }
             const colorWidget = getWidget(node, "color");
             if (colorWidget) colorWidget.value = color;
+            if (fillWidget) fillWidget.value = fillMode;
             node.properties.mbPadLock = choice;
             node.properties.mbPadSnap = snap.value;
             node.setDirtyCanvas(true, true);
