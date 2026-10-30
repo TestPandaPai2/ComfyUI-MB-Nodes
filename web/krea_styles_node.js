@@ -38,14 +38,51 @@ function applyCategory(node, category, keepValue) {
     node.setDirtyCanvas(true, true);
 }
 
+function realCategories() {
+    return DATA.categories.filter((cat) => cat !== FAVORITES);
+}
+
+function categoryOf(name) {
+    return realCategories().find((cat) => DATA.table[cat]?.includes(name));
+}
+
+// Search across every category; sub_style shows the matches and category
+// follows whichever match is picked, so randomize still has a real category.
+function applySearch(node, query) {
+    const q = query.trim().toLowerCase();
+    if (!q) {
+        applyCategory(node, getWidget(node, "category").value, true);
+        return;
+    }
+    const styleWidget = getWidget(node, "sub_style");
+    const names = realCategories().flatMap((cat) => DATA.table[cat]).filter((n) => n.toLowerCase().includes(q));
+    if (!names.length) return;
+    styleWidget.options = { ...(styleWidget.options ?? {}), values: names };
+    if (!names.includes(styleWidget.value)) styleWidget.value = names[0];
+    getWidget(node, "category").value = categoryOf(styleWidget.value);
+    node.setDirtyCanvas(true, true);
+}
+
 function wireNode(node) {
     const category = getWidget(node, "category");
-    if (!category) return;
+    const styleWidget = getWidget(node, "sub_style");
+    if (!category || !styleWidget) return;
+
+    const search = node.addWidget("text", "search", "", (value) => applySearch(node, value ?? ""));
+    search.serialize = false;
 
     const prev = category.callback;
     category.callback = function (value, ...rest) {
         const r = prev?.apply(this, [value, ...rest]);
+        search.value = "";
         applyCategory(node, value ?? this.value, false);
+        return r;
+    };
+
+    const prevStyle = styleWidget.callback;
+    styleWidget.callback = function (value, ...rest) {
+        const r = prevStyle?.apply(this, [value, ...rest]);
+        if (search.value) category.value = categoryOf(value ?? this.value);
         return r;
     };
 }
@@ -67,6 +104,8 @@ async function toggleFavorite(name) {
 
 function applyTable(node) {
     if (!DATA.categories.length) return;
+    const search = getWidget(node, "search");
+    if (search) search.value = "";
     applyCategory(node, getWidget(node, "category")?.value ?? DATA.categories[0], true);
     resizeToContent(node);
 }
