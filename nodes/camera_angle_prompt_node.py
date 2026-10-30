@@ -5,7 +5,7 @@ import random
 
 from comfy_api.latest import io
 
-from .common import MAX_SEED, weighted
+from .common import FAVORITES, MAX_SEED, pick_favorite, weighted
 
 
 CAMERA_ANGLES = {
@@ -69,7 +69,7 @@ class MBCameraAnglePrompt(io.ComfyNode):
             description="Pick a camera perspective/angle, or a seeded-random one; outputs its prompt.",
             search_aliases=["camera", "angle", "perspective", "shot", "framing"],
             inputs=[
-                io.Combo.Input("angle", options=angles, default="Eye Level", tooltip="Camera angle used when random_angle is off."),
+                io.Combo.Input("angle", options=[*angles, FAVORITES], default="Eye Level", tooltip="Camera angle used when random_angle is off."),
                 io.Boolean.Input("random_angle", default=False, tooltip="Pick the camera angle from the seed instead of the angle widget."),
                 io.Int.Input("seed", default=0, min=0, max=MAX_SEED, control_after_generate=True),
                 io.Float.Input("weight", default=1.0, min=0.0, max=2.0, step=0.05, display_mode=io.NumberDisplay.slider, tooltip="Prompt weight. At 1.0 the text is output as-is, otherwise as (text:weight)."),
@@ -79,6 +79,7 @@ class MBCameraAnglePrompt(io.ComfyNode):
 
     @classmethod
     def execute(cls, angle, random_angle, seed, weight) -> io.NodeOutput:
+        angle = pick_favorite("MBNodesCameraAnglePrompt", angle, CAMERA_ANGLES, seed)
         name = random.Random(seed).choice(list(CAMERA_ANGLES)) if random_angle else angle
         return io.NodeOutput(weighted(CAMERA_ANGLES[name], weight))
 

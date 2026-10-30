@@ -5,7 +5,7 @@ import random
 
 from comfy_api.latest import io
 
-from .common import MAX_SEED, weighted
+from .common import FAVORITES, MAX_SEED, pick_favorite, weighted
 
 
 POSES = {
@@ -144,7 +144,7 @@ class MBSimpleStandingPoses(io.ComfyNode):
             display_name="Simple Standing Poses (MB)",
             category="MBNodes",
             inputs=[
-                io.Combo.Input("pose", options=list(POSES), tooltip="Pose used when randomize_pose is off."),
+                io.Combo.Input("pose", options=[*POSES, FAVORITES], tooltip="Pose used when randomize_pose is off."),
                 io.Boolean.Input("randomize_pose", default=False, tooltip="Pick a pose using the seed instead of the pose widget."),
                 io.Int.Input("seed", default=0, min=0, max=MAX_SEED, control_after_generate=True),
                 io.Float.Input("weight", default=1.0, min=0.0, max=2.0, step=0.05, display_mode=io.NumberDisplay.slider, tooltip="Prompt weight. At 1.0 the text is output as-is, otherwise as (text:weight)."),
@@ -155,6 +155,7 @@ class MBSimpleStandingPoses(io.ComfyNode):
 
     @classmethod
     def execute(cls, pose, randomize_pose, seed, weight, closeup) -> io.NodeOutput:
+        pose = pick_favorite("MBNodesSimpleStandingPoses", pose, POSES, seed)
         if randomize_pose:
             pose = random.Random(seed).choice(list(POSES))
         text = CLOSEUPS[pose] if closeup else POSES[pose]

@@ -6,7 +6,7 @@ import random
 
 from comfy_api.latest import io
 
-from .common import COLORS, MAX_SEED, split_lines, weighted
+from .common import COLORS, FAVORITES, MAX_SEED, pick_favorite, split_lines, weighted
 
 
 DRESSES = {
@@ -843,7 +843,7 @@ class MBDressRandomizer(io.ComfyNode):
             description="Build a dress prompt from a chosen or random style's description with random extra details and an optional random color.",
             search_aliases=["dress", "outfit", "random prompt"],
             inputs=[
-                io.Combo.Input("category", options=styles, default=styles[0], tooltip="Dress style used when random_category is off."),
+                io.Combo.Input("category", options=[*styles, FAVORITES], default=styles[0], tooltip="Dress style used when random_category is off."),
                 io.Boolean.Input("random_category", default=False, tooltip="Pick the style from the seed instead of the category widget."),
                 io.Boolean.Input("color", default=False, tooltip="Add a seeded-random color for the dress."),
                 io.Boolean.Input("skip_prefix", default=False, tooltip="Drop the leading \"She wears\" from the description."),
@@ -856,6 +856,7 @@ class MBDressRandomizer(io.ComfyNode):
 
     @classmethod
     def execute(cls, category, random_category, color, details, seed, weight, skip_prefix) -> io.NodeOutput:
+        category = pick_favorite("MBNodesDressRandomizer", category, DRESSES, seed)
         rng = random.Random(seed)
         name = rng.choice(list(DRESSES)) if random_category else category
         text, fragments = DRESSES[name]

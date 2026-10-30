@@ -5,7 +5,7 @@ import random
 
 from comfy_api.latest import io
 
-from .common import COLORS, MAX_SEED, split_lines, weighted
+from .common import COLORS, FAVORITES, MAX_SEED, pick_favorite, split_lines, weighted
 
 
 DRESSES = {
@@ -1202,7 +1202,7 @@ class MBBodyconRandomizer(io.ComfyNode):
             description="Build a bodycon dress prompt from a chosen or random style with random details and an optional random color.",
             search_aliases=["bodycon", "dress", "outfit", "random prompt"],
             inputs=[
-                io.Combo.Input("category", options=styles, default=styles[0], tooltip="Dress style used when random_category is off."),
+                io.Combo.Input("category", options=[*styles, FAVORITES], default=styles[0], tooltip="Dress style used when random_category is off."),
                 io.Boolean.Input("random_category", default=False, tooltip="Pick the style from the seed instead of the category widget."),
                 io.Boolean.Input("color", default=False, tooltip="Put a seeded-random color before the dress name."),
                 io.Int.Input("details", default=3, min=1, max=40, tooltip="How many random detail fragments to add."),
@@ -1214,6 +1214,7 @@ class MBBodyconRandomizer(io.ComfyNode):
 
     @classmethod
     def execute(cls, category, random_category, color, details, seed, weight) -> io.NodeOutput:
+        category = pick_favorite("MBNodesBodyconRandomizer", category, DRESSES, seed)
         rng = random.Random(seed)
         name = rng.choice(list(DRESSES)) if random_category else category
         subject = f"{rng.choice(COLORS)} {name}" if color else name

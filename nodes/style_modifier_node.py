@@ -5,7 +5,7 @@ import random
 
 from comfy_api.latest import io
 
-from .common import MAX_SEED, weighted
+from .common import FAVORITES, MAX_SEED, pick_favorite, weighted
 
 
 STYLES = {
@@ -65,7 +65,7 @@ class MBStyleModifier(io.ComfyNode):
             description="Pick an art style, or a seeded-random one; outputs the style's prompt fragment.",
             search_aliases=["style", "art style", "aesthetic", "medium", "look"],
             inputs=[
-                io.Combo.Input("style", options=list(STYLES), tooltip="Style used when randomize is off."),
+                io.Combo.Input("style", options=[*STYLES, FAVORITES], tooltip="Style used when randomize is off."),
                 io.Boolean.Input("randomize", default=False, tooltip="Pick the style from the seed instead of the style widget."),
                 io.Int.Input("seed", default=0, min=0, max=MAX_SEED, control_after_generate=True),
                 io.Float.Input("weight", default=1.0, min=0.0, max=2.0, step=0.05, display_mode=io.NumberDisplay.slider, tooltip="Prompt weight. At 1.0 the text is output as-is, otherwise as (text:weight)."),
@@ -75,6 +75,7 @@ class MBStyleModifier(io.ComfyNode):
 
     @classmethod
     def execute(cls, style, randomize, seed, weight) -> io.NodeOutput:
+        style = pick_favorite("MBNodesStyleModifier", style, STYLES, seed)
         name = random.Random(seed).choice(list(STYLES)) if randomize else style
         return io.NodeOutput(weighted(STYLES[name], weight), name)
 

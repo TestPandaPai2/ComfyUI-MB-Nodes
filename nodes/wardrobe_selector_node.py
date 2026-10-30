@@ -7,7 +7,7 @@ import re
 
 from comfy_api.latest import io
 
-from .common import COLORS, MAX_SEED, METALLICS, NEUTRALS, PATTERNS, weighted
+from .common import COLORS, FAVORITES, MAX_SEED, METALLICS, NEUTRALS, PATTERNS, all_names, from_favorites, weighted
 
 
 def _sections(block):
@@ -1192,7 +1192,7 @@ class MBWardrobeSelector(io.ComfyNode):
                         io.Combo.Input("style", options=list(items), tooltip="Style used when random_style is off."),
                     ])
                     for name, items in WARDROBE.items()
-                ], tooltip="Wardrobe category used when random_category is off."),
+                ] + [io.DynamicCombo.Option(FAVORITES, [io.Combo.Input("style", options=all_names(WARDROBE), tooltip="Style used when random_style is off.")])], tooltip="Wardrobe category used when random_category is off."),
                 io.Boolean.Input("random_category", default=False, tooltip="Pick the category from the seed. Also randomizes the style."),
                 io.Boolean.Input("random_style", default=False, tooltip="Pick the style within the category from the seed."),
                 io.Boolean.Input("random_color", default=False, tooltip="Put a seeded-random color before the outfit."),
@@ -1236,6 +1236,7 @@ class MBWardrobeSelector(io.ComfyNode):
                 bottom = _colored(bottom, plain)
             return io.NodeOutput(weighted(f"{top} {bottom}", weight), f"{top_name} / {bottom_name}", f"{top_style} / {bottom_style}", weighted(top, weight), weighted(bottom, weight))
 
+        category, random_style = from_favorites("MBNodesWardrobeSelector", WARDROBE, category, "style", rng, random_style)
         name = rng.choice(list(WARDROBE)) if random_category else category["category"]
         items = WARDROBE[name]
         style = rng.choice(list(items)) if random_category or random_style else category["style"]

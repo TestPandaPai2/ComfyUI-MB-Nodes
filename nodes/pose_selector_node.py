@@ -5,7 +5,7 @@ import random
 
 from comfy_api.latest import io
 
-from .common import MAX_SEED, weighted
+from .common import FAVORITES, MAX_SEED, all_names, from_favorites, weighted
 
 
 POSES = {
@@ -649,7 +649,7 @@ class MBPoseSelector(io.ComfyNode):
                     io.DynamicCombo.Option(name, [io.Combo.Input("pose", options=list(poses), tooltip="Pose used when randomize_pose is off.")]
                         + ([io.Boolean.Input("closeup", default=False, tooltip="Describe the same pose as a chest-up close-up shot.")] if name in CLOSEUPS else []))
                     for name, poses in POSES.items()
-                ]),
+                ] + [io.DynamicCombo.Option(FAVORITES, [io.Combo.Input("pose", options=all_names(POSES), tooltip="Pose used when randomize_pose is off.")])]),
                 io.Boolean.Input("randomize_category", default=False, tooltip="Pick a random category and a random pose from it using the seed. Close-up applies only if the picked category has close-ups."),
                 io.Boolean.Input("randomize_pose", default=False, tooltip="Pick a pose from the selected category using the seed instead of the pose widget."),
                 io.Int.Input("seed", default=0, min=0, max=MAX_SEED, control_after_generate=True),
@@ -661,6 +661,7 @@ class MBPoseSelector(io.ComfyNode):
     @classmethod
     def execute(cls, category, randomize_category, randomize_pose, seed, weight) -> io.NodeOutput:
         rng = random.Random(seed)
+        category, randomize_pose = from_favorites("MBNodesPoseSelector", POSES, category, "pose", rng, randomize_pose)
         name = rng.choice(list(POSES)) if randomize_category else category["category"]
         poses = CLOSEUPS[name] if category.get("closeup") and name in CLOSEUPS else POSES[name]
         pose = rng.choice(list(poses)) if randomize_category or randomize_pose else category["pose"]

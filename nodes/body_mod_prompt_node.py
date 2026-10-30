@@ -2,6 +2,8 @@
 
 from comfy_api.latest import io
 
+from .common import FAVORITES, pick_favorite
+
 BODY_TYPES = {
     "Hourglass": "Modify the subject's body to a classic hourglass shape, with shoulders and hips of nearly equal width, a clearly narrowed waist about 25-30% smaller than the hips, smooth curves from bust to waist to hips, and proportionate, naturally toned limbs.",
     "Exaggerated hourglass": "Modify the subject's body to a pronounced hourglass shape, with a very small, cinched waist, noticeably wide hips, and rounded shoulders and bust, creating a dramatic contrast between the waist and the upper and lower body while keeping the proportions realistic.",
@@ -56,7 +58,7 @@ class MBBodyModPrompt(io.ComfyNode):
             description="Pick a body type; outputs its body modification prompt.",
             search_aliases=["body", "body type", "body shape", "body modification"],
             inputs=[
-                io.Combo.Input("types", options=list(BODY_TYPES), default="Hourglass"),
+                io.Combo.Input("types", options=[*BODY_TYPES, FAVORITES], default="Hourglass"),
             ],
             outputs=[
                 io.String.Output("prompt"),
@@ -65,6 +67,7 @@ class MBBodyModPrompt(io.ComfyNode):
 
     @classmethod
     def execute(cls, types) -> io.NodeOutput:
+        types = pick_favorite("MBNodesBodyModPrompt", types, BODY_TYPES, None)
         return io.NodeOutput(BODY_TYPES[types])
 
 

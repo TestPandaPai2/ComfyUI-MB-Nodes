@@ -5,7 +5,7 @@ import random
 
 from comfy_api.latest import io
 
-from .common import MAX_SEED, weighted
+from .common import FAVORITES, MAX_SEED, all_names, from_favorites, weighted
 
 
 EXPRESSIONS = {
@@ -302,7 +302,7 @@ class MBExpressionSelector(io.ComfyNode):
                 io.DynamicCombo.Input("category", options=[
                     io.DynamicCombo.Option(name, [io.Combo.Input("expression", options=list(expressions), tooltip="Expression used when randomize is off.")])
                     for name, expressions in EXPRESSIONS.items()
-                ]),
+                ] + [io.DynamicCombo.Option(FAVORITES, [io.Combo.Input("expression", options=all_names(EXPRESSIONS), tooltip="Expression used when randomize is off.")])]),
                 io.Boolean.Input("randomize", default=False, tooltip="Pick an expression from the selected category using the seed instead of the expression widget."),
                 io.Int.Input("seed", default=0, min=0, max=MAX_SEED, control_after_generate=True),
                 io.Float.Input("weight", default=1.0, min=0.0, max=2.0, step=0.05, display_mode=io.NumberDisplay.slider, tooltip="Prompt weight. At 1.0 the text is output as-is, otherwise as (text:weight)."),
@@ -312,8 +312,10 @@ class MBExpressionSelector(io.ComfyNode):
 
     @classmethod
     def execute(cls, category, randomize, seed, weight) -> io.NodeOutput:
+        rng = random.Random(seed)
+        category, randomize = from_favorites("MBNodesExpressionSelector", EXPRESSIONS, category, "expression", rng, randomize)
         expressions = EXPRESSIONS[category["category"]]
-        name = random.Random(seed).choice(list(expressions)) if randomize else category["expression"]
+        name = rng.choice(list(expressions)) if randomize else category["expression"]
         return io.NodeOutput(weighted(expressions[name], weight), category["category"], name)
 
 

@@ -6,7 +6,7 @@ import random
 
 from comfy_api.latest import io
 
-from .common import COLORS, MAX_SEED, split_lines, weighted
+from .common import COLORS, FAVORITES, MAX_SEED, all_names, from_favorites, split_lines, weighted
 
 
 HEELS = {
@@ -270,7 +270,7 @@ class MBHeelRandomizer(io.ComfyNode):
                 io.DynamicCombo.Input("category", options=[
                     io.DynamicCombo.Option(name, [io.Combo.Input("heel", options=list(heels), tooltip="Heel style used when random_heel is off.")])
                     for name, heels in HEELS.items()
-                ]),
+                ] + [io.DynamicCombo.Option(FAVORITES, [io.Combo.Input("heel", options=all_names(HEELS), tooltip="Heel style used when random_heel is off.")])]),
                 io.Boolean.Input("random_heel", default=False, tooltip="Pick a heel from the selected category using the seed instead of the heel widget."),
                 io.Boolean.Input("color", default=False, tooltip="Add a seeded-random color for the heels."),
                 io.Boolean.Input("skip_prefix", default=False, tooltip="Drop the leading \"She wears\" from the description."),
@@ -284,6 +284,7 @@ class MBHeelRandomizer(io.ComfyNode):
     @classmethod
     def execute(cls, category, random_heel, color, details, seed, weight, skip_prefix) -> io.NodeOutput:
         rng = random.Random(seed)
+        category, random_heel = from_favorites("MBNodesHeelRandomizer", HEELS, category, "heel", rng, random_heel)
         group = category["category"]
         heels = HEELS[group]
         heel = rng.choice(list(heels)) if random_heel else category["heel"]

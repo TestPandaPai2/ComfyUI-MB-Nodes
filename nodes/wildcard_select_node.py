@@ -6,6 +6,8 @@ import os
 import folder_paths
 from comfy_api.latest import io
 
+from .common import FAVORITES, pick_favorite
+
 MAX_SEED = 0xFFFFFFFFFFFFFFFF
 
 WILDCARD_FOLDER = "wildcards"
@@ -73,7 +75,7 @@ class MBWildcardSelect(io.ComfyNode):
             inputs=[
                 io.Combo.Input(
                     "wildcard",
-                    options=files,
+                    options=[*files, FAVORITES],
                     default=files[0] if files else None,
                     socketless=True,
                     tooltip="A .txt file from ComfyUI's wildcards folder.",
@@ -128,6 +130,7 @@ class MBWildcardSelect(io.ComfyNode):
 
     @classmethod
     def execute(cls, wildcard, seed, weight, weight_format, bypass, prefix="", suffix="") -> io.NodeOutput:
+        wildcard = pick_favorite("MBNodesWildcardSelect", wildcard, wildcard_files(), seed)
         if bypass:
             return io.NodeOutput("", "", 0, 0)
 

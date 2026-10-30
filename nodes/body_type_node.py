@@ -4,7 +4,7 @@ import random
 
 from comfy_api.latest import io
 
-from .common import weighted
+from .common import FAVORITES, pick_favorite, weighted
 
 
 BODY_TYPES = {
@@ -43,7 +43,7 @@ class MBBodyType(io.ComfyNode):
             display_name="Body Type (MB)",
             category="MBNodes",
             inputs=[
-                io.Combo.Input("body_type", options=list(BODY_TYPES), default="Hourglass"),
+                io.Combo.Input("body_type", options=[*BODY_TYPES, FAVORITES], default="Hourglass"),
                 io.Float.Input("weight", default=1.0, min=0.0, max=2.0, step=0.05, display_mode=io.NumberDisplay.slider, tooltip="Prompt weight. At 1.0 the text is output as-is, otherwise as (text:weight)."),
                 io.Boolean.Input("randomize", default=False, tooltip="Pick from the seed instead of the dropdown."),
                 io.Int.Input("seed", default=0, min=0, max=0xFFFFFFFFFFFFFFFF, control_after_generate=True),
@@ -54,6 +54,7 @@ class MBBodyType(io.ComfyNode):
 
     @classmethod
     def execute(cls, body_type, weight, randomize, seed, fit_hint=False) -> io.NodeOutput:
+        body_type = pick_favorite("MBNodesBodyType", body_type, BODY_TYPES, seed)
         if randomize:
             body_type = random.Random(seed).choice(list(BODY_TYPES))
         text = BODY_TYPES[body_type]

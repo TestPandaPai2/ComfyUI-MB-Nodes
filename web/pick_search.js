@@ -1,9 +1,10 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 
-// Search box + favorites for the pack's picker nodes. Frontend only: search
-// narrows the pick combos to matching values and favorites are sorted to the
-// top, so every value the backend sees is still one it declared.
+// Search box + favorites for the pack's picker nodes. Search narrows the pick
+// combos to matching values and favorites are sorted to the top, so every
+// value the backend sees is still one it declared. Each node also has a
+// ★ Favorites option the backend resolves from the same favorites file.
 // Pick combos per node class; null means every combo on the node except `skip`.
 const TARGETS = {
     MBNodesBackgroundRandomizer: ["background"],
@@ -30,6 +31,7 @@ const TARGETS = {
 const SKIP = new Set(["metal"]);
 
 const FAV_FILE = "mbnodes_favorites.json";
+const FAVORITES = "★ Favorites";
 
 // { nodeClass: [value, ...] }, kept in the ComfyUI user folder.
 let FAVS = {};
@@ -57,9 +59,17 @@ function targets(node) {
 function refresh(node) {
     const query = (node.widgets?.find((w) => w.name === "search")?.value ?? "").trim().toLowerCase();
     const favs = FAVS[node.comfyClass] ?? [];
+    // Under the ★ Favorites category the child combo declares every item;
+    // show only the starred ones when there are any.
+    const inFavorites = node.widgets?.find((w) => w.name === "category")?.value === FAVORITES;
     for (const widget of targets(node)) {
         widget._mbAll ??= [...widget.options.values];
-        let values = widget._mbAll.filter((v) => String(v).toLowerCase().includes(query));
+        let base = widget._mbAll;
+        if (inFavorites && widget.name !== "category") {
+            const starred = base.filter((v) => favs.includes(v));
+            if (starred.length) base = starred;
+        }
+        let values = base.filter((v) => String(v).toLowerCase().includes(query));
         if (!values.length) continue;
         values = [...values.filter((v) => favs.includes(v)), ...values.filter((v) => !favs.includes(v))];
         widget.options = { ...widget.options, values };
@@ -91,22 +101,11 @@ app.registerExtension({
         nodeType.prototype.getExtraMenuOptions = function (canvas, options) {
             prevMenu?.apply(this, arguments);
             const favs = FAVS[this.comfyClass] ?? [];
-            const entries = targets(this).map((w) => ({
+            const entries = targets(this).filter((w) => w.value !== FAVORITES).map((w) => ({
                 content: favs.includes(w.value) ? `☆ Remove "${w.value}" from favorites` : `★ Add "${w.value}" to favorites`,
                 callback: () => toggleFavorite(this.comfyClass, w.value),
             }));
             if (entries.length) options.push(null, ...entries);
-        };
-
-        // Category changes on DynamicCombo nodes rebuild the child combo, so
-        // re-run the filter after the frontend has swapped it in.
-        const prevChanged = nodeType.prototype.onWidgetChanged;
-        nodeType.prototype.onWidgetChanged = function (name, ...rest) {
-            const r = prevChanged?.apply(this, [name, ...rest]);
-            if (name === "category" && TARGETS[this.comfyClass]?.includes("category") === false) {
-                requestAnimationFrame(() => refresh(this));
-            }
-            return r;
         };
     },
 
@@ -114,6 +113,18 @@ app.registerExtension({
         if (!(node.comfyClass in TARGETS)) return;
         const search = node.addWidget("text", "search", "", () => refresh(node));
         search.serialize = false;
+
+        // Category changes on DynamicCombo nodes rebuild the child combo, so
+        // re-run the filter after the frontend has swapped it in.
+        const category = node.widgets.find((w) => w.name === "category");
+        if (category) {
+            const prev = category.callback;
+            category.callback = function (...args) {
+                const r = prev?.apply(this, args);
+                requestAnimationFrame(() => refresh(node));
+                return r;
+            };
+        }
         READY.then(() => refresh(node));
     },
 

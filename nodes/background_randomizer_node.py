@@ -5,7 +5,7 @@ import random
 
 from comfy_api.latest import io
 
-from .common import MAX_SEED, weighted
+from .common import FAVORITES, MAX_SEED, all_names, from_favorites, weighted
 
 
 BACKGROUNDS = {
@@ -474,7 +474,7 @@ class MBBackgroundRandomizer(io.ComfyNode):
                 io.DynamicCombo.Input("category", options=[
                     io.DynamicCombo.Option(name, [io.Combo.Input("background", options=list(backgrounds), tooltip="Background used when random_background is off.")])
                     for name, backgrounds in BACKGROUNDS.items()
-                ]),
+                ] + [io.DynamicCombo.Option(FAVORITES, [io.Combo.Input("background", options=all_names(BACKGROUNDS), tooltip="Background used when random_background is off.")])]),
                 io.Boolean.Input("random_background", default=False, tooltip="Pick the background from the selected category using the seed instead of the background widget."),
                 io.Int.Input("seed", default=0, min=0, max=MAX_SEED, control_after_generate=True),
                 io.Float.Input("weight", default=1.0, min=0.0, max=2.0, step=0.05, display_mode=io.NumberDisplay.slider, tooltip="Prompt weight. At 1.0 the text is output as-is, otherwise as (text:weight)."),
@@ -484,8 +484,10 @@ class MBBackgroundRandomizer(io.ComfyNode):
 
     @classmethod
     def execute(cls, category, random_background, seed, weight) -> io.NodeOutput:
+        rng = random.Random(seed)
+        category, random_background = from_favorites("MBNodesBackgroundRandomizer", BACKGROUNDS, category, "background", rng, random_background)
         backgrounds = BACKGROUNDS[category["category"]]
-        name = random.Random(seed).choice(list(backgrounds)) if random_background else category["background"]
+        name = rng.choice(list(backgrounds)) if random_background else category["background"]
         return io.NodeOutput(weighted(backgrounds[name], weight), category["category"], name)
 
 

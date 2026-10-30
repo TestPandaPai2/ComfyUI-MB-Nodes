@@ -4,6 +4,8 @@ import random
 
 from comfy_api.latest import io
 
+from .common import FAVORITES, pick_favorite
+
 PREFIX = "Enhance the overall lighting of the image attached to "
 
 LIGHTING_TYPES = {
@@ -95,7 +97,7 @@ class MBLightingEnhancePrompt(io.ComfyNode):
             description="Pick a lighting style; outputs its lighting enhancement prompt.",
             search_aliases=["lighting", "light", "lighting style", "relight"],
             inputs=[
-                io.Combo.Input("types", options=list(LIGHTING_TYPES), default="Soft natural window light"),
+                io.Combo.Input("types", options=[*LIGHTING_TYPES, FAVORITES], default="Soft natural window light"),
                 io.Boolean.Input("randomize", default=False, tooltip="Pick from the seed instead of the dropdown."),
                 io.Int.Input("seed", default=0, min=0, max=0xFFFFFFFFFFFFFFFF, control_after_generate=True),
                 io.Boolean.Input("skip_prefix", default=False, tooltip="Drop the leading \"Enhance the overall lighting of the image attached to\" from the prompt."),
@@ -107,6 +109,7 @@ class MBLightingEnhancePrompt(io.ComfyNode):
 
     @classmethod
     def execute(cls, types, randomize, seed, skip_prefix) -> io.NodeOutput:
+        types = pick_favorite("MBNodesLightingEnhancePrompt", types, LIGHTING_TYPES, seed)
         if randomize:
             types = random.Random(seed).choice(list(LIGHTING_TYPES))
         text = LIGHTING_TYPES[types]

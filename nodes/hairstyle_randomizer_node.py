@@ -6,7 +6,7 @@ import random
 
 from comfy_api.latest import io
 
-from .common import MAX_SEED, weighted
+from .common import FAVORITES, MAX_SEED, all_names, from_favorites, weighted
 
 
 HAIRSTYLES = {
@@ -190,7 +190,7 @@ class MBHairstyleRandomizer(io.ComfyNode):
                 io.DynamicCombo.Input("category", options=[
                     io.DynamicCombo.Option(name, [io.Combo.Input("style", options=list(styles), tooltip="Hairstyle used when random_style is off.")])
                     for name, styles in HAIRSTYLES.items()
-                ]),
+                ] + [io.DynamicCombo.Option(FAVORITES, [io.Combo.Input("style", options=all_names(HAIRSTYLES), tooltip="Hairstyle used when random_style is off.")])]),
                 io.Boolean.Input("random_style", default=False, tooltip="Pick the style from the selected category using the seed instead of the style widget."),
                 io.Combo.Input("color", options=["none", "random", *HAIR_COLORS], default="none", tooltip="Hair color added to the prompt. \"random\" picks one from the seed."),
                 io.Combo.Input("texture", options=["none", "random", *HAIR_TEXTURES], default="none", tooltip="Hair texture added to the prompt. \"random\" picks one from the seed."),
@@ -204,6 +204,7 @@ class MBHairstyleRandomizer(io.ComfyNode):
     @classmethod
     def execute(cls, category, random_style, color, skip_prefix, seed, weight, texture="none") -> io.NodeOutput:
         rng = random.Random(seed)
+        category, random_style = from_favorites("MBNodesHairstyleRandomizer", HAIRSTYLES, category, "style", rng, random_style)
         styles = HAIRSTYLES[category["category"]]
         style = rng.choice(list(styles)) if random_style else category["style"]
         text = styles[style]

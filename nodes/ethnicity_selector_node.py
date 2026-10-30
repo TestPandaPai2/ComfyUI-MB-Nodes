@@ -5,7 +5,7 @@ import random
 
 from comfy_api.latest import io
 
-from .common import MAX_SEED, weighted
+from .common import FAVORITES, MAX_SEED, pick_favorite, weighted
 
 
 ETHNICITIES = {
@@ -84,7 +84,7 @@ class MBEthnicitySelector(io.ComfyNode):
             description="Pick an ethnicity, or a seeded-random one; outputs \"Name: appearance description\".",
             search_aliases=["ethnicity", "ethnic", "appearance", "heritage", "skin tone"],
             inputs=[
-                io.Combo.Input("ethnicity", options=list(ETHNICITIES), tooltip="Ethnicity used when randomize is off."),
+                io.Combo.Input("ethnicity", options=[*ETHNICITIES, FAVORITES], tooltip="Ethnicity used when randomize is off."),
                 io.Boolean.Input("randomize", default=False, tooltip="Pick the ethnicity from the seed instead of the ethnicity widget."),
                 io.Int.Input("seed", default=0, min=0, max=MAX_SEED, control_after_generate=True),
                 io.Float.Input("weight", default=1.0, min=0.0, max=2.0, step=0.05, display_mode=io.NumberDisplay.slider, tooltip="Prompt weight. At 1.0 the text is output as-is, otherwise as (text:weight)."),
@@ -96,6 +96,7 @@ class MBEthnicitySelector(io.ComfyNode):
 
     @classmethod
     def execute(cls, ethnicity, randomize, seed, weight, age, skin_tone) -> io.NodeOutput:
+        ethnicity = pick_favorite("MBNodesEthnicitySelector", ethnicity, ETHNICITIES, seed)
         name = random.Random(seed).choice(list(ETHNICITIES)) if randomize else ethnicity
         return io.NodeOutput(weighted(f"{age}-year-old {name}: {with_skin_tone(ETHNICITIES[name], skin_tone)}", weight), name)
 
