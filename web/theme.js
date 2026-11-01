@@ -17,6 +17,7 @@ const PRESETS = {
     Indigo: "#6366f1",
     Slate: "#64748b",
     Orchid: "#bb00ff",
+    Volt: "#e6ff4f",
 };
 const DEFAULT_PRESET = "Pink";
 
