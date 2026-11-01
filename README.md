@@ -80,7 +80,7 @@ Upload a .txt with the **Upload .txt** button, pick what separates prompts (blan
 Grows one output per line of incoming text (up to 32). In auto mode the count follows the text widget feeding it as you type, or the real count after a run when the text comes from another node; connected outputs are never removed. `keep_blank_lines` gives blank lines their own empty output. Right-click → **Lines** to pin a fixed count (1–32) or go back to Auto. The title bar shows the current count.
 
 ### Pad Image (MB)
-Pads an image for outpainting or framing and outputs an `outpaint_mask` (1 on the pad, optional `mask_feather`). `size_mode`: manual (the `Pad Image` button opens a dialog: drag any edge or corner outward, with aspect-ratio lock and colour picker), target size or aspect ratio with an anchor. Fill with a colour, replicated, reflected or blurred edges; snap to a multiple of 8–64, transparent padding, and `seam_blend` to fade the edge into the fill.
+Pads an image for outpainting or framing and outputs an `outpaint_mask` (1 on the pad, optional `mask_feather`). `size_mode`: manual (the `Pad Image` button opens a dialog: drag any edge or corner outward or type per-side values, one-click +25% extend, size presets, fill mode with live preview, aspect-ratio lock, colour picker and undo/redo), target size or aspect ratio with an anchor. Fill with a colour, replicated, reflected or blurred edges; snap to a multiple of 8–64, transparent padding, and `seam_blend` to fade the edge into the fill.
 
 ### Rotate Image (MB)
 Rotates an image 90, 180 or 270 degrees. The three toggles behave like radio buttons, and `clockwise` flips the direction (ignored by 180).
@@ -137,7 +137,7 @@ Dropdown of 37 body types (Rectangle, Hourglass, Spoon, ...). Outputs the full b
 Dropdown of 43 art styles (Cinematic Realism, Watercolor, Anime, Claymation, ...), or a seeded-random pick. Outputs the style prompt fragment with optional weight.
 
 ### Woman's Wardrobe Selector (MB)
-Outfit description from a chosen or seeded-random category and style, including Pants, Shorts, Jeans and swimwear (bikinis, one-pieces, cover-ups and more). Extra outputs: `topwear` and `bottomwear` (empty for one-piece outfits; Gymwear sets split into both). `mix_outfit` pairs a random top with a random bottom.
+Outfit description from a chosen or seeded-random category and style, including Pants, Shorts, Jeans and swimwear (bikinis, one-pieces, cover-ups and more). Extra outputs: `topwear` and `bottomwear` (empty for one-piece outfits; Gymwear sets split into both). `mix_outfit` pairs a random top with a random bottom. The randomizer toggles show as a grid of buttons.
 
 ### Accessories Selector (MB)
 One dropdown per accessory, each set to none, random (from the seed) or a style, and every picked piece says where it's worn. Slots: `waist_chain`, `necklace`, `bracelet`, `body_jewelry`, 50 styles each, and `jhumka`, `nose_ring` with 51 each. `remove_prefix` drops the leading "She wears" from every piece. `prompt` joins the picked pieces; each slot also has its own output, and `styles` lists the picks. `metal` adds one gold, silver, rose gold or seeded-random finish to the whole set, or keeps the descriptions as written.
@@ -151,6 +151,10 @@ Dropdown of 30 simple standing poses, or a seeded-random one with `randomize_pos
 ## Replace Nodes
 
 Right-click a node (or a selection) → **Replace Node...** and pick a type from the search list. Each node is swapped in place: links are reconnected by slot name, then index, then first compatible type; widget values with matching names carry over; title, colour and mode are kept. Links with no matching slot are dropped and reported. One Ctrl+Z undoes it.
+
+## MB Nodes Sidebar
+
+Box icon pinned to the top of the left sidebar. Lists only this pack's nodes by category, with search. Drag a node onto the canvas to place it there, or click to add it at the canvas centre.
 
 ## Restart Button
 
