@@ -145,6 +145,9 @@ Makeup edit prompt picked by category (Everyday, Glam / Bold, Gothic, Regional /
 ### Text Generate (MB)
 Generate Text with the text encoder picked on the node (`clip_name` + `type`, like CLIP Loader), a `system_prompt` box, any number of images (resized to the first), optional video and audio. `preset`: Fast, Balanced, Quality or Custom (all native options). Outputs the answer text only. Right-click → How to Use.
 
+### Auto Connect (all nodes)
+Right-click an input dot: "Connect to nearest …" or pick any matching output. Right-click an output dot: "Connect to all empty … inputs" or pick one. Matches by type in the current graph; one Ctrl+Z undoes it.
+
 ### Accessories Selector (MB)
 One dropdown per accessory, each set to none, random (from the seed) or a style, and every picked piece says where it's worn. Slots: `waist_chain`, `necklace`, `bracelet`, `body_jewelry`, 50 styles each, and `jhumka`, `nose_ring` with 51 each. `remove_prefix` drops the leading "She wears" from every piece. `prompt` joins the picked pieces; each slot also has its own output, and `styles` lists the picks. `metal` adds one gold, silver, rose gold or seeded-random finish to the whole set, or keeps the descriptions as written.
 
