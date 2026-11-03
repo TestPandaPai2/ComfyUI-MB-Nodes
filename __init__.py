@@ -33,6 +33,7 @@ from .nodes.load_image_crop_area_node import NODES as _load_image_crop_area
 from .nodes.load_image_node import NODES as _load_image
 from .nodes.load_video_node import NODES as _load_video
 from .nodes.makeup_mod_prompt_node import NODES as _makeup_mod_prompt
+from .nodes.text_generate_node import NODES as _text_generate
 from .nodes.lora_stack_node import NODES as _lora_stack
 from .nodes.model_combo_node import NODES as _model_combo
 from .nodes.pad_image_node import NODES as _pad_image
@@ -133,6 +134,7 @@ NODES: list[type[io.ComfyNode]] = [
     *_heel_randomizer,
     *_body_mod_prompt,
     *_makeup_mod_prompt,
+    *_text_generate,
     *_lighting_enhance_prompt,
     *_body_type,
     *_pose_selector,
