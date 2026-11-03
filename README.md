@@ -139,6 +139,9 @@ Dropdown of 43 art styles (Cinematic Realism, Watercolor, Anime, Claymation, ...
 ### Woman's Wardrobe Selector (MB)
 Outfit description from a chosen or seeded-random category and style, including Pants, Shorts, Jeans and swimwear (bikinis, one-pieces, cover-ups and more). Extra outputs: `topwear` and `bottomwear` (empty for one-piece outfits; Gymwear sets split into both). `mix_outfit` pairs a random top with a random bottom. The randomizer toggles show as a grid of buttons.
 
+### Makeup Mod Prompt (MB)
+Makeup edit prompt picked by category (Everyday, Glam / Bold, Gothic, Regional / Trend; 20 styles each) and style, or seeded-random within the category or your favorites.
+
 ### Accessories Selector (MB)
 One dropdown per accessory, each set to none, random (from the seed) or a style, and every picked piece says where it's worn. Slots: `waist_chain`, `necklace`, `bracelet`, `body_jewelry`, 50 styles each, and `jhumka`, `nose_ring` with 51 each. `remove_prefix` drops the leading "She wears" from every piece. `prompt` joins the picked pieces; each slot also has its own output, and `styles` lists the picks. `metal` adds one gold, silver, rose gold or seeded-random finish to the whole set, or keeps the descriptions as written.
 
