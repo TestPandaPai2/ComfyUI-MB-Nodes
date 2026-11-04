@@ -31,6 +31,7 @@ from .nodes.load_folder_node import NODES as _load_folder
 from .nodes.load_prompts_file_node import NODES as _load_prompts_file
 from .nodes.load_image_crop_area_node import NODES as _load_image_crop_area
 from .nodes.load_image_node import NODES as _load_image
+from .nodes.load_two_images_node import NODES as _load_two_images
 from .nodes.load_video_node import NODES as _load_video
 from .nodes.makeup_mod_prompt_node import NODES as _makeup_mod_prompt
 from .nodes.text_generate_node import NODES as _text_generate
@@ -82,6 +83,7 @@ NODES: list[type[io.ComfyNode]] = [
     *_resolution,
     *_slider,
     *_load_image,
+    *_load_two_images,
     *_load_image_crop_area,
     *_image_info,
     *_bounding_boxes,

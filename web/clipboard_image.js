@@ -30,12 +30,11 @@ async function readClipboardImage() {
     return null;
 }
 
-async function upload(blob, type) {
-    const name = `clipboard-${stamp()}.${EXTENSIONS[type] ?? "png"}`;
+export async function upload(blob, type, name = `clipboard-${stamp()}.${EXTENSIONS[type] ?? "png"}`) {
     const body = new FormData();
     body.append("image", new File([blob], name, { type }));
     body.append("type", "input");
-    // Names carry a timestamp, so nothing of the user's is ever landed on.
+    // The server renames on a clash, so nothing of the user's is ever landed on.
     body.append("overwrite", "false");
 
     const response = await api.fetchApi("/upload/image", { method: "POST", body });
