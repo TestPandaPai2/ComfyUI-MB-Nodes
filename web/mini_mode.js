@@ -32,7 +32,7 @@ function applyMini(node) {
     let changed = false;
     for (const w of node.widgets) {
         const keep = w.name === root || w.name.startsWith(`${root}.`) || w.name === SWITCH;
-        changed = setWidgetVisible(node, w.name, keep || !mini) || changed;
+        changed = setWidgetVisible(node, w.name, !w.mbAlwaysHidden && (keep || !mini)) || changed;
     }
     if (changed) resizeToContent(node);
 }

@@ -57,6 +57,7 @@ app.registerExtension({
         for (const [name, label] of TOGGLES) {
             const widget = getWidget(node, name);
             if (!widget) continue;
+            widget.mbAlwaysHidden = true; // mini mode must not bring it back
             setWidgetVisible(node, name, false);
             const button = document.createElement("button");
             button.className = "mb-toggle";
