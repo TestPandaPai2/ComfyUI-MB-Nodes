@@ -65,6 +65,15 @@ const isLinked = (node, name) => node.inputs?.some((i) => i.name === name && i.l
 
 const parseSize = (label) => String(label).split(" x ").map(Number);
 const megapixels = (w, h) => (w * h) / 1e6;
+
+// Mirrors execute(): Python's round() sends exact halves to the even number.
+function roundToMultiple(side, step) {
+    const units = side / step;
+    const floor = Math.floor(units);
+    const diff = units - floor;
+    const rounded = diff > 0.5 || (diff === 0.5 && floor % 2 === 1) ? floor + 1 : floor;
+    return Math.max(step, rounded * step);
+}
 const nearOneMP = (w, h) => Math.abs(Math.log((w * h) / ONE_MP)) <= ONE_MP_TOLERANCE;
 
 // The same ratio turned the other way (3:4 <-> 4:3); 1:1 is its own mirror.
@@ -217,9 +226,11 @@ function drawGrid(ctx, node, widget, y) {
         }
     }
 
-    // Preview: the final frame drawn to scale, then its numbers.
+    // Preview: the final frame drawn to scale, then its numbers. The buttons show
+    // exact targets; this shows the size after multiple_of, as execute() outputs it.
     const [px, py, , ph] = preview;
-    const [fw, fh] = parseSize(resolution);
+    const step = Number(getWidget(node, "multiple_of")?.value) || 1;
+    const [fw, fh] = parseSize(resolution).map((side) => roundToMultiple(side, step));
     ctx.globalAlpha = 1;
     if (fw && fh) {
         const box = ph - 8;

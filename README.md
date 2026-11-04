@@ -23,7 +23,7 @@ Splits text into lines, outputs one picked by a seed widget (wraps to the line c
 Live read-only preview of incoming text, passed through as output. Runnable standalone.
 
 ### Resolution (MB)
-Aspect ratio dropdown and resolution preset buttons (multiples of 64, up to 4 MP), landscape/portrait buttons that switch to the mirrored ratio (picking a ratio sets them too), a batch stepper, and a to-scale preview showing final size, megapixels and latent size. Sizes near 1 MP are marked with a dot. Outputs width, height, empty latent, batch size.
+Aspect ratio dropdown and resolution preset buttons from 0.25 to 2 MP in 0.25 steps, then 3 and 4 MP (`multiple_of` rounds the output, shown in the preview), landscape/portrait buttons that switch to the mirrored ratio (picking a ratio sets them too), a batch stepper, and a to-scale preview showing final size, megapixels and latent size. Sizes near 1 MP are marked with a dot. Outputs width, height, empty latent, batch size.
 
 ### Slider (MB)
 Just a slider. Its single output takes the type (INT or FLOAT), step and, when the span is under 1,000,000, the range and current value of the input it is connected to. Right-click → ⚙ Slider Settings sets min, max and step.

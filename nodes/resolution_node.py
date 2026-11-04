@@ -22,60 +22,21 @@ RATIOS = [
     ("3:1 (Extra Wide)", 3 / 1),
 ]
 
-STEPS = 9           # options offered per ratio
-SNAP = 64           # every dimension is a multiple of this
-MAX_SIDE = 4096
-MIN_AREA = 0.26e6   # 512 x 512
-MAX_AREA = 4 * 1024 * 1024  # 2048 x 2048
-RATIO_TOLERANCE = 0.02  # max |ln(actual / nominal)| after snapping
+TARGETS_MP = [0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 3.0, 4.0]  # options offered per ratio
 
 
-def _snap(value):
-    return max(SNAP, int(round(value / SNAP)) * SNAP)
-
-
-def _candidates(ratio):
-    """All snapped sizes for a ratio that stay inside the area window and keep
-    the ratio within tolerance, ascending by pixel count."""
-    pool = []
-    # Step the long side, so ratios below 1 (portrait) are capped by height the
-    # same way landscape ones are capped by width.
-    for units in range(SNAP // 16, MAX_SIDE // SNAP + 1):
-        long_side = units * SNAP
-        if ratio >= 1:
-            width, height = long_side, _snap(long_side / ratio)
-        else:
-            width, height = _snap(long_side * ratio), long_side
-        area = width * height
-        if not (MIN_AREA * 0.94 <= area <= MAX_AREA):
-            continue
-        if abs(math.log((width / height) / ratio)) > RATIO_TOLERANCE:
-            continue
-        pool.append((area, width, height))
-    pool.sort()
-    return pool
-
-
-def _pick_steps(pool):
-    """STEPS sizes spread evenly on a log-area scale between the pool's ends."""
-    smallest, largest = pool[0][0], pool[-1][0]
-    picks = []
-    for i in range(STEPS):
-        target = smallest * (largest / smallest) ** (i / (STEPS - 1))
-        remaining = [entry for entry in pool if entry not in picks]
-        if not remaining:
-            break
-        picks.append(min(remaining, key=lambda e: abs(math.log(e[0] / target))))
-    picks.sort()
-    return picks
+def _exact_size(megapixels, ratio):
+    """Whole-pixel size for a target. multiple_of rounds it later, at output."""
+    width = math.sqrt(megapixels * 1e6 * ratio)
+    return round(width), round(width / ratio)
 
 
 def build_table():
     """{ratio label: [dimension label, ...]}"""
     table = {}
     for name, ratio in RATIOS:
-        pool = _candidates(ratio)
-        table[name] = [f"{w} x {h}" for _, w, h in _pick_steps(pool)]
+        sizes = (_exact_size(mp, ratio) for mp in TARGETS_MP)
+        table[name] = [f"{w} x {h}" for w, h in sizes]
     return table
 
 
@@ -87,7 +48,7 @@ TABLE = build_table()
 ALL_RESOLUTIONS = list(dict.fromkeys(l for labels in TABLE.values() for l in labels))
 
 DEFAULT_RATIO = RATIOS[0][0]
-DEFAULT_RESOLUTION = "1024 x 1024"
+DEFAULT_RESOLUTION = "1000 x 1000"
 
 
 class MBResolution(io.ComfyNode):
