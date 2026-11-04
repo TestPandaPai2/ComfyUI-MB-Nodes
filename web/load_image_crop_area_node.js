@@ -475,13 +475,14 @@ function wireNode(node) {
     for (const name of RECT_WIDGETS) setWidgetVisible(node, name, false);
     node.__mbAreaZoom = { ...FULL_VIEW };
 
-    // Picking another file swaps the preview; the rect is in fractions, so it
-    // stays where it was on the new image.
+    // Picking another file swaps the preview and drops the old crop. A loaded
+    // workflow restores its value without this callback, so its crop stays.
     const image = getWidget(node, "image");
     if (image) {
         const prev = image.callback;
         image.callback = function (...args) {
             const r = prev?.apply(this, args);
+            if (node.__mbAreaValue !== image.value) setRect(node, { ...EMPTY_RECT });
             loadImage(node);
             return r;
         };
