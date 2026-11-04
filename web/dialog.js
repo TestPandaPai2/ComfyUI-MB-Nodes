@@ -121,6 +121,19 @@ const CSS = `
 .mb-dialog-button:hover { background: var(--border-color); }
 .mb-dialog-button.mb-primary { background: var(--mb-a); color: #ffffff; }
 .mb-dialog-button.mb-primary:hover { filter: brightness(1.1); }
+.mb-dialog.mb-full-height { height: calc(100vh - 32px); display: flex; flex-direction: column; }
+.mb-full-height .mb-dialog-body { flex: 1; min-height: 0; }
+.mb-dialog-editor {
+    padding: 8px 10px;
+    background: var(--comfy-input-bg);
+    color: var(--input-text);
+    border: 1px solid transparent;
+    border-radius: 7px;
+    font: inherit;
+    outline: none;
+}
+.mb-dialog-editor:focus { border-color: var(--mb-a); }
+textarea.mb-dialog-editor { flex: 1; min-height: 0; resize: none; }
 `;
 
 function ensureStyle() {
@@ -137,15 +150,17 @@ function ensureStyle() {
  * however the dialog goes away — Apply, Cancel, Escape or a click outside.
  * `canClose` can return false to keep it open on any of those but Apply.
  * `width` overrides the default narrow body, for dialogs that hold a canvas.
+ * `fullHeight` fills the window and lets Enter type new lines in a textarea.
+ * `extraLabel` adds a button between Cancel and Apply that runs `onExtra`.
  */
-export function openDialog({ title, render, onApply, onClose, canClose, applyLabel = "Apply", width }) {
+export function openDialog({ title, render, onApply, onClose, canClose, applyLabel = "Apply", width, fullHeight, extraLabel, onExtra }) {
     ensureStyle();
 
     const overlay = document.createElement("div");
     overlay.className = "mb-dialog-overlay";
 
     const dialog = document.createElement("div");
-    dialog.className = "mb-dialog";
+    dialog.className = fullHeight ? "mb-dialog mb-full-height" : "mb-dialog";
     if (width) dialog.style.width = `${width}px`;
     dialog.innerHTML = `<div class="mb-dialog-header"><span class="mb-dialog-dot"></span><span class="mb-dialog-title"></span><button class="mb-dialog-close" aria-label="Close">×</button></div><div class="mb-dialog-body"></div>`;
     dialog.querySelector(".mb-dialog-title").textContent = title;
@@ -164,7 +179,15 @@ export function openDialog({ title, render, onApply, onClose, canClose, applyLab
     apply.className = "mb-dialog-button mb-primary";
     apply.textContent = applyLabel;
 
-    footer.append(cancel, apply);
+    footer.append(cancel);
+    if (extraLabel) {
+        const extra = document.createElement("button");
+        extra.className = "mb-dialog-button";
+        extra.textContent = extraLabel;
+        extra.addEventListener("click", () => onExtra());
+        footer.append(extra);
+    }
+    footer.append(apply);
     dialog.appendChild(footer);
     overlay.appendChild(dialog);
     document.body.appendChild(overlay);
@@ -191,6 +214,7 @@ export function openDialog({ title, render, onApply, onClose, canClose, applyLab
             event.stopPropagation(); // keep the canvas from acting on it too
             dismiss();
         } else if (event.key === "Enter") {
+            if (fullHeight && event.target.tagName === "TEXTAREA") return;
             event.stopPropagation();
             submit();
         }

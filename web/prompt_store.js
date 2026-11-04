@@ -35,8 +35,8 @@ function rememberFolder(path, keep = true) {
 
 // Multiline widgets keep a DOM element of their own under Nodes 2.0, which does
 // not follow widget.value on its own.
-function setText(node, text) {
-    const widget = getWidget(node, "text");
+export function setText(node, text, name = "text") {
+    const widget = getWidget(node, name);
     if (!widget) return;
     widget.value = text;
     const element = widget.inputEl ?? widget.element;
@@ -47,7 +47,7 @@ function setText(node, text) {
 
 // ------------------------------------------------------------------- saving
 
-async function post(folder, filename, text, overwrite) {
+export async function post(folder, filename, text, overwrite) {
     const response = await api.fetchApi("/mbnodes/save_prompt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -90,14 +90,14 @@ export async function savePrompt(node, folder) {
 
 // ------------------------------------------------------------------ loading
 
-async function fetchFiles(folder) {
+export async function fetchFiles(folder) {
     const response = await api.fetchApi(`/mbnodes/prompt_files?folder=${encodeURIComponent(folder)}`);
     const data = await response.json();
     if (response.status >= 400) throw new Error(data?.error ?? `HTTP ${response.status}`);
     return data;
 }
 
-async function fetchText(folder, filename) {
+export async function fetchText(folder, filename) {
     const query = `folder=${encodeURIComponent(folder)}&filename=${encodeURIComponent(filename)}`;
     const response = await api.fetchApi(`/mbnodes/prompt_text?${query}`);
     const data = await response.json();

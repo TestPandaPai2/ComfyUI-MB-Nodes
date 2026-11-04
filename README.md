@@ -143,7 +143,7 @@ Outfit description from a chosen or seeded-random category and style, including 
 Makeup edit prompt picked by category (Everyday, Glam / Bold, Gothic, Regional / Trend; 20 styles each) and style, or seeded-random within the category or your favorites.
 
 ### Text Generate (MB)
-Generate Text with the text encoder picked on the node (`clip_name` + `type`, like CLIP Loader), a `system_prompt` box, any number of images (resized to the first), optional video and audio. `preset`: Fast, Balanced, Quality or Custom (all native options). Outputs the answer text only. Right-click → How to Use.
+Generate Text with the text encoder picked on the node (`clip_name` + `type`, like CLIP Loader), a `system_prompt` box, any number of images (resized to the first), optional video and audio. `preset`: Fast, Balanced, Quality or Custom (all native options). Outputs the answer text only. Right-click to save the system prompt as a preset in a full-height editor or load a saved one (shared with System Prompt (MB)), or for How to Use.
 
 ### Auto Connect (all nodes)
 Right-click an input dot: "Connect to nearest …" or pick any matching output. Right-click an output dot: "Connect to all empty … inputs" or pick one. Matches by type in the current graph; one Ctrl+Z undoes it.
