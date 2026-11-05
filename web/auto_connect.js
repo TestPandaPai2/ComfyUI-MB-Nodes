@@ -12,6 +12,17 @@ function matches(a, b) {
     return types(a).some((t) => tb.includes(t));
 }
 
+// Slot names as words, plurals folded: "latent_image" -> latent, image.
+function words(slot) {
+    return String(slot.name ?? "").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).map((w) => w.replace(/s$/, ""));
+}
+
+// "latent" fits "latent_image", but not VAE Decode's "samples".
+function namesMatch(a, b) {
+    const wb = words(b);
+    return words(a).some((w) => wb.includes(w));
+}
+
 function distance(a, b) {
     return Math.hypot(a.pos[0] - b.pos[0], a.pos[1] - b.pos[1]);
 }
@@ -52,7 +63,7 @@ function inputItems(node, index, input) {
         content: `${src.title} → ${slot.label || slot.name}${linkedFrom?.origin_id === src.id && linkedFrom.origin_slot === out ? " ✓" : ""}`,
         callback: () => batch(() => src.connect(out, node, index)),
     }));
-    const [src, out] = found[0];
+    const [src, out] = found.find(([, , slot]) => namesMatch(input, slot)) ?? found[0];
     return [
         { content: `Connect to nearest ${label} ← ${src.title}`, callback: () => batch(() => src.connect(out, node, index)) },
         { content: `Connect to ${label}`, has_submenu: true, callback: (v, o, event, menu) => openList(items, event, menu) },
@@ -64,18 +75,21 @@ function outputItems(node, index, output) {
     const found = candidates(node, "inputs", output.type);
     const label = types(output.type).join(", ");
     if (!found.length) return [{ content: `Connect to ${label} inputs (none)`, disabled: true }];
-    const empty = found.filter(([, , slot]) => slot.link == null);
+    const named = found.filter(([, , slot]) => namesMatch(output, slot));
+    const empty = named.filter(([, , slot]) => slot.link == null);
     const items = found.slice(0, MAX_ITEMS).map(([dst, inp, slot]) => ({
         content: `${dst.title} → ${slot.label || slot.name}${slot.link != null ? " (linked)" : ""}`,
         callback: () => batch(() => node.connect(index, dst, inp)),
     }));
+    const pick = { content: `Connect to`, has_submenu: true, callback: (v, o, event, menu) => openList(items, event, menu) };
+    if (!named.length) return [pick];
     return [
         {
-            content: `Connect to all empty ${label} inputs (${empty.length})`,
+            content: `Connect to all empty "${output.label || output.name}" inputs (${empty.length})`,
             disabled: !empty.length,
             callback: () => batch(() => empty.forEach(([dst, inp]) => node.connect(index, dst, inp))),
         },
-        { content: `Connect to`, has_submenu: true, callback: (v, o, event, menu) => openList(items, event, menu) },
+        pick,
     ];
 }
 

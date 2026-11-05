@@ -149,7 +149,7 @@ Generate Text with the text encoder picked on the node (`clip_name` + `type`, li
 Right-click the canvas, pick **Pipe em!**, then drag a box over two or more links and release to bundle them into a pipe. Add as many pipes to a cluster as you like. Drag a pipe's tie to move it, right-click the tie to remove it. Pipes are visual only, so wiring doesn't change. Links with reroutes are skipped. Esc cancels.
 
 ### Auto Connect (all nodes)
-Right-click an input dot: "Connect to nearest …" or pick any matching output. Right-click an output dot: "Connect to all empty … inputs" or pick one. Matches by type in the current graph; one Ctrl+Z undoes it.
+Right-click an input dot: "Connect to nearest …" (preferring a matching name) or pick any output of that type. Right-click an output dot: "Connect to all empty … inputs" or pick any input of that type. Connect to all needs a matching type and name, so `width` only finds `width` and `latent` finds `latent_image`; with no name match it isn't offered. Works in the current graph; one Ctrl+Z undoes it.
 
 ### Accessories Selector (MB)
 One dropdown per accessory, each set to none, random (from the seed) or a style, and every picked piece says where it's worn. Slots: `waist_chain`, `necklace`, `bracelet`, `body_jewelry`, 50 styles each, and `jhumka`, `nose_ring` with 51 each. `remove_prefix` drops the leading "She wears" from every piece. `prompt` joins the picked pieces; each slot also has its own output, and `styles` lists the picks. `metal` adds one gold, silver, rose gold or seeded-random finish to the whole set, or keeps the descriptions as written.

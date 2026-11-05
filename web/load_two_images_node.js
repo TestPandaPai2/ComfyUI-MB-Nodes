@@ -108,7 +108,7 @@ function buildPanel(node, slot) {
     img.addEventListener("error", () => {
         img.hidden = true;
         hint.textContent = "Image not found";
-        hint.hidden = false;
+        hint.style.display = "flex";
     });
 
     preview.append(img, hint);
@@ -148,7 +148,7 @@ function buildPanel(node, slot) {
             else img.removeAttribute("src");
             img.hidden = !url;
             hint.textContent = "Drop or paste an image";
-            hint.hidden = !!url;
+            hint.style.display = url ? "none" : "flex";
         }
         preview.style.outline = node.__mbTwoTarget === slot ? "2px solid var(--mb-accent,#d4537e)" : "none";
     };
