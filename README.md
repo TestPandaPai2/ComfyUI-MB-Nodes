@@ -11,7 +11,7 @@ Plain multiline text box with dynamic prompts (`{a|b|c}` wildcards) on by defaul
 Joins any number of text inputs with a chosen delimiter. Input slots auto-grow up to 32.
 
 ### MB Replace Text Advanced
-Four find and replace pairs in side-by-side multiline boxes, applied top to bottom. Empty find boxes are skipped.
+Up to ten find and replace pairs, applied top to bottom. Each field can be typed in or linked from another node. Empty find fields are skipped.
 
 ### MB Prompt Combiner
 Joins prompt parts (auto-growing slots) in order between a prefix and suffix. `tidy` cleans each part into a sentence; weighted parts are left alone. Preview shows the result after each run.

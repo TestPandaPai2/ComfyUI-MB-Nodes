@@ -1,10 +1,9 @@
-"""MB Replace Text Advanced: run up to 4 find/replace pairs over one text, in
-order. The side-by-side boxes live in web/replace_text_advanced_node.js and
-write to these hidden widgets."""
+"""MB Replace Text Advanced: run up to 10 find/replace pairs over one text,
+in order. Each pair slot is a regular widget that can also be linked."""
 
 from comfy_api.latest import io
 
-SLOTS = 4
+SLOTS = 10
 
 
 class MBReplaceTextAdvanced(io.ComfyNode):
@@ -12,8 +11,8 @@ class MBReplaceTextAdvanced(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         inputs = [io.String.Input("text", force_input=True, tooltip="The text to edit.")]
         for n in range(1, SLOTS + 1):
-            inputs.append(io.String.Input(f"find_{n}", default="", display_name=f"Text To Replace {n}", socketless=True))
-            inputs.append(io.String.Input(f"replace_{n}", default="", display_name=f"Replaced Text {n}", socketless=True))
+            inputs.append(io.String.Input(f"find_{n}", default="", display_name=f"Text To Replace {n}"))
+            inputs.append(io.String.Input(f"replace_{n}", default="", display_name=f"Replaced Text {n}"))
         return io.Schema(
             node_id="MBReplaceTextAdvanced",
             display_name="MB Replace Text Advanced",
