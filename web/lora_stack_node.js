@@ -1,10 +1,13 @@
 // MB LoRA Stack: rows drawn on the canvas like stock widgets, saved as JSON
 // in the hidden `loras` widget (Autogrow can only grow sockets, not rows).
 // - Header: toggle all on/off, and how many rows are on.
-// - Row: ⋮⋮ drag handle to reorder, on/off pill, file name ▾ (click for a
-//   searchable list), ⓘ trigger words (tick which go out, add your own),
-//   strength as ◀ 1.00 ▶ over a fill bar (arrows step, drag to scrub, click to type).
-// - Right-click a row: move up / down, duplicate, remove.
+// - Row: chevron (click to expand, drag to reorder), on/off pill, file name ▾
+//   (click for a searchable list), trigger count (click to expand), strength as
+//   ◀ 1.00 ▶ over a fill bar (arrows step, drag to scrub, click to type).
+// - Expanded row: strength slider, and trigger chips (click to turn one on or
+//   off, Edit to add your own). The open state is saved on the row.
+// - Right-click the node: separator. Right-click a row: move up / down,
+//   duplicate, remove.
 // A row whose file isn't on disk is drawn red, with "missing file" in the
 // title bar, like Load Models Combo.
 
@@ -19,16 +22,21 @@ const MARGIN = 15;
 const HANDLE_W = 14;
 const PILL_W = 26;
 const PILL_H = 12;
-const STRENGTH_W = 84;
+const STRENGTH_W = 180;
 const ARROW_W = 16;
-const INFO_W = 18;
+const COUNT_W = 18;
 const CARET_W = 12;
+const DETAIL_H = 40;
+const SLIDER_H = 14;
+const CHIP_H = 18;
+const CHIP_GAP = 4;
+const CHIP_PAD = 6;
 const FILL_MAX = 2; // strength that fills the bar
 const NEGATIVE_COLOR = "#5b8def";
 const STEP = 0.05;
 const DRAG_STEP = 0.01;
 const MIN_STRENGTH = -10;
-const MAX_STRENGTH = 10;
+const MAX_STRENGTH = 20;
 const MISSING_COLOR = "#e5484d";
 const OFF_COLOR = "#555";
 
@@ -155,6 +163,24 @@ function pickLora(event, callback) {
     search.focus();
 }
 
+// Every trigger word a row's file offers, once per file.
+async function loadWords(node, row) {
+    if (!row.lora || isMissing(row) || node.__mbWords.has(row.lora)) return;
+    node.__mbWords.set(row.lora, []);
+    const response = await api.fetchApi(`/mbnodes/lora_triggers?${new URLSearchParams({ lora: row.lora })}`);
+    if (!response.ok) return;
+    const data = await response.json();
+    node.__mbWords.set(row.lora, [...new Set([...data.triggers, ...data.custom])]);
+    node.setDirtyCanvas(true, true);
+}
+
+function toggleOpen(node, row) {
+    row.open = !row.open;
+    if (row.open) loadWords(node, row);
+    save(node);
+    rebuild(node);
+}
+
 async function openTriggers(node, row) {
     const response = await api.fetchApi(`/mbnodes/lora_triggers?${new URLSearchParams({ lora: row.lora })}`);
     if (!response.ok) return;
@@ -240,6 +266,7 @@ async function openTriggers(node, row) {
         onApply() {
             const words = new Set([...data.triggers, ...custom]);
             row.triggers = [...selected].filter((w) => words.has(w));
+            node.__mbWords.set(row.lora, [...words]);
             save(node);
             if (custom.join("\n") !== data.custom.join("\n")) {
                 api.fetchApi("/mbnodes/lora_triggers", {
@@ -336,11 +363,8 @@ function headerWidget(node) {
         ctx.font = "12px Arial";
         ctx.textBaseline = "middle";
         ctx.textAlign = "left";
-        ctx.fillStyle = LiteGraph.WIDGET_TEXT_COLOR;
-        ctx.fillText("Toggle all", MARGIN + PILL_W + 8, y + ROW_H / 2);
-        ctx.textAlign = "right";
         ctx.fillStyle = LiteGraph.WIDGET_SECONDARY_TEXT_COLOR ?? "#999";
-        ctx.fillText(`${on} / ${rows.length} on`, (widgetWidth || drawNode.size[0]) - MARGIN, y + ROW_H / 2);
+        ctx.fillText(`${on} of ${rows.length} on`, MARGIN + PILL_W + 8, y + ROW_H / 2);
         ctx.restore();
     };
 
@@ -363,16 +387,16 @@ function rowWidget(node, index) {
     // x ranges of the parts, from the widget width.
     const layout = (width) => {
         const strengthX = width - MARGIN - STRENGTH_W;
-        const infoX = strengthX - 4 - INFO_W;
+        const countX = strengthX - 4 - COUNT_W;
         const pillX = MARGIN + HANDLE_W + 4;
         const nameX = pillX + PILL_W + 8;
-        return { pillX, nameX, nameW: infoX - 4 - CARET_W - nameX, infoX, strengthX };
+        return { pillX, nameX, nameW: countX - 4 - CARET_W - nameX, countX, strengthX };
     };
 
     widget.draw = function (ctx, drawNode, widgetWidth, y) {
         const width = widgetWidth || drawNode.size[0];
         const row = node.__mbRows[index];
-        const { pillX, nameX, nameW, infoX, strengthX } = layout(width);
+        const { pillX, nameX, nameW, countX, strengthX } = layout(width);
         const missing = isMissing(row);
         const on = row.on !== false;
         const cy = y + ROW_H / 2;
@@ -384,10 +408,10 @@ function rowWidget(node, index) {
         ctx.textBaseline = "middle";
         ctx.font = "12px Arial";
 
-        // handle
+        // chevron
         ctx.fillStyle = LiteGraph.WIDGET_SECONDARY_TEXT_COLOR ?? "#999";
         ctx.textAlign = "center";
-        ctx.fillText("⋮⋮", MARGIN + 4 + HANDLE_W / 2, cy);
+        ctx.fillText(row.open ? "▾" : "▸", MARGIN + 4 + HANDLE_W / 2, cy);
 
         drawPill(ctx, pillX, cy, on);
 
@@ -403,30 +427,29 @@ function rowWidget(node, index) {
         ctx.fillText("▾", caretX, cy);
         ctx.font = "12px Arial";
 
-        // trigger words
-        if (row.lora) {
-            ctx.strokeStyle = LiteGraph.WIDGET_SECONDARY_TEXT_COLOR ?? "#999";
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.arc(infoX + INFO_W / 2, cy, 6.5, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.font = "bold 10px Arial";
+        // picked trigger words; unknown until the row is first expanded
+        const picked = row.triggers?.length ?? node.__mbWords.get(row.lora)?.length;
+        if (picked) {
+            ctx.fillStyle = LiteGraph.WIDGET_SECONDARY_TEXT_COLOR ?? "#999";
             ctx.textAlign = "center";
-            ctx.fillText("i", infoX + INFO_W / 2, cy + 0.5);
-            ctx.font = "12px Arial";
+            ctx.fillText(String(picked), countX + COUNT_W / 2, cy);
         }
 
         // strength: fill bar, then ◀ value ▶
         const strength = Number(row.strength ?? 1);
         const fill = Math.min(1, Math.abs(strength) / FILL_MAX) * (STRENGTH_W - 4);
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(strengthX + 2, y + 3, STRENGTH_W - 4, ROW_H - 6, 5);
+        ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
+        ctx.fill();
+        ctx.clip();
         if (fill > 0) {
             ctx.fillStyle = strength < 0 ? NEGATIVE_COLOR : accentColor();
             ctx.globalAlpha *= 0.3;
-            ctx.beginPath();
-            ctx.roundRect(strengthX + 2, y + 3, fill, ROW_H - 6, (ROW_H - 6) / 2);
-            ctx.fill();
-            ctx.globalAlpha = on ? 1 : 0.45;
+            ctx.fillRect(strengthX + 2, y + 3, fill, ROW_H - 6);
         }
+        ctx.restore();
         ctx.fillStyle = LiteGraph.WIDGET_SECONDARY_TEXT_COLOR ?? "#999";
         ctx.textAlign = "center";
         ctx.fillText("◀", strengthX + ARROW_W / 2, cy);
@@ -451,23 +474,24 @@ function rowWidget(node, index) {
     widget.mouse = function (event, pos) {
         if (!isDown(event) || event.button === 2) return false;
         const row = node.__mbRows[index];
-        const { pillX, nameX, infoX, strengthX } = layout(this.mbWidth || node.size[0]);
+        const { pillX, nameX, countX, strengthX } = layout(this.mbWidth || node.size[0]);
         const x = pos[0];
 
         if (x < pillX) {
-            startReorder(node, index, event);
+            startReorder(node, index, event, () => toggleOpen(node, row));
         } else if (x < nameX) {
             row.on = row.on === false;
             save(node);
-        } else if (x < infoX) {
+        } else if (x < countX) {
             pickLora(event, (value) => {
                 if (!value || value === row.lora) return;
                 row.lora = value;
                 delete row.triggers; // picks belonged to the old file
+                if (row.open) loadWords(node, row);
                 save(node);
             });
         } else if (x < strengthX) {
-            if (row.lora && !isMissing(row)) openTriggers(node, row);
+            toggleOpen(node, row);
         } else if (x < strengthX + ARROW_W) {
             row.strength = clamp((row.strength ?? 1) - STEP);
             save(node);
@@ -490,6 +514,117 @@ function rowWidget(node, index) {
                 }, e);
             });
         }
+        return true;
+    };
+
+    return widget;
+}
+
+// The strength slider and trigger chips under an open row.
+function detailWidget(node, index) {
+    const widget = baseWidget("mb_lora_detail", `lora_detail_${index}`);
+    widget.computeSize = (width) => [width ?? 0, DETAIL_H];
+    widget.computeLayoutSize = () => ({ minHeight: DETAIL_H, maxHeight: DETAIL_H, minWidth: 220 });
+
+    const trackX = MARGIN + 8;
+    const trackW = (width) => width - (MARGIN + 8) * 2;
+
+    widget.draw = function (ctx, drawNode, widgetWidth, y) {
+        const width = widgetWidth || drawNode.size[0];
+        const row = node.__mbRows[index];
+        const words = node.__mbWords.get(row.lora) ?? row.triggers ?? [];
+        const selected = row.triggers ?? words;
+        this.mbY = y;
+        this.mbWidth = width;
+        this.mbChips = [];
+
+        ctx.save();
+        ctx.textBaseline = "middle";
+        ctx.font = "11px Arial";
+
+        const strength = Number(row.strength ?? 1);
+        const share = Math.min(1, Math.abs(strength) / FILL_MAX);
+        const color = strength < 0 ? NEGATIVE_COLOR : accentColor();
+        const sliderY = y + SLIDER_H / 2;
+        ctx.fillStyle = LiteGraph.WIDGET_BGCOLOR;
+        ctx.beginPath();
+        ctx.roundRect(trackX, sliderY - 2, trackW(width), 4, 2);
+        ctx.fill();
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.roundRect(trackX, sliderY - 2, trackW(width) * share, 4, 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(trackX + trackW(width) * share, sliderY, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        const chipY = y + SLIDER_H + 4;
+        const right = trackX + trackW(width);
+        const chip = (text, x, on, action) => {
+            const w = ctx.measureText(text).width + CHIP_PAD * 2;
+            ctx.beginPath();
+            ctx.roundRect(x, chipY, w, CHIP_H, 5);
+            if (on === null) {
+                // Edit is an action: outline only, so it never reads as a trigger.
+                ctx.strokeStyle = LiteGraph.WIDGET_SECONDARY_TEXT_COLOR ?? "#999";
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                ctx.fillStyle = LiteGraph.WIDGET_SECONDARY_TEXT_COLOR ?? "#999";
+            } else {
+                // An on trigger is tinted with the accent, an off one is plain and dim.
+                ctx.fillStyle = on ? accentColor() : LiteGraph.WIDGET_BGCOLOR;
+                ctx.globalAlpha = on ? 0.3 : 0.6;
+                ctx.fill();
+                ctx.globalAlpha = on ? 1 : 0.5;
+                ctx.fillStyle = LiteGraph.WIDGET_TEXT_COLOR;
+            }
+            ctx.textAlign = "left";
+            ctx.fillText(text, x + CHIP_PAD, chipY + CHIP_H / 2);
+            ctx.globalAlpha = 1;
+            this.mbChips.push({ x, w, action });
+            return x + w + CHIP_GAP;
+        };
+
+        // Chips that don't fit are reached through Edit, which then counts them.
+        const editW = ctx.measureText("Edit +99").width + CHIP_PAD * 2;
+        let x = trackX;
+        let hidden = 0;
+        for (const word of words) {
+            if (x + ctx.measureText(word).width + CHIP_PAD * 2 > right - editW - CHIP_GAP) {
+                hidden = words.length - words.indexOf(word);
+                break;
+            }
+            x = chip(word, x, selected.includes(word), () => {
+                const current = row.triggers ?? words;
+                row.triggers = current.includes(word) ? current.filter((w) => w !== word) : [...current, word];
+                save(node);
+            });
+        }
+        chip(hidden ? `Edit +${hidden}` : "Edit", x, null, () => {
+            if (row.lora && !isMissing(row)) openTriggers(node, row);
+        });
+        ctx.restore();
+    };
+
+    widget.mouse = function (event, pos) {
+        if (!isDown(event) || event.button === 2) return false;
+        const row = node.__mbRows[index];
+        // Renderers differ on whether y starts at the node or at this widget.
+        const y = pos[1] > DETAIL_H ? pos[1] - this.mbY : pos[1];
+        if (y >= SLIDER_H + 2) {
+            this.mbChips?.find((c) => pos[0] >= c.x && pos[0] <= c.x + c.w)?.action();
+            return true;
+        }
+        const width = this.mbWidth || node.size[0];
+        const sign = Number(row.strength ?? 1) < 0 ? -1 : 1;
+        const at = (x) => sign * Math.max(0, Math.min(1, (x - trackX) / trackW(width))) * FILL_MAX;
+        const start = at(pos[0]);
+        row.strength = clamp(start);
+        save(node);
+        trackPointer(event, (e, dx) => {
+            row.strength = clamp(start + sign * (dx / trackW(width)) * FILL_MAX);
+            save(node);
+        });
         return true;
     };
 
@@ -539,7 +674,7 @@ function moveRow(node, from, to) {
     save(node);
 }
 
-function startReorder(node, index, event) {
+function startReorder(node, index, event, onClick) {
     node.__mbDrop = { target: index };
     trackPointer(event, (e) => {
         const [, y] = app.canvas.convertEventToCanvasOffset(e);
@@ -554,9 +689,10 @@ function startReorder(node, index, event) {
         }
         node.__mbDrop.target = target;
         node.setDirtyCanvas(true, true);
-    }, () => {
+    }, (e, moved) => {
         const target = node.__mbDrop.target;
         node.__mbDrop = null;
+        if (!moved) return onClick();
         // Dropping below the dragged row shifts every later index down by one.
         moveRow(node, index, target > index ? target - 1 : target);
         node.setDirtyCanvas(true, true);
@@ -596,7 +732,13 @@ function rebuild(node) {
         if (node.widgets[i].type?.startsWith?.("mb_lora_")) node.widgets.splice(i, 1);
     }
     node.addCustomWidget(headerWidget(node));
-    node.__mbRows.forEach((_, i) => node.addCustomWidget(rowWidget(node, i)));
+    node.__mbRows.forEach((row, i) => {
+        node.addCustomWidget(rowWidget(node, i));
+        if (row.open) {
+            node.addCustomWidget(detailWidget(node, i));
+            loadWords(node, row);
+        }
+    });
     node.addCustomWidget(addWidget(node));
     node.__mbMissing = node.__mbRows.some((r) => r.on !== false && isMissing(r));
     resizeToContent(node);
@@ -607,13 +749,24 @@ function load(node) {
     rebuild(node);
 }
 
+function editSeparator(node, event) {
+    const widget = getWidget(node, "separator");
+    app.canvas.prompt("Separator between trigger words", widget.value, (value) => {
+        widget.value = value;
+        node.setDirtyCanvas(true, true);
+    }, event);
+}
+
 function wireNode(node) {
+    node.__mbWords = new Map();
     setWidgetVisible(node, "loras", false);
+    setWidgetVisible(node, "separator", false);
     load(node);
 
     const prevConfigure = node.onConfigure;
     node.onConfigure = function () {
         const r = prevConfigure?.apply(this, arguments);
+        setWidgetVisible(this, "separator", false);
         load(this);
         return r;
     };
@@ -622,6 +775,7 @@ function wireNode(node) {
     node.getExtraMenuOptions = function (canvas, options) {
         prevMenu?.apply(this, arguments);
         const index = rowAt(this, canvas.graph_mouse[1]);
+        options.unshift({ content: "Separator…", callback: (v, o, event) => editSeparator(this, event) }, null);
         if (index != null) options.unshift(...rowMenu(this, index));
     };
 

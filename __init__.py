@@ -20,6 +20,7 @@ from .nodes.combine_text_node import NODES as _combine_text
 from .nodes.compress_image_node import NODES as _compress_image
 from .nodes.control_panel_node import NODES as _control_panel
 from .nodes.film_grain_node import NODES as _film_grain
+from .nodes.free_vram_node import NODES as _free_vram
 from .nodes.get_lines_node import NODES as _get_lines
 from .nodes.group_runner_node import NODES as _group_runner
 from .nodes.image_to_svg_node import NODES as _image_to_svg
@@ -116,6 +117,7 @@ NODES: list[type[io.ComfyNode]] = [
     *_random_line,
     *_show_text,
     *_sampler,
+    *_free_vram,
     *_route66,
     *_krea_styles,
     *_control_panel,

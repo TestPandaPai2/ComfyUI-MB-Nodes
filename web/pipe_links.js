@@ -1,13 +1,14 @@
 import { app } from "../../scripts/app.js";
 import { accentColor, notify } from "./common.js";
 
-// Pipe em!: drag a box over links to bundle them into a pipe. Purely visual: wires
-// are untouched, pipes are saved in graph.extra. Native reroutes can't do this, as
+// Pipe em!: drag a box over links to bundle them into a thin string with a knot.
+// Purely visual: wires are untouched, pipes are saved in graph.extra. Native reroutes can't do this, as
 // links from different outputs through one reroute lose their first segment.
 const MIN_LENGTH = 80;
-const PIPE_WIDTH = 10;
-const TIE_W = 14;
-const TIE_H = 22;
+const STRING_WIDTH = 2.5;
+const STRING_BEND = 0.12; // sideways curve, as a share of the string's length
+const KNOT_RADIUS = 7;
+const KNOT_HIT = 12;
 const SAMPLES = 24;
 
 let armed = false;
@@ -118,7 +119,7 @@ function livePipes(graph) {
 function tieAt(graph, x, y) {
     return livePipes(graph).find((pipe) => {
         const [mx, my] = middle(pipe);
-        return Math.abs(x - mx) <= TIE_W && Math.abs(y - my) <= TIE_H;
+        return Math.hypot(x - mx, y - my) <= KNOT_HIT;
     });
 }
 
@@ -126,19 +127,25 @@ function drawPipes(ctx, graph) {
     for (const pipe of livePipes(graph)) {
         ctx.save();
         ctx.lineCap = "round";
-        ctx.lineWidth = PIPE_WIDTH;
-        ctx.strokeStyle = "#7a7a80";
+        ctx.lineWidth = STRING_WIDTH;
+        ctx.strokeStyle = "#a0a0a6";
+        const dx = pipe.b[0] - pipe.a[0];
+        const dy = pipe.b[1] - pipe.a[1];
+        // An S bend, so the string still passes through the knot at its middle.
+        const bendX = -dy * STRING_BEND;
+        const bendY = dx * STRING_BEND;
         ctx.beginPath();
         ctx.moveTo(...pipe.a);
-        ctx.lineTo(...pipe.b);
+        ctx.bezierCurveTo(
+            pipe.a[0] + dx / 3 + bendX, pipe.a[1] + dy / 3 + bendY,
+            pipe.b[0] - dx / 3 - bendX, pipe.b[1] - dy / 3 - bendY,
+            ...pipe.b,
+        );
         ctx.stroke();
 
-        const [mx, my] = middle(pipe);
-        ctx.translate(mx, my);
-        ctx.rotate(Math.atan2(pipe.b[1] - pipe.a[1], pipe.b[0] - pipe.a[0]));
         ctx.fillStyle = accentColor();
         ctx.beginPath();
-        ctx.roundRect(-TIE_W / 2, -TIE_H / 2, TIE_W, TIE_H, 4);
+        ctx.arc(...middle(pipe), KNOT_RADIUS, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
     }
