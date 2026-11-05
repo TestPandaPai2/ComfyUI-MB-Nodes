@@ -43,9 +43,6 @@ Compact Load Image with a custom face: toolbar (upload/paste/settings), arrow + 
 ### Load Image Crop (MB)
 Loads an image and crops it to the area selected on the node's preview: drag to draw the crop area, drag inside it to move, drag its corners to resize, double-click to clear. Wheel zooms the preview (Ctrl-wheel still zooms the graph), Alt-drag pans it; the corner chips fill (`Full`), center, flip the ratio (`Swap`) or reset the zoom (`Fit`). With no crop drawn the full image is output. `aspect` locks the box to a preset (free, source, 1:1, 16:9, …). `max_megapixels` > 0 scales the output up or down to that size (aspect preserved; 0 keeps the crop size), then both sides snap to the nearest multiple of `resolution_steps`, resampled with `upscale_method`. Outputs image.
 
-### Crop Image (MB)
-Crop dialog (drag/resize box, aspect presets, divisible-by) for an `image` input instead of a file picker. Crop is stored as fractions of the image so it survives resolution changes; falls back to a cached preview when nothing upstream has an image yet.
-
 ### Save Image (MB)
 Saves png/jpg/webp/avif to the output folder or anywhere you type, and passes the images through. Once an image is showing, resizing the node keeps the preview in the image's proportions (width drives, height follows), for both the normal preview and the compare_image slider; a new image shape snaps the node to it. `preview` mode skips the write; a cached copy always survives a restart. `preset` (lossless / visually_lossless / balanced / small) sets the per-format quality; `custom` uses the quality widgets. Changing format or preset re-encodes the last run live, and a badge shows the file size and the saving vs png. Connect `compare_image` for a before/after slider (hover to move it, click to step through a batch).
 
@@ -130,9 +127,6 @@ Reads Civitai metadata for a model file. `folder` picks the model directory (che
 ### Saree Randomizer (MB)
 Outputs a saree prompt: style name plus `details` seeded-random fragments from that style's 40. `category` picks the style, or `random_category` picks it from `seed`; `color` prefixes a seeded-random color. Extra outputs: `blouse` (blouse-only details) and `drape` (drape, pallu and fabric details).
 
-### High Heels Randomizer (MB)
-Same as Saree Randomizer for high heels: 33 styles with 40 detail fragments each, plus `details`, `random_category`, `color` and `seed`.
-
 ### Bodycon Randomizer (MB)
 Same as Saree Randomizer for bodycon dresses: 28 styles with 40 detail fragments each, plus `details`, `random_category`, `color` and `seed`.
 
@@ -150,6 +144,9 @@ Makeup edit prompt picked by category (Everyday, Glam / Bold, Gothic, Regional /
 
 ### Text Generate (MB)
 Generate Text with the text encoder picked on the node (`clip_name` + `type`, like CLIP Loader), a `system_prompt` box, any number of images (resized to the first), optional video and audio. `preset`: Fast, Balanced, Quality or Custom (all native options). Outputs the answer text only. Right-click to save the system prompt as a preset in a full-height editor or load a saved one (shared with System Prompt (MB)), or for How to Use.
+
+### Pipe em! (all links)
+Right-click the canvas, pick **Pipe em!**, then drag a box over two or more links and release to bundle them into a pipe. Add as many pipes to a cluster as you like. Drag a pipe's tie to move it, right-click the tie to remove it. Pipes are visual only, so wiring doesn't change. Links with reroutes are skipped. Esc cancels.
 
 ### Auto Connect (all nodes)
 Right-click an input dot: "Connect to nearest …" or pick any matching output. Right-click an output dot: "Connect to all empty … inputs" or pick one. Matches by type in the current graph; one Ctrl+Z undoes it.

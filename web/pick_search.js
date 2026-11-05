@@ -12,7 +12,6 @@ const TARGETS = {
     MBNodesDressRandomizer: ["category"],
     MBNodesHairstyleRandomizer: ["style"],
     MBNodesHeelRandomizer: ["heel"],
-    MBNodesHighHeelsRandomizer: ["category"],
     MBNodesSareeRandomizer: ["category"],
     MBNodesAccessoriesSelector: null,
     MBNodesEthnicitySelector: ["ethnicity"],

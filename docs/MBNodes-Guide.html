@@ -76,7 +76,7 @@ ul.dots li:before{content:"";position:absolute;left:0;top:2.1mm;width:1.4mm;heig
   <div class="grid2" style="gap:5mm 10mm">
   <div class="card"><h3>01 Prompts &amp; text <span class="t">p.3–4</span></h3><p>Prompt (tag library), Prompt Pad, System Prompt, Prompt Expander, Text, Combine Text, Prompt Combiner, Random Line, Show Text, Get Lines, Load Prompts From File.</p></div>
   <div class="card"><h3>02 Image input <span class="t">p.5</span></h3><p>Load Image, Load Image Mini, Load Images from Folder, Load Image Crop, clipboard paste.</p></div>
-  <div class="card"><h3>03 Image processing <span class="t">p.6</span></h3><p>Crop Image, Pad Image, Rotate Image, Film Grain, Image To SVG, Compress Image.</p></div>
+  <div class="card"><h3>03 Image processing <span class="t">p.6</span></h3><p>Pad Image, Rotate Image, Film Grain, Image To SVG, Compress Image.</p></div>
   <div class="card"><h3>04 Output &amp; media <span class="t">p.7</span></h3><p>Save Image (with compare slider), SaveMP4, Load Video, Preview Audio, Preview Anything.</p></div>
   <div class="card"><h3>05 Generation <span class="t">p.8</span></h3><p>Resolution, Upscale Latent, Sampler, Load Models Combo, LoRA Stack, Slider.</p></div>
   <div class="card"><h3>06 Graph flow <span class="t">p.9</span></h3><p>Route 66, WiFi Send/Receive, Branch Runner, Control Panel, Replace Nodes, MB sidebar.</p></div>
@@ -269,7 +269,6 @@ ul.dots li:before{content:"";position:absolute;left:0;top:2.1mm;width:1.4mm;heig
   <div class="cap" style="margin-bottom:5mm">Fig 6.1 — drag any edge or corner outward, or type per-side values</div>
   <div class="grid3">
     <div class="card"><h3>Pad Image</h3><p>Pads for outpainting and outputs <code>outpaint_mask</code> (feathered). Modes: manual dialog, target size, aspect ratio with anchor. Fill with colour, replicate, reflect or blurred edges; transparent padding; <code>seam_blend</code>.</p></div>
-    <div class="card"><h3>Crop Image</h3><p>Same crop dialog as Load Image Crop — box, aspect presets, divisible-by — on an <code>image</code> input. Falls back to a cached preview before the first run.</p></div>
     <div class="card"><h3>Rotate Image</h3><p>90 / 180 / 270 as radio-style toggles; <code>clockwise</code> flips direction.</p></div>
     <div class="card"><h3>Film Grain</h3><p>Presets: Fine 35mm, Portra 400, Tri-X 400, 16mm, Super 8, or Custom sliders (intensity, size, colour, luminance response). Per-frame grain, seeded.</p></div>
     <div class="card"><h3>Image To SVG</h3><p>vtracer vectorising with Accurate, Poster, Logo, B&amp;W or Custom presets. Outputs SVG strings plus a re-rendered image to compare; optional save. Needs <code>vtracer</code>, <code>resvg-py</code>.</p></div>
@@ -462,7 +461,7 @@ ul.dots li:before{content:"";position:absolute;left:0;top:2.1mm;width:1.4mm;heig
         <li><b>Krea2 Styles</b> — category + style over 1,506 bundled styles; random within category; outputs <code>Name: Prompt</code>.</li>
         <li><b>Wildcard Select</b> — seeded pick from <code>wildcards/*.txt</code>, wrapped in a 0–5 weight; prefix/suffix; <code>raw</code> output.</li>
         <li><b>Civitai Info</b> — metadata from sidecars, header, or civitai.com by SHA256 (opt-in). Never errors; <code>found</code> false.</li>
-        <li><b>Saree / High Heels / Bodycon</b> — 28–40 styles × 40 detail fragments, seeded colour; blouse/drape extras on Saree.</li>
+        <li><b>Saree / Bodycon</b> — 28–40 styles × 40 detail fragments, seeded colour; blouse/drape extras on Saree.</li>
         <li><b>Accessories</b> — six slots (none/random/style), metal finish, per-slot outputs.</li>
         <li><b>Body Type</b> (37), <b>Style Modifier</b> (43), <b>Simple Standing Poses</b> (30, with close-up).</li>
       </ul>

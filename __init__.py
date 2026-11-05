@@ -19,7 +19,6 @@ from .nodes.branch_runner_node import NODES as _branch_runner
 from .nodes.combine_text_node import NODES as _combine_text
 from .nodes.compress_image_node import NODES as _compress_image
 from .nodes.control_panel_node import NODES as _control_panel
-from .nodes.crop_image_node import NODES as _crop_image
 from .nodes.film_grain_node import NODES as _film_grain
 from .nodes.get_lines_node import NODES as _get_lines
 from .nodes.group_runner_node import NODES as _group_runner
@@ -54,7 +53,6 @@ from .nodes.save_image_node import NODES as _save_image
 from .nodes.save_mp4_node import NODES as _save_mp4
 from .nodes.save_video_node import NODES as _save_video
 from .nodes.saree_randomizer_node import NODES as _saree_randomizer
-from .nodes.high_heels_randomizer_node import NODES as _high_heels_randomizer
 from .nodes.bodycon_randomizer_node import NODES as _bodycon_randomizer
 from .nodes.dress_randomizer_node import NODES as _dress_randomizer
 from .nodes.hairstyle_randomizer_node import NODES as _hairstyle_randomizer
@@ -107,7 +105,6 @@ NODES: list[type[io.ComfyNode]] = [
     *_replace_text_advanced,
     *_word_remover,
     *_prompt_combiner,
-    *_crop_image,
     *_upscale_latent,
     *_pad_image,
     *_rotate_image,
@@ -124,7 +121,6 @@ NODES: list[type[io.ComfyNode]] = [
     *_wildcard_select,
     *_wildcard_view_all,
     *_saree_randomizer,
-    *_high_heels_randomizer,
     *_bodycon_randomizer,
     *_dress_randomizer,
     *_hairstyle_randomizer,

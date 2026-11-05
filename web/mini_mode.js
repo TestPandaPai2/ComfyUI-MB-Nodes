@@ -15,7 +15,6 @@ const MINI_NODES = new Set([
     "MBNodesDressRandomizer",
     "MBNodesHairstyleRandomizer",
     "MBNodesHeelRandomizer",
-    "MBNodesHighHeelsRandomizer",
     "MBNodesSareeRandomizer",
     "MBNodesEthnicitySelector",
     "MBNodesExpressionSelector",

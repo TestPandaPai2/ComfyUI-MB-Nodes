@@ -1,8 +1,74 @@
 import { app } from "../../scripts/app.js";
+import { api } from "../../scripts/api.js";
 import { getWidget, setWidgetVisible, addButton, resizeToContent, accentColor } from "./common.js";
 import { openDialog } from "./dialog.js";
 import { FIXED_RATIOS, HANDLES, HANDLE } from "./crop_geometry.js";
-import { upstreamPreview } from "./crop_image_node.js";
+
+function viewURL(filename, subfolder, type) {
+    const params = new URLSearchParams({
+        filename,
+        subfolder: subfolder ?? "",
+        type: type ?? "input",
+    });
+    return api.apiURL(`/view?${params}`);
+}
+
+const IMAGE_FILE = /\.(png|jpe?g|webp|gif|bmp|tiff?)$/i;
+// "name [output]" style annotated paths carry their folder in brackets.
+const ANNOTATED = /^(.*?)\s*\[(\w+)\]\s*$/;
+
+// Anything a node already knows about its own image, without running: the
+// preview it is drawing, the result of an earlier run still in the output
+// store, or — the case that matters on a fresh graph — the file a loader has
+// selected in its widget, which is on disk and servable right now.
+function nodeImageSrc(node) {
+    if (node.imgs?.[0]?.src) return node.imgs[0].src;
+
+    const stored = app.nodeOutputs?.[node.id]?.images?.[0]
+        ?? app.nodeOutputs?.[String(node.id)]?.images?.[0];
+    if (stored?.filename) return viewURL(stored.filename, stored.subfolder, stored.type ?? "output");
+
+    const widget = node.widgets?.find(
+        (w) => typeof w.value === "string" && IMAGE_FILE.test(w.value)
+            && (w.name === "image" || w.name === "images")
+    );
+    if (widget) {
+        const match = ANNOTATED.exec(widget.value);
+        const [name, type] = match ? [match[1], match[2]] : [widget.value, "input"];
+        // "/view" keeps only the basename, so a loader subfolder goes in its own param.
+        const cut = name.lastIndexOf("/");
+        return viewURL(name.slice(cut + 1), cut < 0 ? "" : name.slice(0, cut), type);
+    }
+
+    return null;
+}
+
+// Reroutes, upscalers and the like hold no image of their own, so the search
+// keeps walking back through IMAGE links until it finds a node that does.
+function upstreamPreview(node, depth = 0, seen = new Set()) {
+    if (!node || depth > 8 || seen.has(node.id)) return null;
+    seen.add(node.id);
+
+    if (depth > 0) {
+        const src = nodeImageSrc(node);
+        if (src) return src;
+    }
+
+    for (const input of node.inputs ?? []) {
+        if (input.link == null) continue;
+        if (depth === 0 && input.name !== "image") continue; // only our own dot
+        // Newer frontends keep links in a Map rather than a plain object.
+        const links = app.graph?.links;
+        const link = links?.get?.(input.link) ?? links?.[input.link];
+        if (!link) continue;
+        if (link.type && link.type !== "IMAGE" && link.type !== "*") continue;
+
+        const found = upstreamPreview(app.graph.getNodeById(link.origin_id), depth + 1, seen);
+        if (found) return found;
+    }
+
+    return null;
+}
 
 // In manual mode the pad lives in these widgets (pixels per side), hidden from
 // the node body and edited only inside the pad dialog along with the colour.

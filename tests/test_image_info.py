@@ -17,7 +17,6 @@ from PIL import Image
 import folder_paths
 
 from mbnodes.nodes import image_info
-from mbnodes.nodes.crop_image_node import MBImageCrop
 from mbnodes.nodes.image_info import MBImageInfo
 from mbnodes.nodes.load_image_crop_area_node import MBLoadImageCropArea
 from mbnodes.nodes.load_image_node import MBLoadImage
@@ -97,16 +96,6 @@ def test_an_unbroadcastable_batch_is_dropped_rather_than_misaligned():
     image = torch.zeros(3, 8, 8, 3)
     assert image_info.fit_mask(torch.zeros(2, 8, 8), image) is None
     assert image_info.fit_mask(torch.zeros(1, 8, 8), image).shape == (3, 8, 8)
-
-
-def test_crop_inherits_the_filename_from_the_bundle():
-    image = torch.zeros(1, 32, 32, 3)
-    MBImageCrop.hidden = _Hidden()
-    source = image_info.make(image, None, "source.png")
-
-    out = MBImageCrop.execute(image, "free", "1", 0.0, 0.0, 0.5, 1.0, None, source).args
-    assert out[1] == 16
-    assert out[3]["filename"] == "source.png"
 
 
 def test_unpack_substitutes_a_zero_mask():

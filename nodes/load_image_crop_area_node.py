@@ -12,8 +12,28 @@ import comfy.utils
 import folder_paths
 from comfy_api.latest import io
 
-from .crop_image_node import RATIOS, crop_box
 from .load_image_node import _image_files, load_frames
+
+# Aspect presets. "free" leaves the box unconstrained, "source" locks it to the
+# image's aspect. Everything else is a fixed w:h.
+RATIOS = [
+    "free", "source",
+    "1:1", "4:3", "3:2", "16:10", "16:9", "1.85:1", "2:1", "21:9",
+    "3:4", "2:3", "10:16", "9:16", "1:1.85", "1:2", "9:21",
+]
+
+
+def crop_box(width, height, x, y, w, h):
+    """Normalised crop rect -> integer pixel box clamped inside the image, never
+    smaller than one pixel."""
+    left = int(round(min(max(x, 0.0), 1.0) * width))
+    top = int(round(min(max(y, 0.0), 1.0) * height))
+    right = int(round(min(max(x + w, 0.0), 1.0) * width))
+    bottom = int(round(min(max(y + h, 0.0), 1.0) * height))
+
+    left = min(left, width - 1)
+    top = min(top, height - 1)
+    return left, top, max(right, left + 1), max(bottom, top + 1)
 
 
 def has_crop(w, h):

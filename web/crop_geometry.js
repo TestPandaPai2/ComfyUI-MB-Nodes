@@ -1,13 +1,12 @@
 import { accentColor } from "./common.js";
 
-// Crop box maths and painting, shared by the on-node editors of Crop Image (MB)
-// and Load Image Crop (MB). Everything here works in
+// Crop box maths and painting for Load Image Crop (MB). Everything here works in
 // fractions of the image and knows nothing about widgets or LiteGraph.
 
 export const MIN_FRACTION = 0.02;
 export const HANDLE = 8; // hit radius of a corner/edge grip, in canvas pixels
 
-// Fixed presets, keyed the same as RATIOS in nodes/crop_image_node.py.
+// Fixed presets, keyed the same as RATIOS in nodes/load_image_crop_area_node.py.
 export const FIXED_RATIOS = {
     "1:1": 1, "4:3": 4 / 3, "3:2": 3 / 2, "16:10": 16 / 10, "16:9": 16 / 9,
     "1.85:1": 1.85, "2:1": 2, "21:9": 21 / 9,
@@ -28,14 +27,6 @@ const HANDLE_FILL = "#ffffff";
 const TEXT = "#ececee";
 
 export const clamp01 = (v) => Math.min(1, Math.max(0, v));
-
-// Mirrors snap_axis() in nodes/crop_image_node.py, so the readout shows the size
-// that actually comes out.
-export function snapSpan(span, limit, multiple) {
-    const rounded = Math.max(1, Math.round(span));
-    if (multiple <= 1 || multiple > limit) return rounded;
-    return Math.max(multiple, Math.floor(rounded / multiple) * multiple);
-}
 
 // The chosen preset as a ratio in *fraction* space: a pixel ratio has to be
 // expressed against the image's own aspect before it can be applied to a rect
