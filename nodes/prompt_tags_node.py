@@ -89,8 +89,8 @@ def tidy(text):
 
 
 class MBPromptTags(io.ComfyNode):
-    """Write a prompt, name it, and Save Tag. Then @name in the text pulls the
-    saved prompt in when the graph runs."""
+    """Write a prompt; @name pulls a saved prompt in when the graph runs. Right-click
+    for the Tag manager, which holds the tags and this node's options."""
 
     @classmethod
     def define_schema(cls) -> io.Schema:
@@ -102,12 +102,6 @@ class MBPromptTags(io.ComfyNode):
             search_aliases=["prompt tags", "tag", "@ tag", "prompt snippet"],
             inputs=[
                 io.String.Input("text", multiline=True, default=""),
-                io.String.Input(
-                    "tag_name",
-                    default="",
-                    socketless=True,
-                    tooltip="Name the Save Tag button stores the prompt under. Use it as @name.",
-                ),
                 io.Boolean.Input(
                     "dynamic_prompts",
                     default=False,
@@ -128,12 +122,12 @@ class MBPromptTags(io.ComfyNode):
         )
 
     @classmethod
-    def fingerprint_inputs(cls, text, tag_name, dynamic_prompts=False, seed=0):
+    def fingerprint_inputs(cls, text, dynamic_prompts=False, seed=0):
         # A tag edited elsewhere changes the output without changing the inputs.
         return render(text, dynamic_prompts, seed)
 
     @classmethod
-    def execute(cls, text, tag_name, dynamic_prompts=False, seed=0) -> io.NodeOutput:
+    def execute(cls, text, dynamic_prompts=False, seed=0) -> io.NodeOutput:
         return io.NodeOutput(render(text, dynamic_prompts, seed))
 
 

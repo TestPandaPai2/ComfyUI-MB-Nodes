@@ -35,9 +35,16 @@ const OFF_COLOR = "#555";
 let loraFiles = [];
 
 async function fetchLoras() {
-    const r = await api.fetchApi("/models/loras");
-    if (r.ok) loraFiles = await r.json();
+    const r = await api.fetchApi("/mbnodes/model_lists");
+    if (r.ok) loraFiles = (await r.json()).loras;
 }
+
+// nodes/model_watch.py pushes the list when the folder changes.
+api.addEventListener("mbnodes.model_lists", ({ detail }) => {
+    loraFiles = detail.loras;
+    app.graph?.setDirtyCanvas(true, false);
+});
+api.addEventListener("reconnected", fetchLoras);
 
 const basename = (path) => path.split(/[\\/]/).pop();
 const clamp = (v) => Math.min(MAX_STRENGTH, Math.max(MIN_STRENGTH, Math.round(v * 100) / 100));

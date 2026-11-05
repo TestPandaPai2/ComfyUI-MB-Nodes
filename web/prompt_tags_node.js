@@ -1,13 +1,17 @@
-// MB Prompt: Save Tag stores the prompt under tag_name, @ in the text box
-// pops up the saved tags, Manage Tags renames/deletes/loads them. Tags live in
-// PromptTags.json via the routes in nodes/prompt_tags_node.py.
+// MB Prompt: @ in the text box pops up the saved tags. Everything else is in the
+// right-click Tag manager: tags, plus this node's dynamic prompt and seed widgets,
+// which stay hidden on the node. Tags live in PromptTags.json via the routes in nodes/prompt_tags_node.py.
 
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
-import { getWidget, notify } from "./common.js";
+import { getWidget, notify, resizeToContent, setWidgetVisible } from "./common.js";
 import { openDialog } from "./dialog.js";
 
 const TAG_NAME = /^[A-Za-z0-9_-]+$/;
+const HIDDEN_WIDGETS = ["dynamic_prompts", "seed", "control_after_generate"];
+// Workflows saved with the old tag_name widget.
+const OLD_WIDGET_COUNT = 5;
+const OLD_TAG_NAME = 1;
 
 // One copy for every node on the page; refreshed after each change and when a
 // text box gains focus, so tags saved in another tab show up.
@@ -36,112 +40,6 @@ function setText(node, text) {
     if (element && "value" in element) element.value = text;
     widget.callback?.(text);
     node.setDirtyCanvas(true, true);
-}
-
-// ------------------------------------------------------------------- saving
-
-const SAVE_CSS = `
-.mb-ts { display: flex; flex-direction: column; gap: 10px; }
-.mb-ts-name { display: flex; align-items: center; background: var(--comfy-input-bg); border: 1px solid transparent; border-radius: 8px; }
-.mb-ts-name:focus-within { border-color: var(--mb-accent); }
-.mb-ts-name.mb-invalid { border-color: #e5484d; }
-.mb-ts-name span { padding-left: 12px; color: var(--mb-accent); font-weight: 500; }
-.mb-ts-name input { flex: 1; min-width: 0; padding: 8px 12px 8px 3px; background: transparent; color: var(--input-text); border: none; outline: none; font: inherit; }
-.mb-ts-note { font-size: 12px; color: var(--descrip-text); min-height: 16px; }
-.mb-ts-note.mb-warn { color: #e8a33d; }
-.mb-ts-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.mb-ts-compare div { background: var(--comfy-menu-secondary-bg); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; line-height: 1.5; max-height: 160px; overflow-y: auto; white-space: pre-wrap; color: var(--input-text); }
-.mb-ts-compare b { display: block; font-size: 11px; font-weight: 500; color: var(--descrip-text); margin-bottom: 4px; }
-`;
-
-function ensureSaveStyle() {
-    if (document.getElementById("mb-ts-style")) return;
-    const style = document.createElement("style");
-    style.id = "mb-ts-style";
-    style.textContent = SAVE_CSS;
-    document.head.appendChild(style);
-}
-
-// Asks for the name (pre-filled from tag_name). Typing a name that is already
-// saved shows the saved text next to the new one, and Apply then overwrites it.
-async function saveTag(node) {
-    const text = getWidget(node, "text")?.value ?? "";
-    if (!text.trim()) {
-        notify("warn", "Nothing to save", "The prompt is empty.");
-        return;
-    }
-    await fetchTags().catch(() => {});
-    ensureSaveStyle();
-
-    let input;
-    openDialog({
-        title: "Save tag",
-        applyLabel: "Save",
-        width: 480,
-        render(body) {
-            const root = el("div", "mb-ts");
-            const box = el("div", "mb-ts-name");
-            input = el("input");
-            input.value = (getWidget(node, "tag_name")?.value ?? "").trim().replace(/^@/, "").replace(/\s+/g, "_");
-            box.append(el("span", "", "@"), input);
-            const note = el("div", "mb-ts-note");
-            const compare = el("div", "mb-ts-compare");
-
-            const update = () => {
-                const name = input.value.trim().replace(/^@/, "");
-                const valid = TAG_NAME.test(name);
-                box.classList.toggle("mb-invalid", !!name && !valid);
-                const exists = valid && name in tags;
-                const selfRef = valid && new RegExp(`@${name}(?![A-Za-z0-9_-])`).test(text);
-                note.classList.toggle("mb-warn", exists || selfRef || (!!name && !valid));
-                note.textContent = !name ? "Letters, digits, _ and -. Spaces become _."
-                    : !valid ? "Use letters, digits, _ and - only."
-                    : exists ? `@${name} already exists. Saving overwrites it.`
-                    : selfRef ? `@${name} would stay unexpanded inside its own prompt.`
-                    : `Saves as a new tag.`;
-                compare.replaceChildren();
-                if (exists) {
-                    const saved = el("div");
-                    saved.append(el("b", "", "Saved"), tags[name]);
-                    const next = el("div");
-                    next.append(el("b", "", "New"), text);
-                    compare.append(saved, next);
-                }
-            };
-            // A space would end the @name, so it turns into _ as it is typed.
-            input.addEventListener("input", () => {
-                if (/\s/.test(input.value)) {
-                    const caret = input.selectionStart;
-                    input.value = input.value.replace(/\s/g, "_");
-                    input.setSelectionRange(caret, caret);
-                }
-                update();
-            });
-            root.append(box, note, compare);
-            body.appendChild(root);
-            update();
-            setTimeout(() => input.select(), 0);
-        },
-        onApply() {
-            const name = input.value.trim().replace(/^@/, "");
-            if (!TAG_NAME.test(name)) {
-                input.focus();
-                return false;
-            }
-            // The dialog showed whether this overwrites, so saving is the confirmation.
-            post("/mbnodes/prompt_tags/save", { name, text, overwrite: true })
-                .then(({ status, data }) => {
-                    if (status >= 400) throw new Error(data?.error ?? `HTTP ${status}`);
-                    tags = data.tags;
-                    markEdited([data.name]);
-                    const tagName = getWidget(node, "tag_name");
-                    if (tagName) tagName.value = data.name;
-                    node.setDirtyCanvas(true, true);
-                    notify("success", "Tag saved", `@${data.name}`);
-                })
-                .catch((e) => notify("error", "Save failed", e?.message ?? String(e)));
-        },
-    });
 }
 
 // ------------------------------------------------------------- autocomplete
@@ -329,7 +227,14 @@ const MANAGER_CSS = `
     min-width: 640px; min-height: 420px; max-width: calc(100vw - 32px); max-height: calc(100vh - 32px);
 }
 .mb-tm-dialog .mb-dialog-body { flex: 1; min-height: 0; }
-.mb-tm { display: grid; grid-template-columns: 250px minmax(0, 1fr); flex: 1; min-height: 0; margin: -10px -16px -14px; }
+.mb-tm { display: grid; grid-template-columns: 250px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); flex: 1; min-height: 0; margin: -10px -16px -14px; }
+.mb-tm-node { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 8px 16px; border-bottom: 1px solid var(--comfy-input-bg); font-size: 12px; color: var(--descrip-text); }
+.mb-tm-node label { display: flex; align-items: center; gap: 6px; color: var(--input-text); }
+.mb-tm .mb-tm-node input[type=checkbox] { width: auto; accent-color: var(--mb-a); }
+.mb-tm .mb-tm-node input[type=number] { width: 170px; padding: 4px 8px; }
+.mb-tm-node select { padding: 4px 8px; background: var(--comfy-input-bg); color: var(--input-text); border: 1px solid transparent; border-radius: 6px; font: inherit; outline: none; }
+.mb-tm-words { margin-left: auto; cursor: pointer; }
+.mb-tm-words:hover { color: var(--input-text); }
 .mb-tm-side { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--comfy-menu-secondary-bg); border-right: 1px solid var(--comfy-input-bg); min-height: 0; }
 .mb-tm-search { position: relative; }
 .mb-tm-search::before { content: "⌕"; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--descrip-text); font-size: 15px; }
@@ -397,8 +302,6 @@ function ensureManagerStyle() {
 // Same rules as expand() and tidy() in nodes/prompt_tags_node.py; only feeds
 // the previews.
 const TAG_REF = /@([A-Za-z0-9_-]+)(?::(\d+(?:\.\d+)?))?/g;
-// Innermost {a|b|c} group, as CHOICE in nodes/prompt_tags_node.py.
-const CHOICE = /\{[^{}]*\|[^{}]*\}/g;
 
 function expandTags(text, all, chain = []) {
     return text.replace(TAG_REF, (match, name, weight) => {
@@ -501,7 +404,7 @@ async function openManageDialog(node) {
     let visible = []; // rows in list order, for the arrow keys
     let discardArmed = 0;
     const collapsed = new Set();
-    let list, nameBox, nameInput, textInput, backdrop, words, preview, refs, editor, banner, count, status;
+    let list, nameBox, nameInput, textInput, backdrop, words, preview, refs, editor, banner, count, status, nodeWords;
 
     const live = () => draft.filter((t) => !t.deleted);
     const asMap = () => Object.fromEntries(live().map((t) => [t.name.trim(), t.text]));
@@ -680,6 +583,63 @@ async function openManageDialog(node) {
         select(tag);
     }
 
+    function saveNodePrompt() {
+        const text = getWidget(node, "text")?.value ?? "";
+        if (!text.trim()) return notify("warn", "Nothing to save", "The prompt is empty.");
+        const tag = { name: uniqueName("new_tag"), text, orig: null, deleted: false };
+        draft.push(tag);
+        select(tag);
+        nameInput.focus();
+        nameInput.select();
+    }
+
+    function drawNodeWords() {
+        const total = resolve(getWidget(node, "text")?.value ?? "").output.split(/\s+/).filter(Boolean).length;
+        nodeWords.textContent = `→ ${total} word${total === 1 ? "" : "s"}`;
+    }
+
+    // These write straight to the node, separately from Save changes.
+    function nodeStrip() {
+        const strip = el("div", "mb-tm-node", "This node");
+
+        const dynamic = el("input");
+        dynamic.type = "checkbox";
+        dynamic.checked = !!getWidget(node, "dynamic_prompts")?.value;
+        dynamic.addEventListener("change", () => (getWidget(node, "dynamic_prompts").value = dynamic.checked));
+        const dynamicLabel = el("label");
+        dynamicLabel.append(dynamic, "Dynamic prompts");
+
+        const seed = el("input");
+        seed.type = "number";
+        seed.min = 0;
+        seed.value = getWidget(node, "seed")?.value ?? 0;
+        seed.addEventListener("change", () => (getWidget(node, "seed").value = Number(seed.value) || 0));
+        const seedLabel = el("label");
+        seedLabel.append("Seed", seed);
+
+        const controlWidget = getWidget(node, "control_after_generate");
+        const control = el("select");
+        for (const value of controlWidget?.options?.values ?? []) {
+            const option = el("option", "", value);
+            option.value = value;
+            control.appendChild(option);
+        }
+        control.value = controlWidget?.value;
+        control.addEventListener("change", () => (controlWidget.value = control.value));
+
+        nodeWords = el("span", "mb-tm-words");
+        nodeWords.title = "Copy the expanded prompt";
+        nodeWords.addEventListener("click", () => {
+            const { output } = resolve(getWidget(node, "text")?.value ?? "");
+            navigator.clipboard.writeText(output)
+                .then(() => notify("success", "Copied", `${output.length} characters`))
+                .catch((e) => notify("error", "Copy failed", e?.message ?? String(e)));
+        });
+        strip.append(dynamicLabel, seedLabel, control, nodeWords);
+        drawNodeWords();
+        return strip;
+    }
+
     function onText() {
         if (!current || current.deleted) return;
         current.text = textInput.value;
@@ -839,11 +799,17 @@ async function openManageDialog(node) {
 
             const actions = el("div", "mb-tm-actions");
             actions.append(
+                button("Insert into node", () => {
+                    insertTag(node, current.name.trim());
+                    drawNodeWords();
+                    notify("success", "Tag inserted", `@${current.name.trim()}`);
+                }),
                 button("Load into node", () => {
                     setText(node, current.text);
-                    getWidget(node, "tag_name").value = current.name.trim();
+                    drawNodeWords();
                     notify("success", "Tag loaded", `@${current.name.trim()}`);
                 }),
+                button("Save node prompt as tag", saveNodePrompt),
                 button("Duplicate", () => {
                     const tag = { name: uniqueName(`${current.name.trim()}_copy`), text: current.text, orig: null, deleted: false };
                     draft.push(tag);
@@ -860,7 +826,7 @@ async function openManageDialog(node) {
                 labelled("Uses / used by", refs),
                 actions,
             );
-            root.append(side, editor);
+            root.append(nodeStrip(), side, editor);
             body.appendChild(root);
             select(sorted(draft)[0]);
         },
@@ -902,193 +868,58 @@ async function openManageDialog(node) {
     drawList();
 }
 
-// ------------------------------------------------------------- button row
-
-const ROW_H = 26;
-const ROW_MARGIN = 15;
-const ROW_GAP = 8;
-
-// Buttons share one row; each takes an equal slice of the width.
-function buttonRow(buttons) {
-    function rects(width) {
-        const w = (width - ROW_MARGIN * 2 - ROW_GAP * (buttons.length - 1)) / buttons.length;
-        return buttons.map((_, i) => [ROW_MARGIN + i * (w + ROW_GAP), w]);
-    }
-
-    return {
-        type: "mb_button_row",
-        name: "buttons",
-        width: 0,
-        serialize: false,
-        options: { serialize: false },
-
-        computeSize(width) {
-            return [width ?? 0, ROW_H];
-        },
-
-        computeLayoutSize() {
-            return { minHeight: ROW_H, maxHeight: ROW_H, minWidth: 180 };
-        },
-
-        draw(ctx, drawNode, widgetWidth, y) {
-            this.width = widgetWidth || drawNode.size[0];
-            ctx.save();
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.font = "12px Arial";
-            rects(this.width).forEach(([x, w], i) => {
-                ctx.fillStyle = LiteGraph.WIDGET_BGCOLOR;
-                ctx.beginPath();
-                ctx.roundRect(x, y, w, ROW_H, 7);
-                ctx.fill();
-                ctx.fillStyle = LiteGraph.WIDGET_TEXT_COLOR;
-                ctx.fillText(buttons[i][0], x + w / 2, y + ROW_H / 2);
-            });
-            ctx.restore();
-        },
-
-        // Only x decides which button was hit; the widget only receives clicks
-        // inside its own box, whatever origin the renderer measures y from.
-        mouse(event, pos, mouseNode) {
-            if (event.type !== "pointerdown" && event.type !== "mousedown") return false;
-            const hit = rects(this.width || mouseNode.size[0])
-                .findIndex(([x, w]) => pos[0] >= x && pos[0] <= x + w);
-            if (hit < 0) return false;
-            buttons[hit][1](event);
-            return true;
-        },
-    };
+// The tag goes in at the node text box's caret.
+function insertTag(node, name) {
+    const widget = getWidget(node, "text");
+    const textarea = widget?.inputEl ?? widget?.element;
+    const text = widget?.value ?? "";
+    const start = textarea?.selectionStart ?? text.length;
+    const end = textarea?.selectionEnd ?? start;
+    const before = text.slice(0, start);
+    setText(node, `${before}${before && !/\s$/.test(before) ? " " : ""}@${name} ${text.slice(end)}`);
 }
 
-// ------------------------------------------------------------- insert tag
-
-// Searchable list of saved tags (ComfyUI adds its type-to-filter box to dark
-// menus); the pick goes in at the caret.
-async function insertTag(node, textarea, event) {
-    await fetchTags().catch(() => {});
-    const names = Object.keys(tags).sort((a, b) => a.localeCompare(b));
-    if (!names.length) {
-        notify("info", "No tags yet", "Save a prompt as a tag first.");
-        return;
-    }
-    const items = names.map((name) => ({
-        content: `@${name}  ·  ${firstWords(tags[name])}`,
-        callback: () => {
-            const start = textarea?.selectionStart ?? 0;
-            const end = textarea?.selectionEnd ?? start;
-            const text = getWidget(node, "text")?.value ?? "";
-            const before = text.slice(0, start);
-            const insert = `${before && !/\s$/.test(before) ? " " : ""}@${name} `;
-            setText(node, before + insert + text.slice(end));
-            textarea?.focus();
-            textarea?.setSelectionRange(start + insert.length, start + insert.length);
-        },
-    }));
-    new LiteGraph.ContextMenu(items, { event, className: "dark", scale: Math.max(1, app.canvas.ds.scale) });
-}
-
-// ---------------------------------------------------------------- preview
-
-function openPreview(node) {
-    const { output, unknown } = resolve(getWidget(node, "text")?.value ?? "");
-    openDialog({
-        title: "Expanded prompt",
-        applyLabel: "Copy",
-        width: 640,
-        render(body) {
-            ensureManagerStyle();
-            const box = el("div", "mb-tm-preview", output || "(empty)");
-            box.style.maxHeight = "360px";
-            body.appendChild(box);
-            if (getWidget(node, "dynamic_prompts")?.value && output.search(CHOICE) >= 0) {
-                const note = el("div", "", "{a|b} choices are picked with the seed when the graph runs.");
-                note.style.cssText = "color:var(--descrip-text);font-size:12px;margin-top:8px";
-                body.appendChild(note);
-            }
-            if (unknown.length) {
-                const warn = el("div", "", `Unresolved (unknown or self-referencing): ${unknown.map((n) => `@${n}`).join(", ")}`);
-                warn.style.cssText = "color:#e5484d;font-size:12px;margin-top:8px";
-                body.appendChild(warn);
-            }
-        },
-        onApply() {
-            navigator.clipboard.writeText(output)
-                .then(() => notify("success", "Copied", `${output.length} characters`))
-                .catch((e) => notify("error", "Copy failed", e?.message ?? String(e)));
-        },
-    });
-}
-
-const PREVIEW_H = 18;
 const UNKNOWN_COLOR = "#e5484d";
 
-// One line under the buttons: word count of what the node will output, and any
-// @names that won't expand. Click it for the full text.
-function previewLine(node) {
-    return {
-        type: "mb_tag_preview",
-        name: "preview",
-        serialize: false,
-        options: { serialize: false },
-
-        computeSize(width) {
-            return [width ?? 0, PREVIEW_H];
-        },
-
-        computeLayoutSize() {
-            return { minHeight: PREVIEW_H, maxHeight: PREVIEW_H, minWidth: 180 };
-        },
-
-        draw(ctx, drawNode, widgetWidth, y) {
-            const { output, unknown } = resolve(getWidget(node, "text")?.value ?? "");
-            node.__mbUnknown = unknown;
-            const words = output.split(/\s+/).filter(Boolean).length;
-            const main = `→ ${words} word${words === 1 ? "" : "s"}`;
-            ctx.save();
-            ctx.font = "11px Arial";
-            ctx.textAlign = "left";
-            ctx.textBaseline = "middle";
-            // Python's seeded picks can't be reproduced here, so with dynamic
-            // prompts on the line counts the choice groups instead.
-            const choices = getWidget(node, "dynamic_prompts")?.value ? (output.match(CHOICE) ?? []).length : 0;
-            const label = choices ? `${main}  ·  ${choices} choice${choices === 1 ? "" : "s"} picked by seed` : main;
-            ctx.fillStyle = LiteGraph.WIDGET_SECONDARY_TEXT_COLOR ?? "#999";
-            ctx.fillText(label, ROW_MARGIN, y + PREVIEW_H / 2);
-            if (unknown.length) {
-                ctx.fillStyle = UNKNOWN_COLOR;
-                ctx.fillText(`  ·  unresolved: ${unknown.map((n) => `@${n}`).join(", ")}`,
-                    ROW_MARGIN + ctx.measureText(label).width, y + PREVIEW_H / 2);
-            }
-            ctx.restore();
-        },
-
-        mouse(event) {
-            if (event.type !== "pointerdown" && event.type !== "mousedown") return false;
-            openPreview(node);
-            return true;
-        },
-    };
+function hideOptions(node) {
+    for (const name of HIDDEN_WIDGETS) setWidgetVisible(node, name, false);
 }
 
 app.registerExtension({
     name: "MBNodes.PromptTags",
+
+    async beforeRegisterNodeDef(nodeType, nodeData) {
+        if (nodeData.name !== "MBPromptTags") return;
+
+        const configure = nodeType.prototype.configure;
+        nodeType.prototype.configure = function (info) {
+            if (info.widgets_values?.length === OLD_WIDGET_COUNT) {
+                info.widgets_values = info.widgets_values.filter((_, i) => i !== OLD_TAG_NAME);
+            }
+            const result = configure.call(this, info);
+            hideOptions(this);
+            return result;
+        };
+
+        const prev = nodeType.prototype.getExtraMenuOptions;
+        nodeType.prototype.getExtraMenuOptions = function (canvas, options) {
+            prev?.apply(this, arguments);
+            options.unshift({ content: "Tag manager…", callback: () => openManageDialog(this) }, null);
+        };
+    },
 
     async nodeCreated(node) {
         if (node.comfyClass !== "MBPromptTags") return;
         const widget = getWidget(node, "text");
         const textarea = widget?.inputEl ?? widget?.element;
 
-        node.addCustomWidget(buttonRow([
-            ["Save Tag", () => saveTag(node)],
-            ["Insert Tag", (event) => insertTag(node, textarea, event)],
-            ["Manage Tags", () => openManageDialog(node)],
-        ]));
-        node.addCustomWidget(previewLine(node));
+        hideOptions(node);
+        resizeToContent(node);
 
         const prevDraw = node.onDrawForeground;
         node.onDrawForeground = function (ctx) {
             const r = prevDraw?.apply(this, arguments);
-            const count = node.__mbUnknown?.length ?? 0;
+            const count = resolve(getWidget(node, "text")?.value ?? "").unknown.length;
             if (count && !this.flags?.collapsed) {
                 ctx.save();
                 ctx.font = "11px Arial";

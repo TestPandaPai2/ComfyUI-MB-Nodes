@@ -18,6 +18,14 @@ app.registerExtension({
         },
     ],
     async setup() {
+        // !important: the action bar button's own utility classes set these too.
+        const style = document.createElement("style");
+        style.textContent = `
+            .mb-restart-button { background: #dc2626 !important; color: #fff !important; }
+            .mb-restart-button:hover { background: #16a34a !important; }
+            .mb-restart-button .pi { font-size: 1.15rem; font-weight: 700; color: #fff !important; }
+        `;
+        document.head.appendChild(style);
         hideButton("mb-restart-button", app.extensionManager?.setting?.get("MBNodes.Feature.RestartButton") === false);
     },
     actionBarButtons: [

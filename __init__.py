@@ -36,6 +36,7 @@ from .nodes.makeup_mod_prompt_node import NODES as _makeup_mod_prompt
 from .nodes.text_generate_node import NODES as _text_generate
 from .nodes.lora_stack_node import NODES as _lora_stack
 from .nodes.model_combo_node import NODES as _model_combo
+from .nodes import model_watch  # noqa: F401  starts the model folder watch
 from .nodes.pad_image_node import NODES as _pad_image
 from .nodes.preview_anything_node import NODES as _preview_anything
 from .nodes.preview_audio_node import NODES as _preview_audio
