@@ -37,7 +37,7 @@ class MBPromptCombiner(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBPromptCombiner",
-            display_name="Prompt Combiner (MB)",
+            display_name="MB Prompt Combiner",
             category="MBNodes",
             description="Join prompt parts in slot order between a prefix and suffix, with optional tidying and a preview.",
             search_aliases=["prompt combiner", "build prompt", "join prompt", "combine prompt"],

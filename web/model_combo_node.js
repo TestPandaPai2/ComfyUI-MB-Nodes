@@ -1,4 +1,4 @@
-// Load Models Combo (MB): easier picking with many model files.
+// MB Load Models Combo: easier picking with many model files.
 // - Clicking the model / CLIP / VAE dropdowns opens a grouped menu: starred
 //   files, the last few picked, "Search all…" (the stock filterable list),
 //   then files grouped by subfolder.

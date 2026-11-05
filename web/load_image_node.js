@@ -117,7 +117,7 @@ app.registerExtension({
             id: PASTE_ID,
             category: ["MB", "Features", "Clipboard paste"],
             name: "Clipboard paste",
-            tooltip: "Paste from clipboard button on Load Image (MB).",
+            tooltip: "Paste from clipboard button on MB Load Image.",
             type: "boolean",
             defaultValue: true,
             onChange: (on) => {

@@ -14,7 +14,7 @@ class MBRandomLine(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBNodesRandomLine",
-            display_name="Random Line Select (MB)",
+            display_name="MB Random Line Select",
             category="MBNodes",
             description="Select a single line from text using a seed.",
             search_aliases=["random line", "line select", "pick line"],

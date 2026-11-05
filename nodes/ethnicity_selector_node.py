@@ -79,7 +79,7 @@ class MBEthnicitySelector(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBNodesEthnicitySelector",
-            display_name="Ethnicity Selector (MB)",
+            display_name="MB Ethnicity Selector",
             category="MBNodes",
             description="Pick an ethnicity, or a seeded-random one; outputs \"Name: appearance description\".",
             search_aliases=["ethnicity", "ethnic", "appearance", "heritage", "skin tone"],

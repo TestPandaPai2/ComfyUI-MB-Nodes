@@ -53,7 +53,7 @@ class MBBodyModPrompt(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBNodesBodyModPrompt",
-            display_name="Body Modification Prompt (MB)",
+            display_name="MB Body Modification Prompt",
             category="MBNodes",
             description="Pick a body type; outputs its body modification prompt.",
             search_aliases=["body", "body type", "body shape", "body modification"],

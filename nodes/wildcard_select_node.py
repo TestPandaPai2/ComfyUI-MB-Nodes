@@ -68,7 +68,7 @@ class MBWildcardSelect(io.ComfyNode):
         files = wildcard_files()
         return io.Schema(
             node_id="MBNodesWildcardSelect",
-            display_name="Wildcard Select (MB)",
+            display_name="MB Wildcard Select",
             category="MBNodes",
             description="Pick a random item from a wildcard file and apply a prompt weight.",
             search_aliases=["wildcard", "random prompt", "dynamic prompt", "weight"],

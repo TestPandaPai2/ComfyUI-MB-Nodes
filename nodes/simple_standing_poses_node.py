@@ -141,7 +141,7 @@ class MBSimpleStandingPoses(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBNodesSimpleStandingPoses",
-            display_name="Simple Standing Poses (MB)",
+            display_name="MB Simple Standing Poses",
             category="MBNodes",
             inputs=[
                 io.Combo.Input("pose", options=[*POSES, FAVORITES], tooltip="Pose used when randomize_pose is off."),

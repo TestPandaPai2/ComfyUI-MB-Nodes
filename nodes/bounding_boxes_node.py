@@ -1,4 +1,4 @@
-"""Create Bounding Boxes (MB): the core Create Bounding Boxes node for the
+"""MB Create Bounding Boxes: the core Create Bounding Boxes node for the
 legacy (LiteGraph) node UI. The core node's editor only renders in Nodes 2.0;
 here the canvas is a DOM widget from web/bounding_boxes_node.js and the boxes
 travel as JSON in two hidden string widgets. Parsing, preview and element
@@ -23,7 +23,7 @@ class MBCreateBoundingBoxes(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBCreateBoundingBoxes",
-            display_name="Create Bounding Boxes (MB)",
+            display_name="MB Create Bounding Boxes",
             category="MBNodes",
             description=(
                 "Draw bounding boxes in a canvas. Outputs Ideogram prompt elements, pixel-space "

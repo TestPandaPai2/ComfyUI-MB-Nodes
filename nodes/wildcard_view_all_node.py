@@ -1,4 +1,4 @@
-"""View All (MB): pick a file from ComfyUI's wildcards folder and output its
+"""MB View All: pick a file from ComfyUI's wildcards folder and output its
 whole text, unchanged, plus how many items it holds."""
 
 import os
@@ -15,7 +15,7 @@ class MBWildcardViewAll(io.ComfyNode):
         files = wildcard_files()
         return io.Schema(
             node_id="MBWildcardViewAll",
-            display_name="View All (MB)",
+            display_name="MB View All",
             category="MBNodes",
             description="Output the full text of a wildcard file and show it on the node.",
             search_aliases=["view all", "wildcard text", "read wildcard", "show wildcard"],

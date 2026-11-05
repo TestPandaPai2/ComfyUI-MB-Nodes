@@ -642,7 +642,7 @@ class MBPoseSelector(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBNodesPoseSelector",
-            display_name="Pose Selector (MB)",
+            display_name="MB Pose Selector",
             category="MBNodes",
             inputs=[
                 io.DynamicCombo.Input("category", options=[

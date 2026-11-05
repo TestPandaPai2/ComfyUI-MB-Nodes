@@ -100,7 +100,7 @@ class MBLoadImage(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBLoadImage",
-            display_name="Load Image (MB)",
+            display_name="MB Load Image",
             category="MBNodes",
             description="Load an image with an optional resize to a target megapixel count.",
             search_aliases=["load image", "upload image", "image input"],

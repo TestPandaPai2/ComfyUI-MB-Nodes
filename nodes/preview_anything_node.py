@@ -17,7 +17,7 @@ class MBPreviewAnything(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBPreviewAnything",
-            display_name="Preview Anything (MB)",
+            display_name="MB Preview Anything",
             category="MBNodes",
             description="Preview any input on the node -- image/mask/audio/video get a real preview, everything else a text repr -- and pass it through unchanged.",
             search_aliases=["preview anything", "show anything", "print anything", "debug"],

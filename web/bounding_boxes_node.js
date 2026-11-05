@@ -1,4 +1,4 @@
-// Create Bounding Boxes (MB): canvas editor for the legacy node UI, matching
+// MB Create Bounding Boxes: canvas editor for the legacy node UI, matching
 // the core Create Bounding Boxes editor. Drag on empty canvas to draw a box,
 // drag a box to move it, drag a corner grip to resize, Delete removes the
 // selected box. The panel below edits the selected box's type, text,

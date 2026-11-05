@@ -35,7 +35,7 @@ class MBLoadPromptsFromFile(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBLoadPromptsFromFile",
-            display_name="Load Prompts From File (MB)",
+            display_name="MB Load Prompts From File",
             category="MBNodes",
             description="Load a .txt of prompts, split by a delimiter, and batch run each one.",
             search_aliases=["prompts from file", "prompt list", "batch prompts", "load txt"],

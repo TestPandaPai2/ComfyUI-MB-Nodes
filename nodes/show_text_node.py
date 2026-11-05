@@ -9,7 +9,7 @@ class MBShowText(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBShowText",
-            display_name="Show Text (MB)",
+            display_name="MB Show Text",
             category="MBNodes",
             description="Preview text on the node and pass it through.",
             search_aliases=["show text", "preview text", "print text", "display text"],

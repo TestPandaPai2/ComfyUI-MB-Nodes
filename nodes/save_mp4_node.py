@@ -63,7 +63,7 @@ class MBSaveMP4(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBSaveMP4",
-            display_name="Preview/Save Video (MB)",
+            display_name="MB Preview/Save Video",
             category="MBNodes",
             description="Write images and audio to video, or preview only, with a player on the node.",
             search_aliases=["save mp4", "save video", "export video"],

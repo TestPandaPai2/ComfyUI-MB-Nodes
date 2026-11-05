@@ -1089,7 +1089,7 @@ class MBSareeRandomizer(io.ComfyNode):
         styles = list(SAREES)
         return io.Schema(
             node_id="MBNodesSareeRandomizer",
-            display_name="Saree Randomizer (MB)",
+            display_name="MB Saree Randomizer",
             category="MBNodes",
             description="Build a saree prompt from a chosen or random style with random details and an optional random color.",
             search_aliases=["saree", "sari", "random prompt", "outfit"],

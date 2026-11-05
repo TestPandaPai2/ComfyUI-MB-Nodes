@@ -64,7 +64,7 @@ class MBCameraAnglePrompt(io.ComfyNode):
         angles = list(CAMERA_ANGLES)
         return io.Schema(
             node_id="MBNodesCameraAnglePrompt",
-            display_name="Camera Angle Prompt (MB)",
+            display_name="MB Camera Angle Prompt",
             category="MBNodes",
             description="Pick a camera perspective/angle, or a seeded-random one; outputs its prompt.",
             search_aliases=["camera", "angle", "perspective", "shot", "framing"],

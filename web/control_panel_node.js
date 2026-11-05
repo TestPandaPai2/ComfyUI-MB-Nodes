@@ -616,7 +616,7 @@ function openControlPanelSettings(node) {
     let commit = () => {};
 
     openDialog({
-        title: "Control Panel (MB) — Settings",
+        title: "MB Control Panel — Settings",
         width: 400,
         render(body) {
             const list = document.createElement("div");

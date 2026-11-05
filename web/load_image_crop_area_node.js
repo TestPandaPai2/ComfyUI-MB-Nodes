@@ -1,4 +1,4 @@
-// Load Image Crop (MB): crop area picked on the node's preview. Drag on the
+// MB Load Image Crop: crop area picked on the node's preview. Drag on the
 // image to draw a box, drag inside it to move, drag a grip to resize,
 // double-click to clear. Wheel zooms the preview, Alt-drag pans it. The chips
 // in the corner fill, centre or flip the box. The aspect combo locks the box to
@@ -536,7 +536,7 @@ app.registerExtension({
             id: ASPECT_DEFAULT_ID,
             category: ["MB", "Node defaults", "Load Image Crop aspect"],
             name: "Load Image Crop: aspect",
-            tooltip: "aspect value on newly added Load Image Crop (MB) nodes.",
+            tooltip: "aspect value on newly added MB Load Image Crop nodes.",
             type: "combo",
             options: ["free", "source", ...Object.keys(FIXED_RATIOS)],
             defaultValue: "free",

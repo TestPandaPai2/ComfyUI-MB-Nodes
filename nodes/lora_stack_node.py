@@ -149,7 +149,7 @@ class MBLoraStack(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBLoraStack",
-            display_name="LoRA Stack (MB)",
+            display_name="MB LoRA Stack",
             category="MBNodes",
             description="Applies any number of LoRAs, each with an on/off toggle and strength, and outputs the trigger words picked for them.",
             search_aliases=["lora", "lora stack", "lora loader", "multiple loras", "trigger words"],

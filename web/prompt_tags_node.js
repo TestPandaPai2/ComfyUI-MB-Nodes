@@ -1,4 +1,4 @@
-// Prompt (MB): Save Tag stores the prompt under tag_name, @ in the text box
+// MB Prompt: Save Tag stores the prompt under tag_name, @ in the text box
 // pops up the saved tags, Manage Tags renames/deletes/loads them. Tags live in
 // PromptTags.json via the routes in nodes/prompt_tags_node.py.
 

@@ -1,6 +1,6 @@
 import { accentColor } from "./common.js";
 
-// Crop box maths and painting for Load Image Crop (MB). Everything here works in
+// Crop box maths and painting for MB Load Image Crop. Everything here works in
 // fractions of the image and knows nothing about widgets or LiteGraph.
 
 export const MIN_FRACTION = 0.02;

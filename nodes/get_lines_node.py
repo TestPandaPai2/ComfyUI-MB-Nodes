@@ -20,7 +20,7 @@ class MBGetLines(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBGetLines",
-            display_name="Get Lines (MB)",
+            display_name="MB Get Lines",
             category="MBNodes",
             description="Split text into one output per non-blank line.",
             search_aliases=["get lines", "split lines", "text to lines"],

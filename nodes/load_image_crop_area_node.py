@@ -1,4 +1,4 @@
-"""Load Image Crop (MB): load a file and crop it to the area drawn on the
+"""MB Load Image Crop: load a file and crop it to the area drawn on the
 node's preview. Drag to draw the box, drag inside it to move, drag a grip to
 resize, double-click to clear. No box means the full image is output. The rect is
 stored as fractions of the image, so swapping the file keeps the crop
@@ -63,7 +63,7 @@ class MBLoadImageCropArea(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBLoadImageCropArea",
-            display_name="Load Image Crop (MB)",
+            display_name="MB Load Image Crop",
             category="MBNodes",
             description=(
                 "Load an image and crop it to the area selected on the preview. "

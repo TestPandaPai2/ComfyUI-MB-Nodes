@@ -1,4 +1,4 @@
-// LoRA Stack (MB): rows drawn on the canvas like stock widgets, saved as JSON
+// MB LoRA Stack: rows drawn on the canvas like stock widgets, saved as JSON
 // in the hidden `loras` widget (Autogrow can only grow sockets, not rows).
 // - Header: toggle all on/off, and how many rows are on.
 // - Row: ⋮⋮ drag handle to reorder, on/off pill, file name ▾ (click for a

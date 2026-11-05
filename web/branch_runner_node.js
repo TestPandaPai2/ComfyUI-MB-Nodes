@@ -1,4 +1,4 @@
-// Run Branch for Branch Runner (MB). Queues this node through ComfyUI's own
+// Run Branch for MB Branch Runner. Queues this node through ComfyUI's own
 // partial execution (app.queuePrompt's queueNodeIds, the same thing "Queue
 // Selected Output Nodes" uses), which runs it plus everything that feeds it
 // and nothing else. Hovering the button outlines that set; the label counts
@@ -137,7 +137,7 @@ app.registerExtension({
             id: RUNS_DEFAULT_ID,
             category: ["MB", "Node defaults", "Branch Runner runs"],
             name: "Branch Runner: runs",
-            tooltip: "runs value on newly added Branch Runner (MB) nodes.",
+            tooltip: "runs value on newly added MB Branch Runner nodes.",
             type: "number",
             attrs: { min: 1, max: 100, step: 1 },
             defaultValue: 1,

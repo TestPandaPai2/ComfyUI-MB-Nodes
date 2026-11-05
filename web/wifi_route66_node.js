@@ -1,7 +1,7 @@
 import { app } from "../../scripts/app.js";
 import { accentColor, getWidget, resizeToContent } from "./common.js";
 
-// WiFi Send (MB) / WiFi Receive (MB): Route 66 without the wire. A sender
+// MB WiFi Send / MB WiFi Receive: Route 66 without the wire. A sender
 // takes lanes under a channel name; every receiver on that channel, in the
 // root graph or any subgraph, outputs the same lanes. Both are frontend-only
 // virtual nodes: when the prompt is built, a receiver's output i resolves
@@ -208,7 +208,7 @@ app.registerExtension({
 
     registerCustomNodes() {
         class WiFiSend extends LGraphNode {
-            static title = "WiFi Send (MB)";
+            static title = "MB WiFi Send";
             static category = "MBNodes";
             serialize_widgets = true;
 
@@ -249,7 +249,7 @@ app.registerExtension({
             applyToGraph() {
                 const channel = channelOf(this);
                 if (isDuplicate(channel)) {
-                    throw new Error(`WiFi channel "${channel}" has more than one WiFi Send (MB), or its sender sits in a subgraph placed more than once. Rename one of them.`);
+                    throw new Error(`WiFi channel "${channel}" has more than one MB WiFi Send, or its sender sits in a subgraph placed more than once. Rename one of them.`);
                 }
             }
 
@@ -274,7 +274,7 @@ app.registerExtension({
         }
 
         class WiFiReceive extends LGraphNode {
-            static title = "WiFi Receive (MB)";
+            static title = "MB WiFi Receive";
             static category = "MBNodes";
             serialize_widgets = true;
 
@@ -296,10 +296,10 @@ app.registerExtension({
                 const { state } = signalOf(this);
                 const used = this.outputs.some((_, i) => this.isOutputConnected(i));
                 if (state === "duplicate") {
-                    throw new Error(`WiFi channel "${channelOf(this)}" has more than one WiFi Send (MB), or its sender sits in a subgraph placed more than once. Rename one of them.`);
+                    throw new Error(`WiFi channel "${channelOf(this)}" has more than one MB WiFi Send, or its sender sits in a subgraph placed more than once. Rename one of them.`);
                 }
                 if (state === "none" && used) {
-                    throw new Error(`WiFi Receive (MB) #${this.id}: no WiFi Send (MB) on channel "${channelOf(this)}".`);
+                    throw new Error(`MB WiFi Receive #${this.id}: no MB WiFi Send on channel "${channelOf(this)}".`);
                 }
             }
 

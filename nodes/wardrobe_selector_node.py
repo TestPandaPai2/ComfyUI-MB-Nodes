@@ -1413,7 +1413,7 @@ class MBWardrobeSelector(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBNodesWardrobeSelector",
-            display_name="Woman's Wardrobe Selector (MB)",
+            display_name="MB Woman's Wardrobe Selector",
             category="MBNodes",
             description="Output a woman's outfit description from a chosen or random category and style.",
             search_aliases=["wardrobe", "outfit", "clothing", "dress", "gown", "random prompt"],

@@ -29,7 +29,7 @@ class MBSampler(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBSampler",
-            display_name="Sampler (MB)",
+            display_name="MB Sampler",
             category="MBNodes",
             description="KSampler with an optional second pass that upscales the latent and samples it again.",
             search_aliases=["ksampler", "sampler", "sample", "generate", "hires fix", "two pass", "upscale sampler"],

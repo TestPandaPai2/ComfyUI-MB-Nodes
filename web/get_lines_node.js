@@ -1,7 +1,7 @@
 import { app } from "../../scripts/app.js";
 import { getWidget, resizeToContent } from "./common.js";
 
-// Get Lines (MB): one output per line of the incoming text. In auto mode the
+// MB Get Lines: one output per line of the incoming text. In auto mode the
 // count follows the text widget feeding the node (refreshed as it is edited)
 // or, when the text only exists at run time, the count Python reports after a
 // run. Right-click -> Lines pins a fixed count instead.
@@ -205,7 +205,7 @@ app.registerExtension({
             id: MODE_DEFAULT_ID,
             category: ["MB", "Node defaults", "Get Lines mode"],
             name: "Get Lines: start mode",
-            tooltip: "Line mode of newly added Get Lines (MB) nodes.",
+            tooltip: "Line mode of newly added MB Get Lines nodes.",
             type: "combo",
             options: MODE_OPTIONS,
             defaultValue: AUTO,

@@ -11,7 +11,7 @@ class MBSlider(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBSlider",
-            display_name="Slider (MB)",
+            display_name="MB Slider",
             category="MBNodes",
             description="Slider whose output takes the type, range and step of the input it is connected to.",
             inputs=[

@@ -1,4 +1,4 @@
-// Load Two Images (MB): two side-by-side panels over the hidden image1/image2
+// MB Load Two Images: two side-by-side panels over the hidden image1/image2
 // combos. Each panel takes a picker choice, an upload, or a dropped file. Ctrl+V
 // fills the clicked panel, else the first empty one, else Image1.
 

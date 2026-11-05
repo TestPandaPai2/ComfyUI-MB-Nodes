@@ -1,5 +1,5 @@
-"""Reading and writing prompt .txt files for Prompt Pad (MB) and System Prompt
-(MB). Saving and loading are frontend actions — buttons on the node — so they
+"""Reading and writing prompt .txt files for MB Prompt Pad and MB System Prompt.
+Saving and loading are frontend actions — buttons on the node — so they
 run over these routes rather than as part of a graph run."""
 
 import os

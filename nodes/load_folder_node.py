@@ -95,7 +95,7 @@ class MBLoadImagesFromFolder(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBLoadImagesFromFolder",
-            display_name="Load Images from Folder (MB)",
+            display_name="MB Load Images from Folder",
             category="MBNodes",
             description="Load all images in a local folder, or a selection of them, as one image batch.",
             search_aliases=["load images", "folder", "batch load", "image folder"],

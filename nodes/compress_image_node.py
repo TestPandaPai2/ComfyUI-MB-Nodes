@@ -65,7 +65,7 @@ class MBCompressImage(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBCompressImage",
-            display_name="Compress Image (MB)",
+            display_name="MB Compress Image",
             category="MBNodes",
             description="Compress and convert images to jpg, webp or png, with quality, target size and resize controls.",
             search_aliases=["compress image", "convert image", "jpg", "webp", "png"],

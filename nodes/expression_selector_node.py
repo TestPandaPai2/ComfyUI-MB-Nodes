@@ -294,7 +294,7 @@ class MBExpressionSelector(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBNodesExpressionSelector",
-            display_name="Expression Selector (MB)",
+            display_name="MB Expression Selector",
             category="MBNodes",
             description="Pick a facial expression by category, or a seeded-random one from that category; outputs its prompt.",
             search_aliases=["expression", "face", "emotion", "mood"],

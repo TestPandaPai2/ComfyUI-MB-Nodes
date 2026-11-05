@@ -1,4 +1,4 @@
-r"""Covers Save Image (MB): preset mapping, avif with alpha, the pass-through
+r"""Covers MB Save Image: preset mapping, avif with alpha, the pass-through
 output, size stats, the compare payload and the live re-encode.
 
 Run from the ComfyUI root:

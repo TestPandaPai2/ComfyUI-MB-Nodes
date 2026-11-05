@@ -100,7 +100,7 @@ class MBModelCombo(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBModelCombo",
-            display_name="Load Models Combo (MB)",
+            display_name="MB Load Models Combo",
             category="MBNodes",
             description="Loads a diffusion model, CLIP, and VAE from one node.",
             search_aliases=["load models", "checkpoint", "unet", "clip", "vae", "combo loader"],

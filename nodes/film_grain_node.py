@@ -49,7 +49,7 @@ class MBFilmGrain(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBFilmGrain",
-            display_name="Film Grain (MB)",
+            display_name="MB Film Grain",
             category="MBNodes",
             description="Add realistic film grain. Pick a film stock preset or Custom to use the sliders.",
             search_aliases=["film grain", "grain", "noise", "film look"],

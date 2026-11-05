@@ -1,4 +1,4 @@
-// Replace Text Advanced (MB): find/replace pairs as side-by-side text boxes.
+// MB Replace Text Advanced: find/replace pairs as side-by-side text boxes.
 // Native widgets always stack, so these boxes write to hidden string widgets.
 
 import { app } from "../../scripts/app.js";

@@ -82,7 +82,7 @@ class MBImageToSVG(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBImageToSVG",
-            display_name="Image To SVG (MB)",
+            display_name="MB Image To SVG",
             category="MBNodes",
             description="Vectorize images into SVG with vtracer. Outputs one SVG string per image and a render of the SVG to compare against the source.",
             search_aliases=["image to svg", "vectorize", "vector", "trace", "svg", "vtracer"],

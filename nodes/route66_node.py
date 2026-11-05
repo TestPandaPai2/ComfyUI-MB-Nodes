@@ -17,7 +17,7 @@ class MBRoute66(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBRoute66",
-            display_name="Route 66 (MB)",
+            display_name="MB Route 66",
             category="MBNodes",
             description="Multi-lane reroute -- pass many wires through one tidy node, one lane per wire, lanes grow as you connect. Keeps big workflows clean.",
             search_aliases=["reroute", "multi reroute", "route", "route 66", "passthrough", "bus"],

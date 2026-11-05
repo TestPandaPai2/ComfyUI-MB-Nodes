@@ -60,7 +60,7 @@ class MBStyleModifier(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBNodesStyleModifier",
-            display_name="Style Modifier (MB)",
+            display_name="MB Style Modifier",
             category="MBNodes",
             description="Pick an art style, or a seeded-random one; outputs the style's prompt fragment.",
             search_aliases=["style", "art style", "aesthetic", "medium", "look"],

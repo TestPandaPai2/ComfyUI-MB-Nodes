@@ -37,7 +37,7 @@ class MBRotateImage(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBRotateImage",
-            display_name="Rotate Image (MB)",
+            display_name="MB Rotate Image",
             category="MBNodes",
             description="Rotate an image a quarter, half or three-quarter turn, either direction.",
             search_aliases=["rotate image", "turn", "90", "180", "270", "flip orientation"],

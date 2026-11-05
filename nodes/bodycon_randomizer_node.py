@@ -1197,7 +1197,7 @@ class MBBodyconRandomizer(io.ComfyNode):
         styles = list(DRESSES)
         return io.Schema(
             node_id="MBNodesBodyconRandomizer",
-            display_name="Bodycon Randomizer (MB)",
+            display_name="MB Bodycon Randomizer",
             category="MBNodes",
             description="Build a bodycon dress prompt from a chosen or random style with random details and an optional random color.",
             search_aliases=["bodycon", "dress", "outfit", "random prompt"],

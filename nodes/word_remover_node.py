@@ -1,4 +1,4 @@
-"""Word Remover (MB): strip a list of words or phrases out of a text. Matches are
+"""MB Word Remover: strip a list of words or phrases out of a text. Matches are
 whole-word and case-insensitive, and the leftover double spaces and empty comma
 slots are tidied so a prompt reads cleanly afterwards."""
 
@@ -33,7 +33,7 @@ class MBWordRemover(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBWordRemover",
-            display_name="Word Remover (MB)",
+            display_name="MB Word Remover",
             category="MBNodes",
             description="Remove words or phrases (comma or newline separated) from a text, whole-word and ignoring case.",
             search_aliases=["remove words", "word remover", "strip words", "delete words"],

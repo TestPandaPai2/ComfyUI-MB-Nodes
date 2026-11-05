@@ -100,7 +100,7 @@ class MBKrea2Styles(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBNodesKrea2Styles",
-            display_name="Krea2 Styles (MB)",
+            display_name="MB Krea2 Styles",
             category="MBNodes",
             description="Pick a Krea2 prompt style by category; outputs \"StyleName: Prompt\".",
             search_aliases=["krea", "krea2", "style", "prompt style"],

@@ -1,4 +1,4 @@
-"""Prompt (MB): save the prompt under a tag name, then write @name in any
+"""MB Prompt: save the prompt under a tag name, then write @name in any
 Prompt Tags node to pull that prompt in. Tags live in one JSON file shared by
 every workflow; saving and managing them are frontend actions over the routes
 below, expansion happens when the graph runs."""
@@ -96,7 +96,7 @@ class MBPromptTags(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBPromptTags",
-            display_name="Prompt (MB)",
+            display_name="MB Prompt",
             category="MBNodes",
             description="Save prompts as @tags and reuse them by name. Tags expand recursively when the graph runs.",
             search_aliases=["prompt tags", "tag", "@ tag", "prompt snippet"],

@@ -59,7 +59,7 @@ class MBTextGenerate(io.ComfyNode):
         ]
         return io.Schema(
             node_id="MBNodesTextGenerate",
-            display_name="Text Generate (MB)",
+            display_name="MB Text Generate",
             category="MBNodes",
             description="Generate text with a local text encoder LLM, from a prompt plus optional images, video and audio.",
             search_aliases=["LLM", "generate text", "qwen", "gemma", "caption"],

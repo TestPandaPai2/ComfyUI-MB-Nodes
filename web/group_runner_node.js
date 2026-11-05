@@ -1,4 +1,4 @@
-// Group Runner (MB): one row per group that holds live output nodes, with a
+// MB Group Runner: one row per group that holds live output nodes, with a
 // Run button (app.queuePrompt's queueNodeIds, the same partial-execution call
 // Branch Runner uses) and a Fit button (canvas.animateToBounds onto the group).
 // The list is rebuilt from onDrawForeground whenever a cheap signature of the

@@ -17,7 +17,7 @@ class MBControlPanel(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBControlPanel",
-            display_name="Control Panel (MB)",
+            display_name="MB Control Panel",
             category="MBNodes",
             description=(
                 "Up to 16 controls (slider, switch, dropdown, seed, text) in one node. "

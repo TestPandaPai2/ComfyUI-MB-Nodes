@@ -1,6 +1,6 @@
 from comfy_api.latest import io
 
-# Saving and loading live in prompt_store, shared with System Prompt (MB).
+# Saving and loading live in prompt_store, shared with MB System Prompt.
 from . import prompt_store  # noqa: F401  (imported for its routes)
 
 
@@ -12,7 +12,7 @@ class MBPromptPad(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBPromptPad",
-            display_name="Prompt Pad (MB)",
+            display_name="MB Prompt Pad",
             category="MBNodes",
             description="Write prompts, keep them, and save them to SavedPrompts as .txt files.",
             search_aliases=["prompt pad", "save prompt", "prompt notes"],

@@ -838,7 +838,7 @@ class MBDressRandomizer(io.ComfyNode):
         styles = list(DRESSES)
         return io.Schema(
             node_id="MBNodesDressRandomizer",
-            display_name="Dress Randomizer (MB)",
+            display_name="MB Dress Randomizer",
             category="MBNodes",
             description="Build a dress prompt from a chosen or random style's description with random extra details and an optional random color.",
             search_aliases=["dress", "outfit", "random prompt"],

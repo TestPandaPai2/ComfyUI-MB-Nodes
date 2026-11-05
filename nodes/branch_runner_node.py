@@ -11,7 +11,7 @@ class MBBranchRunner(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBBranchRunner",
-            display_name="Branch Runner (MB)",
+            display_name="MB Branch Runner",
             category="MBNodes",
             description=(
                 "Drop this at the end of a branch and hit Run Branch to queue "

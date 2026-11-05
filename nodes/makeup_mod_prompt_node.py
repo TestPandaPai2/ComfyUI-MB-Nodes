@@ -103,7 +103,7 @@ class MBMakeupModPrompt(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBNodesMakeupModPrompt",
-            display_name="Makeup Mod Prompt (MB)",
+            display_name="MB Makeup Mod Prompt",
             category="MBNodes",
             description="Pick a makeup style; outputs its makeup modification prompt.",
             search_aliases=["makeup", "makeup style", "makeup modification"],

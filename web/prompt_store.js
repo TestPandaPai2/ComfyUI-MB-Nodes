@@ -1,5 +1,5 @@
-// Save and load for the prompt text boxes — Prompt Pad (MB) and System Prompt
-// (MB). Both talk to the routes in nodes/prompt_store.py; the only difference
+// Save and load for the prompt text boxes — MB Prompt Pad and MB System Prompt.
+// Both talk to the routes in nodes/prompt_store.py; the only difference
 // is which folder they default to.
 
 import { api } from "../../scripts/api.js";

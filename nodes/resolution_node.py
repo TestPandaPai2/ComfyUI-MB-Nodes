@@ -59,7 +59,7 @@ class MBResolution(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBResolution",
-            display_name="Resolution (MB)",
+            display_name="MB Resolution",
             category="MBNodes",
             description="Pick an aspect ratio and a resolution; outputs width, height and an empty latent.",
             search_aliases=["resolution", "aspect ratio", "empty latent"],

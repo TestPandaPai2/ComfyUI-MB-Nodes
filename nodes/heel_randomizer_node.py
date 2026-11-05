@@ -262,7 +262,7 @@ class MBHeelRandomizer(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBNodesHeelRandomizer",
-            display_name="Heel Randomizer (MB)",
+            display_name="MB Heel Randomizer",
             category="MBNodes",
             description="Build a heel prompt from a chosen or random heel style's description with random extra details and an optional random color.",
             search_aliases=["heels", "shoes", "footwear", "outfit", "random prompt"],

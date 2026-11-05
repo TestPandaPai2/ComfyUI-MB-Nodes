@@ -9,7 +9,7 @@ class MBText(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBNodesText",
-            display_name="Text (MB)",
+            display_name="MB Text",
             category="MBNodes",
             description="Multiline text box with dynamic prompts enabled.",
             search_aliases=["text", "string", "prompt text"],

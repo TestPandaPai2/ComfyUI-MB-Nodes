@@ -3,7 +3,7 @@ import { getWidget, notify } from "./common.js";
 import { openDialog } from "./dialog.js";
 import { fetchFiles, fetchText, post, setText } from "./prompt_store.js";
 
-const FOLDER = "system"; // the pack's SystemPrompts folder, shared with System Prompt (MB)
+const FOLDER = "system"; // the pack's SystemPrompts folder, shared with MB System Prompt
 
 const HOW_TO = [
     ["1. Pick a model", "Choose an LLM text encoder in clip_name (Qwen, Gemma, ...) and set type to match it, the same as on CLIP Loader. Plain CLIP or T5 encoders can't write text."],
@@ -31,7 +31,7 @@ function showHowTo() {
     });
 }
 
-function openPresetEditor(node) {
+export function openPresetEditor(node) {
     const initial = getWidget(node, "system_prompt")?.value ?? "";
     let name, text, close;
     let saving = false;
@@ -84,7 +84,8 @@ function openPresetEditor(node) {
     text.focus();
 }
 
-async function openPresetList(node, event, menu) {
+// `extra` is [name, text] pairs listed ahead of the saved files.
+export async function openPresetList(node, event, menu, extra = []) {
     let files;
     try {
         files = (await fetchFiles(FOLDER)).files ?? [];
@@ -101,7 +102,10 @@ async function openPresetList(node, event, menu) {
             }
         },
     }));
-    new LiteGraph.ContextMenu(items.length ? items : [{ content: "(none saved)", disabled: true }], { event, parentMenu: menu });
+    const fixed = extra.map(([content, text]) => ({ content, callback: () => setText(node, text, "system_prompt") }));
+    if (fixed.length && items.length) fixed.push(null);
+    const all = [...fixed, ...items];
+    new LiteGraph.ContextMenu(all.length ? all : [{ content: "(none saved)", disabled: true }], { event, parentMenu: menu });
 }
 
 app.registerExtension({

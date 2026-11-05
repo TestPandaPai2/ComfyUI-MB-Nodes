@@ -30,7 +30,7 @@ class MBLoadVideo(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBLoadVideo",
-            display_name="Load Video (MB)",
+            display_name="MB Load Video",
             category="MBNodes",
             description="Load a video and output its frames, audio, frame rate and length in seconds.",
             search_aliases=["load video", "upload video", "video input", "video to frames"],

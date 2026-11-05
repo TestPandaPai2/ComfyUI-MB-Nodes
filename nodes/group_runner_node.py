@@ -11,7 +11,7 @@ class MBGroupRunner(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBGroupRunner",
-            display_name="Group Runner (MB)",
+            display_name="MB Group Runner",
             category="MBNodes",
             description=(
                 "Lists every group with output nodes. Run queues only that group's "

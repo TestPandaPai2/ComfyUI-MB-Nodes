@@ -1,4 +1,4 @@
-"""Load Two Images (MB): two files side by side on one node, each with its own
+"""MB Load Two Images: two files side by side on one node, each with its own
 output and a shared megapixel cap. The face lives in web/load_two_images_node.js."""
 
 import hashlib
@@ -69,7 +69,7 @@ class MBLoadTwoImages(io.ComfyNode):
         files = _image_files()
         return io.Schema(
             node_id="MBLoadTwoImages",
-            display_name="Load Two Images (MB)",
+            display_name="MB Load Two Images",
             category="MBNodes",
             description="Load two images in one node, with drag and drop, paste, and a shared megapixel cap.",
             search_aliases=["load two images", "load 2 images", "dual image", "image pair"],

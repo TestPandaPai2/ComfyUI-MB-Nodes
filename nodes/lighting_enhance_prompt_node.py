@@ -92,7 +92,7 @@ class MBLightingEnhancePrompt(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBNodesLightingEnhancePrompt",
-            display_name="Lighting Enhance Prompt (MB)",
+            display_name="MB Lighting Enhance Prompt",
             category="MBNodes",
             description="Pick a lighting style; outputs its lighting enhancement prompt.",
             search_aliases=["lighting", "light", "lighting style", "relight"],

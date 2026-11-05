@@ -1,30 +1,15 @@
-// Prompt Expander (MB): picking a preset fills the system prompt box, Save
-// Preset stores the box under preset_name, Delete Preset removes a custom one,
-// Pick Model lists the models Ollama has installed. Presets live in
-// ExpanderPresets.json via the routes in nodes/prompt_expander_node.py.
+// MB Prompt Expander: system prompt presets and the Ollama model list live in the
+// right-click menu. Presets save to the same folder as MB Text Generate.
 
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
-import { addButton, getWidget, notify, resizeToContent } from "./common.js";
+import { getWidget, notify, resizeToContent } from "./common.js";
 import { openDialog } from "./dialog.js";
+import { openPresetEditor, openPresetList } from "./text_generate_node.js";
 
-let builtin = {};
-let custom = {};
-
-async function fetchPresets() {
-    const data = await (await api.fetchApi("/mbnodes/expander_presets")).json();
-    builtin = data.builtin ?? {};
-    custom = data.custom ?? {};
-}
-
-async function post(route, body) {
-    const response = await api.fetchApi(route, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-    });
-    return { status: response.status, data: await response.json() };
-}
+// Workflows saved with the old preset and preset_name widgets.
+const OLD_WIDGET_COUNT = 11;
+const OLD_WIDGETS = [1, 3];
 
 // Multiline widgets keep a DOM element of their own under Nodes 2.0, which does
 // not follow widget.value on its own.
@@ -37,78 +22,15 @@ function setValue(node, name, value) {
     node.setDirtyCanvas(true, true);
 }
 
-// Every Prompt Expander on the page shares one preset list.
-function refreshCombos(select) {
-    const names = [...Object.keys(builtin), ...Object.keys(custom)];
-    for (const node of app.graph.nodes) {
-        if (node.comfyClass !== "MBPromptExpander") continue;
-        const widget = getWidget(node, "preset");
-        if (!widget) continue;
-        widget.options.values = names;
-        if (node === select?.node) widget.value = select.name;
-        else if (!names.includes(widget.value)) widget.value = names[0];
-        node.setDirtyCanvas(true, true);
-    }
-}
-
-function applyPreset(node, name) {
-    const text = custom[name] ?? builtin[name];
-    if (text === undefined) return;
-    setValue(node, "system_prompt", text);
-    if (name in custom) setValue(node, "preset_name", name);
-}
-
-async function savePreset(node) {
-    const name = (getWidget(node, "preset_name")?.value ?? "").trim();
-    const text = getWidget(node, "system_prompt")?.value ?? "";
-
-    if (!name) {
-        notify("warn", "No preset name", "Type a name in preset_name first.");
-        return;
-    }
-    if (!text.trim()) {
-        notify("warn", "Nothing to save", "The system prompt is empty.");
-        return;
-    }
-
+async function loadPresets(node, event, menu) {
+    let extra = [];
     try {
-        let result = await post("/mbnodes/expander_presets/save", { name, text, overwrite: false });
-        if (result.status === 409) {
-            if (!confirm(`"${name}" already exists.\n\nOverwrite it?`)) return;
-            result = await post("/mbnodes/expander_presets/save", { name, text, overwrite: true });
-        }
-        if (result.status >= 400) {
-            notify("error", "Save failed", result.data?.error ?? `HTTP ${result.status}`);
-            return;
-        }
-        custom = result.data.custom;
-        refreshCombos({ node, name });
-        notify("success", "Preset saved", name);
+        const data = await (await api.fetchApi("/mbnodes/expander_presets")).json();
+        extra = Object.entries({ ...data.builtin, ...data.custom });
     } catch (e) {
-        notify("error", "Save failed", e?.message ?? String(e));
+        notify("error", "Presets not loaded", e?.message ?? String(e));
     }
-}
-
-async function deletePreset(node) {
-    const name = getWidget(node, "preset")?.value;
-    if (!(name in custom)) {
-        notify("warn", "Built-in preset", "Only custom presets can be deleted.");
-        return;
-    }
-    if (!confirm(`Delete the preset "${name}"?`)) return;
-
-    try {
-        const result = await post("/mbnodes/expander_presets/delete", { name });
-        if (result.status >= 400) {
-            notify("error", "Delete failed", result.data?.error ?? `HTTP ${result.status}`);
-            return;
-        }
-        custom = result.data.custom;
-        refreshCombos();
-        notify("success", "Preset deleted", name);
-    } catch (e) {
-        notify("error", "Delete failed", e?.message ?? String(e));
-    }
+    openPresetList(node, event, menu, extra);
 }
 
 async function pickModel(node) {
@@ -162,21 +84,31 @@ async function pickModel(node) {
 app.registerExtension({
     name: "MBNodes.PromptExpander",
 
+    async beforeRegisterNodeDef(nodeType, nodeData) {
+        if (nodeData.name !== "MBPromptExpander") return;
+
+        const configure = nodeType.prototype.configure;
+        nodeType.prototype.configure = function (info) {
+            if (info.widgets_values?.length === OLD_WIDGET_COUNT) {
+                info.widgets_values = info.widgets_values.filter((_, i) => !OLD_WIDGETS.includes(i));
+            }
+            return configure.call(this, info);
+        };
+
+        const prev = nodeType.prototype.getExtraMenuOptions;
+        nodeType.prototype.getExtraMenuOptions = function (canvas, options) {
+            prev?.apply(this, arguments);
+            options.push(
+                null,
+                { content: "Save System Prompt as Preset…", callback: () => openPresetEditor(this) },
+                { content: "Load System Prompt Preset", has_submenu: true, callback: (v, o, event, menu) => loadPresets(this, event, menu) },
+                { content: "Pick Ollama Model…", callback: () => pickModel(this) },
+            );
+        };
+    },
+
     async nodeCreated(node) {
         if (node.comfyClass !== "MBPromptExpander") return;
-
-        const preset = getWidget(node, "preset");
-        if (preset) {
-            const original = preset.callback;
-            preset.callback = function (value, ...rest) {
-                applyPreset(node, value);
-                return original?.call(this, value, ...rest);
-            };
-        }
-
-        addButton(node, "Save Preset", () => savePreset(node));
-        addButton(node, "Delete Preset", () => deletePreset(node));
-        addButton(node, "Pick Model", () => pickModel(node));
 
         const prompt = getWidget(node, "prompt");
         if (prompt) {
@@ -186,12 +118,5 @@ app.registerExtension({
 
         resizeToContent(node);
         node.setSize([Math.max(node.size[0], 360), node.size[1]]);
-
-        try {
-            await fetchPresets();
-            refreshCombos();
-        } catch (e) {
-            notify("error", "Presets not loaded", e?.message ?? String(e));
-        }
     },
 });

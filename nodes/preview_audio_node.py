@@ -89,7 +89,7 @@ class MBPreviewAudio(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBPreviewAudio",
-            display_name="Preview Audio (MB)",
+            display_name="MB Preview Audio",
             category="MBNodes",
             description="Preview audio with a node-side volume slider, and optionally save it as mp3/opus/wav/flac.",
             search_aliases=["preview audio", "play audio", "save audio", "export audio"],

@@ -215,7 +215,7 @@ class MBSaveImage(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBSaveImage",
-            display_name="Save Image (MB)",
+            display_name="MB Save Image",
             category="MBNodes",
             description="Save, preview or compare images with a format picker, quality presets and a custom output folder.",
             search_aliases=["save image", "preview image", "export image", "compare image", "avif"],

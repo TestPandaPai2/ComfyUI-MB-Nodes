@@ -1,6 +1,6 @@
-"""Prompt Expander (MB): sends a short prompt and a system prompt to a local
-Ollama server and outputs the rewrite. The system prompt box is filled from a
-preset — built in, or saved from the node into ExpanderPresets.json."""
+"""MB Prompt Expander: sends a short prompt and a system prompt to a local
+Ollama server and outputs the rewrite. Right-click the node to load a built-in
+or saved system prompt preset. ExpanderPresets.json holds older saved presets."""
 
 import asyncio
 import json
@@ -18,7 +18,6 @@ PACK_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PRESETS_FILE = os.path.join(PACK_ROOT, "ExpanderPresets.json")
 
 DEFAULT_URL = "http://127.0.0.1:11434"
-MAX_NAME = 64
 
 BUILTIN_PRESETS = {
     "Detailed photo": (
@@ -82,13 +81,6 @@ def load_custom():
     return {k: v for k, v in data.items() if isinstance(v, str) and k not in BUILTIN_PRESETS}
 
 
-def write_custom(presets):
-    tmp = PRESETS_FILE + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(dict(sorted(presets.items())), f, indent=2, ensure_ascii=False)
-    os.replace(tmp, PRESETS_FILE)
-
-
 def ollama(url, route, payload=None, timeout=300):
     data = json.dumps(payload).encode("utf-8") if payload is not None else None
     request = urllib.request.Request(url.rstrip("/") + route, data=data, headers={"Content-Type": "application/json"})
@@ -114,37 +106,21 @@ def clean(text):
 
 
 class MBPromptExpander(io.ComfyNode):
-    """Pick a system prompt preset (or edit the box), then the prompt is
-    rewritten by a local Ollama model when the graph runs."""
+    """The prompt is rewritten by a local Ollama model when the graph runs."""
 
     @classmethod
     def define_schema(cls) -> io.Schema:
-        # Re-read on every validation, so a preset saved from the node is valid at once.
-        presets = list(BUILTIN_PRESETS) + list(load_custom())
         return io.Schema(
             node_id="MBPromptExpander",
-            display_name="Prompt Expander (MB)",
+            display_name="MB Prompt Expander",
             category="MBNodes",
-            description="Expand a short prompt with a local Ollama model. System prompt presets are built in, and you can save your own.",
+            description="Expand a short prompt with a local Ollama model. Right-click for system prompt presets.",
             search_aliases=["prompt expander", "prompt enhancer", "ollama", "llm", "expand prompt"],
             inputs=[
                 io.String.Input("prompt", multiline=True, default=""),
-                io.Combo.Input(
-                    "preset",
-                    options=presets,
-                    default=presets[0],
-                    socketless=True,
-                    tooltip="Fills the system prompt box. The box is what gets sent, edits included.",
-                ),
-                io.String.Input("system_prompt", multiline=True, default=BUILTIN_PRESETS[presets[0]]),
-                io.String.Input(
-                    "preset_name",
-                    default="",
-                    socketless=True,
-                    tooltip="Name the Save Preset button stores the system prompt under.",
-                ),
+                io.String.Input("system_prompt", multiline=True, default=BUILTIN_PRESETS["Detailed photo"]),
                 io.String.Input("url", default=DEFAULT_URL, socketless=True),
-                io.String.Input("model", default="qwen3:8b", socketless=True, tooltip="Ollama model name. Pick Model lists the installed ones."),
+                io.String.Input("model", default="qwen3:8b", socketless=True, tooltip="Ollama model name. Right-click to pick an installed one."),
                 io.Float.Input("temperature", default=0.7, min=0.0, max=2.0, step=0.05),
                 io.Int.Input("max_tokens", default=0, min=0, max=32768, step=16, tooltip="Cap on generated tokens. 0 = no limit."),
                 io.Int.Input("seed", default=0, min=0, max=MAX_SEED, control_after_generate=True),
@@ -159,7 +135,7 @@ class MBPromptExpander(io.ComfyNode):
         )
 
     @classmethod
-    def execute(cls, prompt, preset, system_prompt, preset_name, url, model, temperature, max_tokens, seed, keep_alive) -> io.NodeOutput:
+    def execute(cls, prompt, system_prompt, url, model, temperature, max_tokens, seed, keep_alive) -> io.NodeOutput:
         if not prompt.strip():
             return io.NodeOutput("")
         options = {"temperature": temperature, "seed": seed % 2**31}
@@ -189,33 +165,6 @@ try:
     @PromptServer.instance.routes.get("/mbnodes/expander_presets")
     async def _mbnodes_expander_presets(request):
         return web.json_response({"builtin": BUILTIN_PRESETS, "custom": load_custom()})
-
-    @PromptServer.instance.routes.post("/mbnodes/expander_presets/save")
-    async def _mbnodes_expander_presets_save(request):
-        data = await request.json()
-        name = (data.get("name") or "").strip()
-        if not name or len(name) > MAX_NAME:
-            return web.json_response({"error": f"Preset names need 1 to {MAX_NAME} characters."}, status=400)
-        if name in BUILTIN_PRESETS:
-            return web.json_response({"error": f"\"{name}\" is a built-in preset. Pick another name."}, status=400)
-
-        presets = load_custom()
-        if name in presets and not data.get("overwrite"):
-            return web.json_response({"error": "exists", "name": name}, status=409)
-
-        presets[name] = data.get("text") or ""
-        write_custom(presets)
-        return web.json_response({"name": name, "custom": presets})
-
-    @PromptServer.instance.routes.post("/mbnodes/expander_presets/delete")
-    async def _mbnodes_expander_presets_delete(request):
-        name = (await request.json()).get("name") or ""
-        presets = load_custom()
-        if name not in presets:
-            return web.json_response({"error": f"No custom preset named \"{name}\"."}, status=404)
-        del presets[name]
-        write_custom(presets)
-        return web.json_response({"custom": presets})
 
     @PromptServer.instance.routes.get("/mbnodes/ollama_models")
     async def _mbnodes_ollama_models(request):

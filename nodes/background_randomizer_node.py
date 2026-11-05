@@ -466,7 +466,7 @@ class MBBackgroundRandomizer(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBNodesBackgroundRandomizer",
-            display_name="Background Randomizer (MB)",
+            display_name="MB Background Randomizer",
             category="MBNodes",
             description="Build a background prompt from a chosen or random background in a category.",
             search_aliases=["background", "backdrop", "scene", "setting", "random prompt"],

@@ -182,7 +182,7 @@ class MBHairstyleRandomizer(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBNodesHairstyleRandomizer",
-            display_name="Hairstyle Randomizer (MB)",
+            display_name="MB Hairstyle Randomizer",
             category="MBNodes",
             description="Build a women's hairstyle prompt from a chosen or random style in a length category, with an optional hair color.",
             search_aliases=["hair", "hairstyle", "haircut", "random prompt"],

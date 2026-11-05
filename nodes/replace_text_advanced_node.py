@@ -1,4 +1,4 @@
-"""Replace Text Advanced (MB): run up to 4 find/replace pairs over one text, in
+"""MB Replace Text Advanced: run up to 4 find/replace pairs over one text, in
 order. The side-by-side boxes live in web/replace_text_advanced_node.js and
 write to these hidden widgets."""
 
@@ -16,7 +16,7 @@ class MBReplaceTextAdvanced(io.ComfyNode):
             inputs.append(io.String.Input(f"replace_{n}", default="", display_name=f"Replaced Text {n}", socketless=True))
         return io.Schema(
             node_id="MBReplaceTextAdvanced",
-            display_name="Replace Text Advanced",
+            display_name="MB Replace Text Advanced",
             category="MBNodes",
             description=f"Replace text using up to {SLOTS} Text To Replace / Replaced Text pairs, applied top to bottom.",
             search_aliases=["replace text", "find and replace", "substitute", "text replace"],

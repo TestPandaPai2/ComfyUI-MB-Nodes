@@ -25,7 +25,7 @@ class MBCombineText(io.ComfyNode):
         )
         return io.Schema(
             node_id="MBCombineText",
-            display_name="Combine Text (MB)",
+            display_name="MB Combine Text",
             category="MBNodes",
             description="Join several text inputs with a chosen delimiter.",
             search_aliases=["combine text", "join text", "concat", "merge text"],

@@ -343,7 +343,7 @@ class MBAccessoriesSelector(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBNodesAccessoriesSelector",
-            display_name="Accessories Selector (MB)",
+            display_name="MB Accessories Selector",
             category="MBNodes",
             description="Output an accessory description from a chosen or random category and style.",
             search_aliases=["accessories", "jewelry", "waist chain", "belly chain", "body chain", "necklace", "bracelet", "bangle", "jhumka", "earrings", "nose ring", "nath", "random prompt"],

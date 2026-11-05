@@ -81,7 +81,7 @@ function promptCustom(node, event) {
 }
 
 // Latent [width, height] coming into the node: read off the upstream node's
-// width/height widgets (pixels), chained through other Upscale Latent (MB)
+// width/height widgets (pixels), chained through other MB Upscale Latent
 // nodes, else the size seen on the last run.
 function inputSize(node, seen = new Set()) {
     if (seen.has(node)) return null;
@@ -249,7 +249,7 @@ function openSettings(node) {
     };
 
     openDialog({
-        title: "Upscale Latent (MB) — MB Settings",
+        title: "MB Upscale Latent — MB Settings",
         applyLabel: "Done",
         render(body) {
             const hint = document.createElement("div");

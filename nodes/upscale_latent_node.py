@@ -8,7 +8,7 @@ MAX_MULTIPLIER = 8.0
 
 
 def upscale(samples, multiplier, upscale_method):
-    """Scale a LATENT dict's width and height; shared with Sampler (MB)'s second pass."""
+    """Scale a LATENT dict's width and height; shared with MB Sampler's second pass."""
     if multiplier == 1.0:
         return samples
     tensor = samples["samples"]
@@ -29,7 +29,7 @@ class MBUpscaleLatent(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBUpscaleLatent",
-            display_name="Upscale Latent (MB)",
+            display_name="MB Upscale Latent",
             category="MBNodes",
             description="Upscale a latent by a multiplier chosen from clickable buttons.",
             search_aliases=["upscale latent", "latent upscale by", "scale latent"],

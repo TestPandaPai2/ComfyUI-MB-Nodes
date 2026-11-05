@@ -126,7 +126,7 @@ function openSettings(node) {
     const stepInput = numberField(stepW.value);
 
     openDialog({
-        title: "Slider (MB) — Settings",
+        title: "MB Slider — Settings",
         applyLabel: "Done",
         render(body) {
             body.append(settingsRow("Min", minInput), settingsRow("Max", maxInput), settingsRow("Step", stepInput));

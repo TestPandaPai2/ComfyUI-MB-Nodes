@@ -40,7 +40,7 @@ class MBBodyType(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBNodesBodyType",
-            display_name="Body Type (MB)",
+            display_name="MB Body Type",
             category="MBNodes",
             inputs=[
                 io.Combo.Input("body_type", options=[*BODY_TYPES, FAVORITES], default="Hourglass"),

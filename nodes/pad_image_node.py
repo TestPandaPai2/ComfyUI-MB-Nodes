@@ -116,7 +116,7 @@ class MBPadImage(io.ComfyNode):
 
         return io.Schema(
             node_id="MBPadImage",
-            display_name="Pad Image (MB)",
+            display_name="MB Pad Image",
             category="MBNodes",
             description="Pad an image with a colour or stretched, mirrored or blurred edges; outputs an outpaint mask.",
             search_aliases=["pad image", "border", "letterbox", "extend canvas", "outpaint"],

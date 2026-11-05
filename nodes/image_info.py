@@ -93,7 +93,7 @@ class MBImageInfo(io.ComfyNode):
     def define_schema(cls) -> io.Schema:
         return io.Schema(
             node_id="MBImageInfo",
-            display_name="Image Info (MB)",
+            display_name="MB Image Info",
             category="MBNodes",
             description="Unpack an image_info bundle into image, mask, width, height and filename. A wired image replaces the bundle's image.",
             search_aliases=["image info", "unpack image info", "image metadata"],
