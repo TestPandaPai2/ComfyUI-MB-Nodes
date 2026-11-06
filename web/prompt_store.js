@@ -83,6 +83,7 @@ export async function savePrompt(node, folder) {
             return;
         }
         notify("success", "Prompt saved", `${result.data.folder}/${result.data.filename}`);
+        return result.data.filename;
     } catch (e) {
         notify("error", "Save failed", e?.message ?? String(e));
     }

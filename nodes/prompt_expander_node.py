@@ -117,10 +117,10 @@ class MBPromptExpander(io.ComfyNode):
             description="Expand a short prompt with a local Ollama model. Right-click for system prompt presets.",
             search_aliases=["prompt expander", "prompt enhancer", "ollama", "llm", "expand prompt"],
             inputs=[
+                io.Combo.Input("model", options=["qwen3:8b"], default="qwen3:8b", tooltip="Models installed in Ollama at url."),
                 io.String.Input("prompt", multiline=True, default=""),
                 io.String.Input("system_prompt", multiline=True, default=BUILTIN_PRESETS["Detailed photo"]),
                 io.String.Input("url", default=DEFAULT_URL, socketless=True),
-                io.String.Input("model", default="qwen3:8b", socketless=True, tooltip="Ollama model name. Right-click to pick an installed one."),
                 io.Float.Input("temperature", default=0.7, min=0.0, max=2.0, step=0.05),
                 io.Int.Input("max_tokens", default=0, min=0, max=32768, step=16, tooltip="Cap on generated tokens. 0 = no limit."),
                 io.Int.Input("seed", default=0, min=0, max=MAX_SEED, control_after_generate=True),
@@ -135,7 +135,11 @@ class MBPromptExpander(io.ComfyNode):
         )
 
     @classmethod
-    def execute(cls, prompt, system_prompt, url, model, temperature, max_tokens, seed, keep_alive) -> io.NodeOutput:
+    def validate_inputs(cls, model) -> bool:
+        return True  # the list comes from Ollama in the browser; Ollama rejects unknown names on run
+
+    @classmethod
+    def execute(cls, model, prompt, system_prompt, url, temperature, max_tokens, seed, keep_alive) -> io.NodeOutput:
         if not prompt.strip():
             return io.NodeOutput("")
         options = {"temperature": temperature, "seed": seed % 2**31}

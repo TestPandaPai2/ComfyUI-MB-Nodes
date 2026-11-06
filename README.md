@@ -71,10 +71,10 @@ Save prompts as tags and reuse them by writing `@name`; tags expand recursively 
 Prompt scratchpad — save/load `.txt` files from a `SavedPrompts` folder. `text_in` overrides the output when connected.
 
 ### MB System Prompt
-Same idea for LLM system prompts, with its own library folder, an "Add folder..." picker for outside libraries, and `.txt`/`.md` loading.
+Same idea for LLM system prompts, with its own library folder. Pick a saved `.txt` or `.md` prompt from the dropdown to fill the text box; Refresh list picks up files added by hand.
 
 ### MB Prompt Expander
-Expands a short prompt with a local Ollama model (`url`, default `http://127.0.0.1:11434`). Right-click the node to save or load system prompt presets, the same as MB Text Generate, or to pick an installed model. Loading fills the system prompt box, which is what gets sent, edits included. Eight presets are built in, including **System prompt creator**: describe the expander you want as the prompt, and it writes a system prompt you can paste into the box and save. `max_tokens` caps the reply (0 = no limit). `keep_alive` 0 unloads the model after each call to free VRAM.
+Expands a short prompt with a local Ollama model (`url`, default `http://127.0.0.1:11434`). Right-click the node to save or load system prompt presets, the same as MB Text Generate. The `model` dropdown lists what Ollama has installed. Loading fills the system prompt box, which is what gets sent, edits included. Eight presets are built in, including **System prompt creator**: describe the expander you want as the prompt, and it writes a system prompt you can paste into the box and save. `max_tokens` caps the reply (0 = no limit). `keep_alive` 0 unloads the model after each call to free VRAM.
 
 ### MB Load Prompts From File
 Upload a .txt with the **Upload .txt** button, pick what separates prompts (blank line, newline, `---`, `<>`), and every prompt goes out as a list so downstream nodes run once per prompt in one queue. `start`/`limit` pick a range (limit 0 = all); `count` outputs how many were sent.

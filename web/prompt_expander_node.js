@@ -1,26 +1,14 @@
-// MB Prompt Expander: system prompt presets and the Ollama model list live in the
-// right-click menu. Presets save to the same folder as MB Text Generate.
+// MB Prompt Expander: the model dropdown lists what Ollama has installed, and system
+// prompt presets live in the right-click menu. Presets save to the same folder as MB Text Generate.
 
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 import { getWidget, notify, resizeToContent } from "./common.js";
-import { openDialog } from "./dialog.js";
 import { openPresetEditor, openPresetList } from "./text_generate_node.js";
 
 // Workflows saved with the old preset and preset_name widgets.
 const OLD_WIDGET_COUNT = 11;
 const OLD_WIDGETS = [1, 3];
-
-// Multiline widgets keep a DOM element of their own under Nodes 2.0, which does
-// not follow widget.value on its own.
-function setValue(node, name, value) {
-    const widget = getWidget(node, name);
-    if (!widget) return;
-    widget.value = value;
-    const element = widget.inputEl ?? widget.element;
-    if (element && "value" in element) element.value = value;
-    node.setDirtyCanvas(true, true);
-}
 
 async function loadPresets(node, event, menu) {
     let extra = [];
@@ -33,52 +21,21 @@ async function loadPresets(node, event, menu) {
     openPresetList(node, event, menu, extra);
 }
 
-async function pickModel(node) {
+// Keeps the current model in the list, so a missing one stays selected and a
+// stopped Ollama changes nothing.
+async function refreshModels(node) {
+    const widget = getWidget(node, "model");
+    if (!widget) return;
     const url = getWidget(node, "url")?.value ?? "";
-    let models;
+    let models = [];
     try {
         const response = await api.fetchApi(`/mbnodes/ollama_models?url=${encodeURIComponent(url)}`);
-        const data = await response.json();
-        if (response.status >= 400) throw new Error(data?.error ?? `HTTP ${response.status}`);
-        models = data.models ?? [];
+        if (response.ok) models = (await response.json()).models ?? [];
     } catch (e) {
-        notify("error", "No model list", e?.message ?? String(e));
-        return;
+        console.warn("[MBNodes] Ollama model list not loaded", e);
     }
-    if (!models.length) {
-        notify("warn", "No models", "Ollama has no models installed. Run ollama pull <model> first.");
-        return;
-    }
-
-    let list;
-    const choose = () => {
-        if (list.value) setValue(node, "model", list.value);
-    };
-    const close = openDialog({
-        title: "Pick Ollama model",
-        width: 360,
-        applyLabel: "Use",
-        render(body) {
-            list = document.createElement("select");
-            list.className = "mb-dialog-select";
-            list.size = Math.min(12, Math.max(4, models.length));
-            list.style.width = "100%";
-            for (const name of models) {
-                const item = document.createElement("option");
-                item.value = name;
-                item.textContent = name;
-                list.appendChild(item);
-            }
-            const current = getWidget(node, "model")?.value;
-            list.value = models.includes(current) ? current : models[0];
-            list.addEventListener("dblclick", () => {
-                choose();
-                close();
-            });
-            body.appendChild(list);
-        },
-        onApply: choose,
-    });
+    widget.options.values = models.includes(widget.value) ? models : [widget.value, ...models];
+    node.setDirtyCanvas(true, true);
 }
 
 app.registerExtension({
@@ -92,7 +49,12 @@ app.registerExtension({
             if (info.widgets_values?.length === OLD_WIDGET_COUNT) {
                 info.widgets_values = info.widgets_values.filter((_, i) => !OLD_WIDGETS.includes(i));
             }
-            return configure.call(this, info);
+            const values = info.widgets_values;
+            // Workflows saved with model after url.
+            if (/^https?:\/\//.test(values?.[2])) values.unshift(values.splice(3, 1)[0]);
+            const result = configure.call(this, info);
+            refreshModels(this);
+            return result;
         };
 
         const prev = nodeType.prototype.getExtraMenuOptions;
@@ -102,7 +64,6 @@ app.registerExtension({
                 null,
                 { content: "Save System Prompt as Preset…", callback: () => openPresetEditor(this) },
                 { content: "Load System Prompt Preset", has_submenu: true, callback: (v, o, event, menu) => loadPresets(this, event, menu) },
-                { content: "Pick Ollama Model…", callback: () => pickModel(this) },
             );
         };
     },
@@ -115,6 +76,17 @@ app.registerExtension({
             if (!prompt.options) prompt.options = {};
             prompt.options.placeholder = "woman in red dress on a rooftop";
         }
+
+        const url = getWidget(node, "url");
+        if (url) {
+            const prev = url.callback;
+            url.callback = function (...args) {
+                const result = prev?.apply(this, args);
+                refreshModels(node);
+                return result;
+            };
+        }
+        refreshModels(node);
 
         resizeToContent(node);
         node.setSize([Math.max(node.size[0], 360), node.size[1]]);

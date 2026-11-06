@@ -5,9 +5,8 @@ from . import prompt_store  # noqa: F401  (imported for its routes)
 
 
 class MBSystemPrompt(io.ComfyNode):
-    """A system prompt box with Save and Load buttons. Saves land in the pack's
-    SystemPrompts folder; Load reads that folder or any other one you point it
-    at, so a prompt kept elsewhere can be pulled straight in."""
+    """A system prompt box with a dropdown of saved prompts and a Save button,
+    both working on the pack's SystemPrompts folder."""
 
     @classmethod
     def define_schema(cls) -> io.Schema:
